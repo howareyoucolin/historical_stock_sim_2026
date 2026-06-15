@@ -40,5 +40,54 @@
         "editor.cursorBlinking": "solid",
         "editor.cursorWidth": 2,
         "editorCursor.foreground": "#FFFFFF"
+    },
+    "editor.tokenColorCustomizations": {
+        "textMateRules": [
+            {
+                "scope": [
+                    "comment",
+                    "keyword",
+                    "storage",
+                    "storage.type",
+                    "storage.type.function",
+                    "storage.modifier",
+                    "entity.name.type",
+                    "entity.name.class",
+                    "entity.other.inherited-class",
+                    "variable.language",
+                    "variable.parameter",
+                    "markup.italic"
+                ],
+                "settings": {
+                    "fontStyle": ""
+                }
+            }
+        ]
+    },
+    "editor.semanticTokenColorCustomizations": {
+        "enabled": true,
+        "rules": {
+            "keyword": {
+                "italic": false
+            },
+            "type": {
+                "italic": false
+            },
+            "typeParameter": {
+                "italic": false
+            },
+            "parameter": {
+                "italic": false
+            },
+            "variable": {
+                "italic": false
+            },
+            "function": {
+                "italic": false
+            },
+            "method": {
+                "italic": false
+            }
+        }
     }
 }
