@@ -80,5 +80,4 @@ async function testDepositIntoDefaultUserAccountSession(): Promise<void> {
 export async function runDepositAccountActionTests(): Promise<void> {
     await testDepositIntoDefaultUserAccountSessionInvalidCash()
     await testDepositIntoDefaultUserAccountSession()
-    console.log('Account deposit action tests passed.')
 }

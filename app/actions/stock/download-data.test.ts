@@ -172,5 +172,4 @@ export async function runDownloadDataActionTests(): Promise<void> {
     testBuildDividendMap()
     testBuildHistoryPayload()
     await testDownloadStockDataAction()
-    console.log('Download stock data action tests passed.')
 }

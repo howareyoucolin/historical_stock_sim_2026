@@ -104,5 +104,4 @@ export async function runCliCommandTests(): Promise<void> {
     await testAccountDepositInvalidValue()
     await testAccountCommandUsage()
     await testStockDownloadCommand()
-    console.log('CLI command tests passed.')
 }

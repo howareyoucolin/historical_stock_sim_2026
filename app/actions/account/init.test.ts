@@ -54,5 +54,4 @@ async function testInitializeDefaultUserAccountSession(): Promise<void> {
 // Run the focused init action tests that protect the account reset flow.
 export async function runInitializeAccountActionTests(): Promise<void> {
     await testInitializeDefaultUserAccountSession()
-    console.log('Account init action tests passed.')
 }

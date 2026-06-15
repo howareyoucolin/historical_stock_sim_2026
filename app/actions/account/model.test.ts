@@ -91,5 +91,4 @@ export async function runUserSessionStoreTests(): Promise<void> {
     await testReadDefaultUserAccountSession()
     await testReadDefaultUserAccountSessionInvalidJson()
     await testWriteDefaultUserAccountSession()
-    console.log('User session store tests passed.')
 }

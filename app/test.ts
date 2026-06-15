@@ -4,17 +4,74 @@ import { runDepositAccountActionTests } from './actions/account/deposit.test'
 import { runDownloadDataActionTests } from './actions/stock/download-data.test'
 import { runCliCommandTests } from '../cli/commands.test'
 
-// Run the project's focused TypeScript test scripts in a single entrypoint.
+const GREEN = '\u001b[32m'
+const RED = '\u001b[31m'
+const BOLD = '\u001b[1m'
+const RESET = '\u001b[0m'
+
+interface TestSuite {
+    label: string
+    run: () => Promise<void>
+}
+
+const TEST_SUITES: TestSuite[] = [
+    { label: 'Download stock data action tests', run: runDownloadDataActionTests },
+    { label: 'User session store tests', run: runUserSessionStoreTests },
+    { label: 'Account init action tests', run: runInitializeAccountActionTests },
+    { label: 'Account deposit action tests', run: runDepositAccountActionTests },
+    { label: 'CLI command tests', run: runCliCommandTests },
+]
+
+// Wrap a message in ANSI color codes so test output is easier to scan in the terminal.
+function colorize(color: string, message: string): string {
+    return `${color}${message}${RESET}`
+}
+
+// Build a single pass or fail line for one test suite.
+function formatStatusLine(icon: string, color: string, label: string): string {
+    return colorize(color, `${icon} ${label}`)
+}
+
+// Normalize thrown values into readable terminal output for failed test suites.
+function formatFailureDetails(error: unknown): string {
+    const message = error instanceof Error ? error.stack || error.message : String(error)
+
+    return colorize(RED, `${message}`)
+}
+
+// Run every focused test suite, print styled output, and count any failures.
+async function runTestSuites(): Promise<number> {
+    let failedSuiteCount = 0
+
+    for (const testSuite of TEST_SUITES) {
+        try {
+            await testSuite.run()
+            console.log(formatStatusLine('✓', GREEN, testSuite.label))
+        } catch (error) {
+            failedSuiteCount += 1
+            console.error(formatStatusLine('✗', RED, testSuite.label))
+            console.error(formatFailureDetails(error))
+        }
+    }
+
+    return failedSuiteCount
+}
+
+// Run the project's focused TypeScript test scripts and print a colored summary at the end.
 async function main(): Promise<void> {
-    await runDownloadDataActionTests()
-    await runUserSessionStoreTests()
-    await runInitializeAccountActionTests()
-    await runDepositAccountActionTests()
-    await runCliCommandTests()
+    const failedSuiteCount = await runTestSuites()
+    const passedSuiteCount = TEST_SUITES.length - failedSuiteCount
+
+    if (failedSuiteCount === 0) {
+        console.log(colorize(GREEN, `${BOLD}✓ All ${passedSuiteCount} test suites passed.${RESET}`))
+        return
+    }
+
+    console.error(colorize(RED, `${BOLD}✗ ${failedSuiteCount} of ${TEST_SUITES.length} test suites failed.${RESET}`))
+    process.exit(1)
 }
 
 void main().catch((error: unknown) => {
-    const message = error instanceof Error ? error.stack || error.message : String(error)
-    console.error(message)
+    console.error(formatFailureDetails(error))
     process.exit(1)
 })
