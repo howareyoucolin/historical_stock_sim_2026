@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Run the project's test suite before allowing a commit to succeed.
+set -e
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+cd "$REPO_ROOT"
+npm test
