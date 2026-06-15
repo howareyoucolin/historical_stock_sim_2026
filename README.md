@@ -34,6 +34,9 @@ npm run cli
 This opens an interactive shell where you can run commands such as:
 
 - `help`
+- `account init`
+- `account deposit 500`
+- `account deposit -125.5`
 - `stock download AAPL`
 - `exit`
 - `quit`

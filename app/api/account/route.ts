@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server'
 
 import {
     DEFAULT_USER_SESSION_RELATIVE_PATH,
-    initializeDefaultUserAccountSession,
     readDefaultUserAccountSession,
-} from '../../actions/account/session-store'
+} from '../../actions/account/model'
+import { initializeDefaultUserAccountSession } from '../../actions/account/init'
 
 export const runtime = 'nodejs'
 

@@ -2,7 +2,12 @@
 
 import { useEffect, useState } from 'react'
 
-import { createDefaultAccountState, type AccountState } from '../actions/account/storage'
+import type { AccountState } from '../actions/account/model'
+
+const EMPTY_ACCOUNT_STATE: AccountState = {
+    cash: 0,
+    positions: {},
+}
 
 interface AccountResponse {
     account: AccountState
@@ -11,7 +16,7 @@ interface AccountResponse {
 
 // Render the browser account controls and current shared account snapshot.
 export function AccountPanel() {
-    const [account, setAccount] = useState<AccountState>(createDefaultAccountState)
+    const [account, setAccount] = useState<AccountState>(EMPTY_ACCOUNT_STATE)
     const [sessionFile, setSessionFile] = useState('user-sessions/default.json')
     const [statusMessage, setStatusMessage] = useState('Loading the shared account session...')
     const [isSaving, setIsSaving] = useState(false)
