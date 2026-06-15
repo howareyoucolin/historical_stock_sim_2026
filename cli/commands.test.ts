@@ -9,6 +9,8 @@ function testGetHelpText(): void {
     assert.match(getHelpText(), /account show/)
     assert.match(getHelpText(), /account buy <code> <qty>/)
     assert.match(getHelpText(), /account deposit <cash>/)
+    assert.match(getHelpText(), /date next/)
+    assert.match(getHelpText(), /date set <yyyy-mm-dd>/)
     assert.match(getHelpText(), /stock download <code>/)
 }
 
@@ -119,6 +121,46 @@ async function testAccountBuyCommand(): Promise<void> {
     assert.equal(result.output, '3 stocks of AAPL successfully bought.')
 }
 
+// Verify date next calls the shared simulation date advancer and returns the updated day.
+async function testDateNextCommand(): Promise<void> {
+    let nextWasCalled = false
+    const runCommand = createRunCommand({
+        setDefaultUserAccountDateToTomorrow: async () => {
+            nextWasCalled = true
+
+            return {
+                date: '2016-01-05',
+            }
+        },
+    })
+
+    const result = await runCommand('date next')
+
+    assert.equal(nextWasCalled, true)
+    assert.equal(result.exitCode, 0)
+    assert.equal(result.output, 'Advanced simulation date to 2016-01-05.')
+}
+
+// Verify date set calls the shared simulation date setter and returns the updated day.
+async function testDateSetCommand(): Promise<void> {
+    let capturedSpecificDate = ''
+    const runCommand = createRunCommand({
+        setDefaultUserAccountDateToSpecificDate: async (specificDate) => {
+            capturedSpecificDate = specificDate
+
+            return {
+                date: specificDate,
+            }
+        },
+    })
+
+    const result = await runCommand('date set 2018-04-02')
+
+    assert.equal(capturedSpecificDate, '2018-04-02')
+    assert.equal(result.exitCode, 0)
+    assert.equal(result.output, 'Set simulation date to 2018-04-02.')
+}
+
 // Verify invalid deposit values are rejected before the shared session updater runs.
 async function testAccountDepositInvalidValue(): Promise<void> {
     const runCommand = createRunCommand()
@@ -165,6 +207,21 @@ async function testAccountCommandUsage(): Promise<void> {
     assert.equal(badBuyResult.output, 'Usage: account buy <stock_code> <quantity>')
 }
 
+// Verify bad date command arguments return the expected usage guidance.
+async function testDateCommandUsage(): Promise<void> {
+    const runCommand = createRunCommand()
+    const dateResult = await runCommand('date')
+    const badDateResult = await runCommand('date wrong')
+    const badDateSetResult = await runCommand('date set')
+
+    assert.equal(dateResult.exitCode, 1)
+    assert.equal(dateResult.output, 'Usage: date next')
+    assert.equal(badDateResult.exitCode, 1)
+    assert.equal(badDateResult.output, 'Usage: date <next|set <yyyy-mm-dd>>')
+    assert.equal(badDateSetResult.exitCode, 1)
+    assert.equal(badDateSetResult.output, 'Usage: date set <yyyy-mm-dd>')
+}
+
 // Verify stock download still routes through the dedicated stock command handler.
 async function testStockDownloadCommand(): Promise<void> {
     let requestedStockCode = ''
@@ -175,7 +232,7 @@ async function testStockDownloadCommand(): Promise<void> {
             return {
                 stockCode: 'AAPL',
                 source: 'Yahoo Finance',
-                range: { start: '2016-01-01', end: '2026-01-01' },
+                range: { start: '2010-01-01', end: '2026-01-01' },
                 historyByDate: {},
                 rowCount: 42,
                 outputPath: 'market-data/AAPL/history.json',
@@ -196,8 +253,11 @@ export async function runCliCommandTests(): Promise<void> {
     await testAccountShowCommand()
     await testAccountBuyCommand()
     await testAccountDepositCommand()
+    await testDateNextCommand()
+    await testDateSetCommand()
     await testAccountDepositInvalidValue()
     await testAccountBuyInvalidQuantity()
     await testAccountCommandUsage()
+    await testDateCommandUsage()
     await testStockDownloadCommand()
 }

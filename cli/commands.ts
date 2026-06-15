@@ -1,8 +1,9 @@
 import { createAccountCommandHandler, type AccountCommandDependencies, ACCOUNT_HELP_LINES } from './command-groups/account'
+import { createDateCommandHandler, type DateCommandDependencies, DATE_HELP_LINES } from './command-groups/date'
 import { createStockCommandHandler, type StockCommandDependencies, STOCK_HELP_LINES } from './command-groups/stock'
 import type { CommandResult } from './command-types'
 
-type CommandDependencies = AccountCommandDependencies & StockCommandDependencies
+type CommandDependencies = AccountCommandDependencies & DateCommandDependencies & StockCommandDependencies
 
 export type { CommandResult } from './command-types'
 
@@ -17,6 +18,7 @@ export function getHelpText(): string {
         'Available commands:',
         '  help                   Show the command list',
         ...ACCOUNT_HELP_LINES,
+        ...DATE_HELP_LINES,
         ...STOCK_HELP_LINES,
         '  exit                   Leave the CLI',
         '  quit                   Leave the CLI',
@@ -40,12 +42,18 @@ export function createRunCommand({
     depositIntoDefaultUserAccount,
     initializeDefaultUserAccount,
     showDefaultUserAccount,
+    setDefaultUserAccountDateToTomorrow,
+    setDefaultUserAccountDateToSpecificDate,
 }: CommandDependencies = {}) {
     const runAccountCommand = createAccountCommandHandler({
         buyStockInDefaultUserAccount,
         initializeDefaultUserAccount,
         depositIntoDefaultUserAccount,
         showDefaultUserAccount,
+    })
+    const runDateCommand = createDateCommandHandler({
+        setDefaultUserAccountDateToTomorrow,
+        setDefaultUserAccountDateToSpecificDate,
     })
     const runStockCommand = createStockCommandHandler({
         downloadStockData,
@@ -64,6 +72,8 @@ export function createRunCommand({
                 return { output: getHelpText(), shouldExit: false, exitCode: 0 }
             case 'account':
                 return runAccountCommand(args)
+            case 'date':
+                return runDateCommand(args)
             case 'stock':
                 return runStockCommand(args)
             case 'exit':

@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
+import { DATA_DIRECTORY_NAME, END_DATE, HISTORY_FILE_NAME, START_DATE } from '../stock/download-data'
 import { buyStockInDefaultUserAccountSession } from './buy'
 import { DEFAULT_ACCOUNT_DATE, DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
 
@@ -24,7 +24,7 @@ async function writeLocalStockHistory(
     await fs.mkdir(outputDirectory, { recursive: true })
     await fs.writeFile(
         outputPath,
-        `${JSON.stringify({ stockCode, source: 'Yahoo Finance', range: { start: '2016-01-01', end: '2026-01-01' }, historyByDate }, null, 2)}\n`,
+        `${JSON.stringify({ stockCode, source: 'Yahoo Finance', range: { start: START_DATE, end: END_DATE }, historyByDate }, null, 2)}\n`,
         'utf8'
     )
 }

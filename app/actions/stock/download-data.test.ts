@@ -2,6 +2,8 @@ import assert from 'node:assert/strict'
 
 import {
     DATA_DIRECTORY_NAME,
+    END_DATE,
+    START_DATE,
     buildDividendMap,
     buildHistoryByDate,
     buildHistoryPayload,
@@ -76,7 +78,7 @@ function testBuildHistoryPayload(): void {
 
     assert.equal(payload.stockCode, 'AAPL')
     assert.equal(payload.source, 'Yahoo Finance')
-    assert.deepEqual(payload.range, { start: '2016-01-01', end: '2026-01-01' })
+    assert.deepEqual(payload.range, { start: START_DATE, end: END_DATE })
     assert.equal(Object.keys(payload.historyByDate).length, 1)
     assert.deepEqual(payload.historyByDate['2000-01-01'], {
         close: 1.5,
@@ -145,7 +147,7 @@ async function testDownloadStockDataAction(): Promise<void> {
     assert.equal(result.source, 'Yahoo Finance')
     assert.equal(result.rowCount, 1)
     assert.equal(result.outputPath, `${DATA_DIRECTORY_NAME}/AAPL/history.json`)
-    assert.deepEqual(result.range, { start: '2016-01-01', end: '2026-01-01' })
+    assert.deepEqual(result.range, { start: START_DATE, end: END_DATE })
     assert.deepEqual(result.historyByDate['2000-01-01'], {
         close: 1.5,
         isPayoutDate: true,

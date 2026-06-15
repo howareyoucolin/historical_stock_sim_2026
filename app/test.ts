@@ -3,6 +3,8 @@ import { runBuyAccountActionTests } from './actions/account/buy.test'
 import { runInitializeAccountActionTests } from './actions/account/init.test'
 import { runDepositAccountActionTests } from './actions/account/deposit.test'
 import { runShowAccountActionTests } from './actions/account/show.test'
+import { runSetDateToSpecificDateActionTests } from './actions/date/set-to-specific-date.test'
+import { runSetDateToTomorrowActionTests } from './actions/date/set-to-tomorrow.test'
 import { runDownloadDataActionTests } from './actions/stock/download-data.test'
 import { runCliCommandTests } from '../cli/commands.test'
 import { runCliOutputTests } from '../cli/output.test'
@@ -25,6 +27,8 @@ const TEST_SUITES: TestSuite[] = [
     { label: 'Account init action tests', run: runInitializeAccountActionTests },
     { label: 'Account deposit action tests', run: runDepositAccountActionTests },
     { label: 'Account show action tests', run: runShowAccountActionTests },
+    { label: 'Date next action tests', run: runSetDateToTomorrowActionTests },
+    { label: 'Date set action tests', run: runSetDateToSpecificDateActionTests },
     { label: 'CLI command tests', run: runCliCommandTests },
     { label: 'CLI output tests', run: runCliOutputTests },
 ]
