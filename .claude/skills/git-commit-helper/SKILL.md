@@ -53,7 +53,7 @@ already follow the required format:
 ```text
 feat: add hello world homepage
 fix: correct chart tooltip overflow
-chore: reorganize local codex skill folders
+chore: reorganize local claude workflow files
 ```
 
 Keep the message text under 80 characters for every option.
