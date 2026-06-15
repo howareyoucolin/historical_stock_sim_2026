@@ -36,10 +36,12 @@ export function parseCommand(input: string): { command: string; args: string[] }
 // Build the CLI command runner so tests can replace side effects with focused stubs.
 export function createRunCommand({
     downloadStockData,
+    buyStockInDefaultUserAccount,
     depositIntoDefaultUserAccount,
     initializeDefaultUserAccount,
 }: CommandDependencies = {}) {
     const runAccountCommand = createAccountCommandHandler({
+        buyStockInDefaultUserAccount,
         initializeDefaultUserAccount,
         depositIntoDefaultUserAccount,
     })

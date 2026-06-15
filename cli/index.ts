@@ -3,13 +3,14 @@
 import readline from 'node:readline'
 
 import { getBanner, runCommand } from './commands'
+import { formatCliResultOutput } from './output'
 
 const CLI_PROMPT = 'stocksimulate> '
 
 // Print a command result to stdout.
 function renderResult(result: { output: string }): void {
     if (result.output) {
-        console.log(result.output)
+        console.log(formatCliResultOutput(result.output))
     }
 }
 

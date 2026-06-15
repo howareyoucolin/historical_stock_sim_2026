@@ -58,9 +58,8 @@ async function testReadDefaultUserAccountSessionMissingDate(): Promise<void> {
     })
 
     assert.deepEqual(account, {
-        date: '2016-01-01',
+        ...DEFAULT_ACCOUNT_STATE,
         cash: 1200,
-        positions: {},
     })
 }
 

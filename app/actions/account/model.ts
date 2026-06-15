@@ -16,7 +16,7 @@ export interface AccountState {
 export const USER_SESSIONS_DIRECTORY_NAME = 'user-sessions'
 export const DEFAULT_USER_SESSION_FILE_NAME = 'default.json'
 export const DEFAULT_USER_SESSION_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${DEFAULT_USER_SESSION_FILE_NAME}`
-export const DEFAULT_ACCOUNT_DATE = '2016-01-01'
+export const DEFAULT_ACCOUNT_DATE = '2016-01-04'
 
 export interface AccountSessionDependencies {
     cwd?: () => string

@@ -2,13 +2,9 @@
 
 import { useEffect, useState } from 'react'
 
-import type { AccountState } from '../actions/account/model'
+import { createDefaultAccountState, type AccountState } from '../actions/account/model'
 
-const EMPTY_ACCOUNT_STATE: AccountState = {
-    date: '2016-01-01',
-    cash: 0,
-    positions: {},
-}
+const EMPTY_ACCOUNT_STATE: AccountState = createDefaultAccountState()
 
 interface AccountResponse {
     account: AccountState

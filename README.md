@@ -35,6 +35,7 @@ This opens an interactive shell where you can run commands such as:
 
 - `help`
 - `account init`
+- `account buy AAPL 10`
 - `account deposit 500`
 - `account deposit -125.5`
 - `stock download AAPL`
@@ -55,6 +56,8 @@ npm run cli -- stock download AAPL
 
 Downloaded files are stored at `market-data/<STOCK_CODE>/history.json`.
 The current download range is `2016-01-01` through `2026-01-01`.
+After downloading a stock's history, you can buy shares for the account date with `account buy <STOCK_CODE> <QUANTITY>`.
+`account init` resets the simulator account date to `2016-01-04`, the first trading day after the New Year's holiday weekend.
 The CLI is only a controller here; the shared stock-download logic lives in `app/actions/`.
 The saved JSON is keyed by date for faster lookup, and each date entry includes only `close`, `isPayoutDate`, and `dividendPerShare`.
 

@@ -1,8 +1,10 @@
 import { runUserSessionStoreTests } from './actions/account/model.test'
+import { runBuyAccountActionTests } from './actions/account/buy.test'
 import { runInitializeAccountActionTests } from './actions/account/init.test'
 import { runDepositAccountActionTests } from './actions/account/deposit.test'
 import { runDownloadDataActionTests } from './actions/stock/download-data.test'
 import { runCliCommandTests } from '../cli/commands.test'
+import { runCliOutputTests } from '../cli/output.test'
 
 const GREEN = '\u001b[32m'
 const RED = '\u001b[31m'
@@ -18,9 +20,11 @@ interface TestSuite {
 const TEST_SUITES: TestSuite[] = [
     { label: 'Download stock data action tests', run: runDownloadDataActionTests },
     { label: 'User session store tests', run: runUserSessionStoreTests },
+    { label: 'Account buy action tests', run: runBuyAccountActionTests },
     { label: 'Account init action tests', run: runInitializeAccountActionTests },
     { label: 'Account deposit action tests', run: runDepositAccountActionTests },
     { label: 'CLI command tests', run: runCliCommandTests },
+    { label: 'CLI output tests', run: runCliOutputTests },
 ]
 
 // Wrap a message in ANSI color codes so test output is easier to scan in the terminal.
