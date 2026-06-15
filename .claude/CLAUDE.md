@@ -9,6 +9,7 @@ Read only the files relevant to the current task:
 
 - `rules/commenting.md`: code commenting conventions for edits.
 - `rules/commits.md`: guardrails for staging and committing changes.
+- `rules/testing.md`: when to add unit tests for new code changes.
 
 ## Skills
 
