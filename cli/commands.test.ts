@@ -232,6 +232,7 @@ async function testStockDownloadCommand(): Promise<void> {
             return {
                 stockCode: 'AAPL',
                 source: 'Yahoo Finance',
+                peRatio: 31.25,
                 range: { start: '2010-01-01', end: '2026-01-01' },
                 historyByDate: {},
                 rowCount: 42,
