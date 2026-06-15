@@ -23,6 +23,26 @@ npm run dev
 
 Open the app at `http://localhost:8600`.
 
+## CLI
+
+Start the local app CLI:
+
+```bash
+npm run cli
+```
+
+This opens an interactive shell where you can run commands such as:
+
+- `help`
+- `exit`
+- `quit`
+
+You can also run one command directly:
+
+```bash
+npm run cli -- help
+```
+
 ## Production Build
 
 Create a production build:
@@ -44,6 +64,7 @@ The production server also runs on `http://localhost:8600`.
 - `app/layout.tsx`: root layout and shared document shell
 - `app/page.tsx`: home page for the app
 - `app/globals.css`: global styles
+- `cli/index.cjs`: interactive CLI entrypoint
 - `tsconfig.json`: TypeScript configuration for the project
 - `next-env.d.ts` and `global.d.ts`: Next.js and CSS type declarations
 
