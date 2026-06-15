@@ -1,6 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
+import type { AccountStockTableRow, AccountStockTableSummary, DefaultUserAccountSessionView } from './view-model'
 import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
 import { readDefaultUserAccountSession, type AccountPosition, type AccountSessionDependencies, type AccountState, DEFAULT_USER_SESSION_RELATIVE_PATH } from './model'
 
@@ -10,24 +11,6 @@ interface StockHistoryPayload {
 
 interface ShowAccountSessionDependencies extends AccountSessionDependencies {
     readMarketDataFile?: (path: string, encoding: BufferEncoding) => Promise<string>
-}
-
-interface AccountStockTableRow {
-    stockCode: string
-    averageCost: number
-    currentPrice: number
-    quantity: number
-    totalCostBasis: number
-    totalValue: number
-    totalGainLoss: number
-    percentGainLoss: number
-}
-
-interface AccountStockTableSummary {
-    principal: number
-    totalCurrentValue: number
-    totalGainLoss: number
-    percentGainLoss: number
 }
 
 // Read the shared default user account session JSON for callers that need the raw account object.
@@ -152,6 +135,29 @@ function buildAccountStockTableSummary(rows: AccountStockTableRow[]): AccountSto
     }
 }
 
+// Build the reusable account holdings view used by both the CLI and browser UI.
+export async function buildDefaultUserAccountSessionView(
+    account: AccountState,
+    dependencies: ShowAccountSessionDependencies = {}
+): Promise<DefaultUserAccountSessionView> {
+    const rows = await buildAccountStockTableRows(account, dependencies)
+
+    return {
+        account,
+        rows,
+        summary: buildAccountStockTableSummary(rows),
+    }
+}
+
+// Read the shared account session and resolve the stock holdings view model for UI and CLI consumers.
+export async function fetchDefaultUserAccountSessionView(
+    dependencies: ShowAccountSessionDependencies = {}
+): Promise<DefaultUserAccountSessionView> {
+    const account = await fetchDefaultUserAccountSession(dependencies)
+
+    return buildDefaultUserAccountSessionView(account, dependencies)
+}
+
 // Format the one-line portfolio rollup that sits between cash and the holdings table.
 function formatAccountStockTableSummary(summary: AccountStockTableSummary): string {
     return [
@@ -208,9 +214,7 @@ function formatAccountStockTable(rows: AccountStockTableRow[]): string {
 export async function showDefaultUserAccountSession(
     dependencies: ShowAccountSessionDependencies = {}
 ): Promise<string> {
-    const account = await fetchDefaultUserAccountSession(dependencies)
-    const rows = await buildAccountStockTableRows(account, dependencies)
-    const summary = buildAccountStockTableSummary(rows)
+    const { account, rows, summary } = await fetchDefaultUserAccountSessionView(dependencies)
 
     if (rows.length === 0) {
         return [

@@ -39,6 +39,22 @@ body {
     text-align: center;
 }
 
+.accountCard {
+    width: min(100%, 1120px);
+    text-align: left;
+}
+
+.cardHeader {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+}
+
+.heroCopy {
+    max-width: 720px;
+}
+
 .eyebrow {
     margin: 0 0 12px;
     font-size: 0.85rem;
@@ -118,16 +134,120 @@ pre {
     text-align: right;
 }
 
-.jsonPreview {
-    margin: 18px 0 0;
+.summaryGrid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 14px;
+    margin-top: 24px;
+}
+
+.summaryCard {
     padding: 18px;
-    border-radius: 20px;
-    background: rgba(121, 82, 45, 0.08);
-    color: #35261a;
-    text-align: left;
+    border: 1px solid rgba(84, 61, 41, 0.12);
+    border-radius: 18px;
+    background: rgba(255, 250, 242, 0.88);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+.summaryLabel {
+    display: block;
+    color: #8b6542;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.summaryValue {
+    display: block;
+    margin-top: 10px;
+    color: #2d1e12;
+    font-size: 1.15rem;
+    line-height: 1.1;
+}
+
+.holdingsSection {
+    margin-top: 24px;
+    padding: 22px;
+    border: 1px solid rgba(84, 61, 41, 0.12);
+    border-radius: 22px;
+    background: rgba(250, 243, 231, 0.76);
+}
+
+.sectionHeading {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 18px;
+}
+
+.sectionEyebrow {
+    margin: 0 0 8px;
+    color: #9a6a37;
+    font-size: 0.78rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.sectionHeading h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
+.rowCount {
+    color: #7a5a3d;
     font-size: 0.92rem;
-    line-height: 1.55;
-    overflow: auto;
+    white-space: nowrap;
+}
+
+.tableScroll {
+    overflow-x: auto;
+}
+
+.holdingsTable {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 760px;
+}
+
+.holdingsTable th,
+.holdingsTable td {
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(84, 61, 41, 0.12);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.holdingsTable thead th {
+    color: #8b6542;
+    font-size: 0.82rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.holdingsTable th:first-child,
+.holdingsTable td:first-child {
+    text-align: left;
+}
+
+.holdingsTable tbody th {
+    color: #2f2218;
+    font-size: 1rem;
+}
+
+.holdingsTable tbody tr:last-child th,
+.holdingsTable tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.emptyState {
+    padding: 22px;
+    border-radius: 18px;
+    background: rgba(121, 82, 45, 0.08);
+    color: #5f4631;
+    text-align: center;
+    line-height: 1.5;
 }
 
 @media (max-width: 640px) {
@@ -135,7 +255,17 @@ pre {
         padding: 36px 24px;
     }
 
+    .cardHeader,
     .storageMeta {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .summaryGrid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .sectionHeading {
         align-items: flex-start;
         flex-direction: column;
     }
