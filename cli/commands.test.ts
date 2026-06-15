@@ -246,6 +246,34 @@ async function testStockDownloadCommand(): Promise<void> {
     assert.match(result.output, /Downloaded 42 rows for AAPL\./)
 }
 
+// Verify stock build routes through the dedicated stock command handler.
+async function testStockBuildCommand(): Promise<void> {
+    let requestedStockCode = ''
+    const runCommand = createRunCommand({
+        buildStockData: async (stockCode) => {
+            requestedStockCode = stockCode
+
+            return {
+                stockCode: 'AAPL',
+                sources: {
+                    priceHistory: { source: 'Yahoo Finance', file: 'history.json' },
+                    eps: { source: 'Macrotrends', file: 'eps.json' },
+                },
+                range: { start: '2010-01-04', end: '2026-01-01' },
+                fields: {},
+                historyByDate: {},
+                rowCount: 99,
+                outputPath: 'market-data/AAPL/data.json',
+            }
+        },
+    })
+    const result = await runCommand('stock build AAPL')
+
+    assert.equal(requestedStockCode, 'AAPL')
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /Built 99 rows for AAPL\./)
+}
+
 // Run the focused tests that protect CLI account command wiring.
 export async function runCliCommandTests(): Promise<void> {
     testGetHelpText()
@@ -260,4 +288,5 @@ export async function runCliCommandTests(): Promise<void> {
     await testAccountCommandUsage()
     await testDateCommandUsage()
     await testStockDownloadCommand()
+    await testStockBuildCommand()
 }
