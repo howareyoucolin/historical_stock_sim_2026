@@ -6,8 +6,9 @@ import { runCliCommandTests } from '../cli/commands.test'
 
 const GREEN = '\u001b[32m'
 const RED = '\u001b[31m'
-const BOLD = '\u001b[1m'
+const WHITE = '\u001b[37m'
 const RESET = '\u001b[0m'
+const SUMMARY_SEPARATOR = '-------------------------------------------'
 
 interface TestSuite {
     label: string
@@ -27,9 +28,14 @@ function colorize(color: string, message: string): string {
     return `${color}${message}${RESET}`
 }
 
-// Build a single pass or fail line for one test suite.
-function formatStatusLine(icon: string, color: string, label: string): string {
-    return colorize(color, `${icon} ${label}`)
+// Build a single test status line with an independently colored symbol and label.
+function formatStatusLine(icon: string, iconColor: string, label: string, labelColor: string): string {
+    return `${colorize(iconColor, icon)} ${colorize(labelColor, label)}`
+}
+
+// Build the separator used to frame the final test summary block.
+function formatSummarySeparator(): string {
+    return colorize(WHITE, SUMMARY_SEPARATOR)
 }
 
 // Normalize thrown values into readable terminal output for failed test suites.
@@ -46,10 +52,10 @@ async function runTestSuites(): Promise<number> {
     for (const testSuite of TEST_SUITES) {
         try {
             await testSuite.run()
-            console.log(formatStatusLine('✓', GREEN, testSuite.label))
+            console.log(formatStatusLine('✓', GREEN, testSuite.label, WHITE))
         } catch (error) {
             failedSuiteCount += 1
-            console.error(formatStatusLine('✗', RED, testSuite.label))
+            console.error(formatStatusLine('✗', RED, testSuite.label, WHITE))
             console.error(formatFailureDetails(error))
         }
     }
@@ -63,11 +69,17 @@ async function main(): Promise<void> {
     const passedSuiteCount = TEST_SUITES.length - failedSuiteCount
 
     if (failedSuiteCount === 0) {
-        console.log(colorize(GREEN, `${BOLD}✓ All ${passedSuiteCount} test suites passed.${RESET}`))
+        console.log(formatSummarySeparator())
+        console.log(formatStatusLine('✓', GREEN, `All ${passedSuiteCount} test suites passed.`, WHITE))
+        console.log(formatSummarySeparator())
+        console.log()
         return
     }
 
-    console.error(colorize(RED, `${BOLD}✗ ${failedSuiteCount} of ${TEST_SUITES.length} test suites failed.${RESET}`))
+    console.error(formatSummarySeparator())
+    console.error(formatStatusLine('✗', RED, `${failedSuiteCount} of ${TEST_SUITES.length} test suites failed.`, WHITE))
+    console.error(formatSummarySeparator())
+    console.error()
     process.exit(1)
 }
 
