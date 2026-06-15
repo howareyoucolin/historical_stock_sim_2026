@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start -p 8600",
     "cli": "tsx cli/index.ts",
-    "test": "tsx app/actions/stock/download-data.test.ts"
+    "test": "tsx app/test.ts"
   },
   "dependencies": {
     "next": "13.5.11",

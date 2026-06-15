@@ -165,7 +165,7 @@ async function testDownloadStockDataAction(): Promise<void> {
 }
 
 // Run the focused action tests that protect the reusable stock download logic.
-async function main(): Promise<void> {
+export async function runDownloadDataActionTests(): Promise<void> {
     testValidateStockCode()
     testGetHistoryUrl()
     testBuildHistoryByDate()
@@ -174,9 +174,3 @@ async function main(): Promise<void> {
     await testDownloadStockDataAction()
     console.log('Download stock data action tests passed.')
 }
-
-void main().catch((error: unknown) => {
-    const message = error instanceof Error ? error.stack || error.message : String(error)
-    console.error(message)
-    process.exit(1)
-})
