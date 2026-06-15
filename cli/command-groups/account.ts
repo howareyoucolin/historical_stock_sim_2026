@@ -5,10 +5,12 @@ import {
 import { buyStockInDefaultUserAccountSession, type BuyStockResult } from '../../app/actions/account/buy'
 import { depositIntoDefaultUserAccountSession } from '../../app/actions/account/deposit'
 import { initializeDefaultUserAccountSession } from '../../app/actions/account/init'
+import { showDefaultUserAccountSession } from '../../app/actions/account/show'
 import type { CommandResult } from '../command-types'
 
 export interface AccountCommandDependencies {
     initializeDefaultUserAccount?: () => Promise<AccountState>
+    showDefaultUserAccount?: () => Promise<string>
     depositIntoDefaultUserAccount?: (valueCash: number) => Promise<AccountState>
     buyStockInDefaultUserAccount?: (stockCode: string, quantity: number) => Promise<BuyStockResult>
 }
@@ -17,6 +19,7 @@ export const ACCOUNT_HELP_LINES = [
     '  account buy <code> <qty> Buy shares using downloaded local history data',
     '  account deposit <cash> Add cash to the shared account session file',
     '  account init           Reset the shared account session file',
+    '  account show           Show the tracked stock table for the shared account',
 ]
 
 // Format a numeric dollar amount so CLI output stays consistent for account actions.
@@ -24,34 +27,10 @@ function formatCurrency(value: number): string {
     return value.toFixed(2)
 }
 
-// Build a display-only view of tracked positions with readable currency formatting for terminal output.
-function formatTrackedSymbols(positions: AccountState['positions']): string {
-    const formattedPositions = Object.fromEntries(
-        Object.entries(positions).map(([stockCode, stockPositions]) => [
-            stockCode,
-            stockPositions.map((position) => ({
-                ...position,
-                cost_per_share: formatCurrency(position.cost_per_share),
-            })),
-        ])
-    )
-
-    return JSON.stringify(formattedPositions, null, 2)
-}
-
-// Build the shared account detail lines used by CLI account command success messages.
-function formatAccountDetails(account: AccountState): string[] {
-    return [`Date: ${account.date}`, `Cash: ${formatCurrency(account.cash)}`, `Tracked symbols:\n${formatTrackedSymbols(account.positions)}`]
-}
-
-// Build the short account summary shown after CLI account mutations succeed.
-function formatAccountSummary(prefix: string, account: AccountState): string {
-    return [prefix, ...formatAccountDetails(account)].join('\n')
-}
-
 // Build the account command handler so account-specific behavior stays out of the main router.
 export function createAccountCommandHandler({
     initializeDefaultUserAccount = initializeDefaultUserAccountSession,
+    showDefaultUserAccount = showDefaultUserAccountSession,
     depositIntoDefaultUserAccount = depositIntoDefaultUserAccountSession,
     buyStockInDefaultUserAccount = buyStockInDefaultUserAccountSession,
 }: AccountCommandDependencies = {}) {
@@ -59,10 +38,10 @@ export function createAccountCommandHandler({
     return async function runAccountCommand(args: string[]): Promise<CommandResult> {
         if (args[0] === 'init' && args.length === 1) {
             try {
-                const account = await initializeDefaultUserAccount()
+                await initializeDefaultUserAccount()
 
                 return {
-                    output: formatAccountSummary(`Reset account in ${DEFAULT_USER_SESSION_RELATIVE_PATH}.`, account),
+                    output: `Reset account in ${DEFAULT_USER_SESSION_RELATIVE_PATH}.`,
                     shouldExit: false,
                     exitCode: 0,
                 }
@@ -71,6 +50,26 @@ export function createAccountCommandHandler({
 
                 return {
                     output: `Account init failed: ${message}`,
+                    shouldExit: false,
+                    exitCode: 1,
+                }
+            }
+        }
+
+        if (args[0] === 'show' && args.length === 1) {
+            try {
+                const tableOutput = await showDefaultUserAccount()
+
+                return {
+                    output: tableOutput,
+                    shouldExit: false,
+                    exitCode: 0,
+                }
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error)
+
+                return {
+                    output: `Account show failed: ${message}`,
                     shouldExit: false,
                     exitCode: 1,
                 }
@@ -89,10 +88,10 @@ export function createAccountCommandHandler({
             }
 
             try {
-                const account = await depositIntoDefaultUserAccount(valueCash)
+                await depositIntoDefaultUserAccount(valueCash)
 
                 return {
-                    output: formatAccountSummary(`Updated account in ${DEFAULT_USER_SESSION_RELATIVE_PATH}.`, account),
+                    output: `Updated account cash by ${formatCurrency(valueCash)} in ${DEFAULT_USER_SESSION_RELATIVE_PATH}.`,
                     shouldExit: false,
                     exitCode: 0,
                 }
@@ -122,11 +121,7 @@ export function createAccountCommandHandler({
                 const result = await buyStockInDefaultUserAccount(args[1], quantity)
 
                 return {
-                    output: [
-                        `Bought ${result.quantity} shares of ${result.stockCode} at ${formatCurrency(result.costPerShare)} in ${DEFAULT_USER_SESSION_RELATIVE_PATH}.`,
-                        `Total cost: ${formatCurrency(result.totalCost)}`,
-                        ...formatAccountDetails(result.account),
-                    ].join('\n'),
+                    output: `${result.quantity} stocks of ${result.stockCode} successfully bought.`,
                     shouldExit: false,
                     exitCode: 0,
                 }
@@ -149,6 +144,14 @@ export function createAccountCommandHandler({
             }
         }
 
+        if (args[0] === 'show') {
+            return {
+                output: 'Usage: account show',
+                shouldExit: false,
+                exitCode: 1,
+            }
+        }
+
         if (args[0] === 'buy') {
             return {
                 output: 'Usage: account buy <stock_code> <quantity>',
@@ -158,7 +161,7 @@ export function createAccountCommandHandler({
         }
 
         return {
-            output: args[0] ? 'Usage: account <init|deposit <value_cash>|buy <stock_code> <quantity>>' : 'Usage: account init',
+            output: 'Usage: account <init|show|deposit <value_cash>|buy <stock_code> <quantity>>',
             shouldExit: false,
             exitCode: 1,
         }

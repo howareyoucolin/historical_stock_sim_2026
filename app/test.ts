@@ -2,6 +2,7 @@ import { runUserSessionStoreTests } from './actions/account/model.test'
 import { runBuyAccountActionTests } from './actions/account/buy.test'
 import { runInitializeAccountActionTests } from './actions/account/init.test'
 import { runDepositAccountActionTests } from './actions/account/deposit.test'
+import { runShowAccountActionTests } from './actions/account/show.test'
 import { runDownloadDataActionTests } from './actions/stock/download-data.test'
 import { runCliCommandTests } from '../cli/commands.test'
 import { runCliOutputTests } from '../cli/output.test'
@@ -23,6 +24,7 @@ const TEST_SUITES: TestSuite[] = [
     { label: 'Account buy action tests', run: runBuyAccountActionTests },
     { label: 'Account init action tests', run: runInitializeAccountActionTests },
     { label: 'Account deposit action tests', run: runDepositAccountActionTests },
+    { label: 'Account show action tests', run: runShowAccountActionTests },
     { label: 'CLI command tests', run: runCliCommandTests },
     { label: 'CLI output tests', run: runCliOutputTests },
 ]

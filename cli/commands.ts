@@ -39,11 +39,13 @@ export function createRunCommand({
     buyStockInDefaultUserAccount,
     depositIntoDefaultUserAccount,
     initializeDefaultUserAccount,
+    showDefaultUserAccount,
 }: CommandDependencies = {}) {
     const runAccountCommand = createAccountCommandHandler({
         buyStockInDefaultUserAccount,
         initializeDefaultUserAccount,
         depositIntoDefaultUserAccount,
+        showDefaultUserAccount,
     })
     const runStockCommand = createStockCommandHandler({
         downloadStockData,

@@ -6,12 +6,13 @@ import { createRunCommand, getHelpText } from './commands'
 // Verify the CLI help text advertises the shared account init command.
 function testGetHelpText(): void {
     assert.match(getHelpText(), /account init/)
+    assert.match(getHelpText(), /account show/)
     assert.match(getHelpText(), /account buy <code> <qty>/)
     assert.match(getHelpText(), /account deposit <cash>/)
     assert.match(getHelpText(), /stock download <code>/)
 }
 
-// Verify account init calls the shared session initializer and reports the session file path.
+// Verify account init calls the shared session initializer and returns a short success message.
 async function testAccountInitCommand(): Promise<void> {
     let initializerWasCalled = false
     const runCommand = createRunCommand({
@@ -30,13 +31,34 @@ async function testAccountInitCommand(): Promise<void> {
 
     assert.equal(initializerWasCalled, true)
     assert.equal(result.exitCode, 0)
-    assert.match(result.output, /user-sessions\/default\.json/)
-    assert.match(result.output, new RegExp(`Date: ${DEFAULT_ACCOUNT_DATE}`))
-    assert.match(result.output, /Cash: 0.00/)
-    assert.match(result.output, /Tracked symbols:\n\{\}/)
+    assert.equal(result.output, 'Reset account in user-sessions/default.json.')
 }
 
-// Verify account deposit calls the shared session updater with the provided cash delta.
+// Verify account show calls the shared account presenter and prints the terminal table output.
+async function testAccountShowCommand(): Promise<void> {
+    let showWasCalled = false
+    const shownTable = [
+        'Date: 2018-03-10',
+        'Cash: 125.50',
+        '',
+        'stock_code | average_cost | current_price | quantity | total_value | total_gain_loss | percent_gain_loss',
+    ].join('\n')
+    const runCommand = createRunCommand({
+        showDefaultUserAccount: async () => {
+            showWasCalled = true
+
+            return shownTable
+        },
+    })
+
+    const result = await runCommand('account show')
+
+    assert.equal(showWasCalled, true)
+    assert.equal(result.exitCode, 0)
+    assert.equal(result.output, shownTable)
+}
+
+// Verify account deposit calls the shared session updater with the provided cash delta and returns a short success message.
 async function testAccountDepositCommand(): Promise<void> {
     let capturedCashDelta = 0
     const runCommand = createRunCommand({
@@ -55,12 +77,10 @@ async function testAccountDepositCommand(): Promise<void> {
 
     assert.equal(capturedCashDelta, -25.5)
     assert.equal(result.exitCode, 0)
-    assert.match(result.output, /Date: 2018-03-10/)
-    assert.match(result.output, /Cash: 125.50/)
-    assert.match(result.output, /Tracked symbols:\n\{\}/)
+    assert.equal(result.output, 'Updated account cash by -25.50 in user-sessions/default.json.')
 }
 
-// Verify account buy calls the shared purchase action with the provided stock code and quantity.
+// Verify account buy calls the shared purchase action with the provided stock code and quantity and returns a short success message.
 async function testAccountBuyCommand(): Promise<void> {
     let capturedStockCode = ''
     let capturedQuantity = 0
@@ -96,13 +116,7 @@ async function testAccountBuyCommand(): Promise<void> {
     assert.equal(capturedStockCode, 'aapl')
     assert.equal(capturedQuantity, 3)
     assert.equal(result.exitCode, 0)
-    assert.match(result.output, /Bought 3 shares of AAPL at 10.50/)
-    assert.match(result.output, /Total cost: 31.50/)
-    assert.match(result.output, new RegExp(`Date: ${DEFAULT_ACCOUNT_DATE}`))
-    assert.match(result.output, /Cash: 968.50/)
-    assert.match(result.output, /Tracked symbols:\n\{/)
-    assert.match(result.output, /"AAPL": \[/)
-    assert.match(result.output, /"cost_per_share": "10.50"/)
+    assert.equal(result.output, '3 stocks of AAPL successfully bought.')
 }
 
 // Verify invalid deposit values are rejected before the shared session updater runs.
@@ -133,12 +147,18 @@ async function testAccountBuyInvalidQuantity(): Promise<void> {
 // Verify bad account command arguments return the expected usage guidance.
 async function testAccountCommandUsage(): Promise<void> {
     const runCommand = createRunCommand()
+    const accountResult = await runCommand('account')
     const badAccountResult = await runCommand('account wrong')
+    const badShowResult = await runCommand('account show now')
     const badDepositResult = await runCommand('account deposit')
     const badBuyResult = await runCommand('account buy AAPL')
 
+    assert.equal(accountResult.exitCode, 1)
+    assert.equal(accountResult.output, 'Usage: account <init|show|deposit <value_cash>|buy <stock_code> <quantity>>')
     assert.equal(badAccountResult.exitCode, 1)
-    assert.equal(badAccountResult.output, 'Usage: account <init|deposit <value_cash>|buy <stock_code> <quantity>>')
+    assert.equal(badAccountResult.output, 'Usage: account <init|show|deposit <value_cash>|buy <stock_code> <quantity>>')
+    assert.equal(badShowResult.exitCode, 1)
+    assert.equal(badShowResult.output, 'Usage: account show')
     assert.equal(badDepositResult.exitCode, 1)
     assert.equal(badDepositResult.output, 'Usage: account deposit <value_cash>')
     assert.equal(badBuyResult.exitCode, 1)
@@ -173,6 +193,7 @@ async function testStockDownloadCommand(): Promise<void> {
 export async function runCliCommandTests(): Promise<void> {
     testGetHelpText()
     await testAccountInitCommand()
+    await testAccountShowCommand()
     await testAccountBuyCommand()
     await testAccountDepositCommand()
     await testAccountDepositInvalidValue()
