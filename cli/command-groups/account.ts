@@ -18,7 +18,7 @@ export const ACCOUNT_HELP_LINES = [
 
 // Build the short account summary shown after CLI account mutations succeed.
 function formatAccountSummary(prefix: string, account: AccountState): string {
-    return [prefix, `Cash: ${account.cash}`, `Tracked symbols: ${Object.keys(account.positions).length}`].join('\n')
+    return [prefix, `Date: ${account.date}`, `Cash: ${account.cash}`, `Tracked symbols: ${Object.keys(account.positions).length}`].join('\n')
 }
 
 // Build the account command handler so account-specific behavior stays out of the main router.

@@ -4,15 +4,13 @@ import os from 'node:os'
 import path from 'node:path'
 
 import {
+    createDefaultAccountState,
     DEFAULT_USER_SESSION_RELATIVE_PATH,
     readDefaultUserAccountSession,
     writeDefaultUserAccountSession,
 } from './model'
 
-const DEFAULT_ACCOUNT_STATE = {
-    cash: 0,
-    positions: {},
-}
+const DEFAULT_ACCOUNT_STATE = createDefaultAccountState()
 
 // Build a temporary repo root so file-backed account session tests can run in isolation.
 async function createTempRepoRoot(): Promise<string> {
@@ -31,12 +29,39 @@ async function testReadDefaultUserAccountSession(): Promise<void> {
         cwd: () => tempRepoRoot,
     })
     const savedAccount = JSON.parse(await fs.readFile(path.join(tempRepoRoot, DEFAULT_USER_SESSION_RELATIVE_PATH), 'utf8')) as {
+        date: string
         cash: number
         positions: Record<string, unknown>
     }
 
     assert.deepEqual(account, DEFAULT_ACCOUNT_STATE)
     assert.deepEqual(savedAccount, DEFAULT_ACCOUNT_STATE)
+}
+
+// Verify older session JSON missing the date field is normalized to the current account shape.
+async function testReadDefaultUserAccountSessionMissingDate(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+    const sessionFilePath = path.join(tempRepoRoot, DEFAULT_USER_SESSION_RELATIVE_PATH)
+
+    await fs.mkdir(path.dirname(sessionFilePath), { recursive: true })
+    await fs.writeFile(
+        sessionFilePath,
+        JSON.stringify({
+            cash: 1200,
+            positions: {},
+        }),
+        'utf8'
+    )
+
+    const account = await readDefaultUserAccountSession({
+        cwd: () => tempRepoRoot,
+    })
+
+    assert.deepEqual(account, {
+        date: '2016-01-01',
+        cash: 1200,
+        positions: {},
+    })
 }
 
 // Verify malformed session JSON fails loudly instead of being silently replaced.
@@ -61,6 +86,7 @@ async function testWriteDefaultUserAccountSession(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
     const sessionFilePath = path.join(tempRepoRoot, DEFAULT_USER_SESSION_RELATIVE_PATH)
     const accountToPersist = {
+        date: '2018-03-10',
         cash: 1200,
         positions: {
             AAPL: [
@@ -77,6 +103,7 @@ async function testWriteDefaultUserAccountSession(): Promise<void> {
         cwd: () => tempRepoRoot,
     })
     const savedAccount = JSON.parse(await fs.readFile(sessionFilePath, 'utf8')) as {
+        date: string
         cash: number
         positions: Record<string, unknown>
     }
@@ -89,6 +116,7 @@ async function testWriteDefaultUserAccountSession(): Promise<void> {
 export async function runUserSessionStoreTests(): Promise<void> {
     testGetDefaultUserSessionFilePath()
     await testReadDefaultUserAccountSession()
+    await testReadDefaultUserAccountSessionMissingDate()
     await testReadDefaultUserAccountSessionInvalidJson()
     await testWriteDefaultUserAccountSession()
 }

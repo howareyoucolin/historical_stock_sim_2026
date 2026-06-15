@@ -39,6 +39,7 @@ async function testDepositIntoDefaultUserAccountSession(): Promise<void> {
 
     await writeDefaultUserAccountSession(
         {
+            date: '2018-03-10',
             cash: 1200,
             positions: {
                 AAPL: [
@@ -59,10 +60,12 @@ async function testDepositIntoDefaultUserAccountSession(): Promise<void> {
         cwd: () => tempRepoRoot,
     })
     const savedAccount = JSON.parse(await fs.readFile(sessionFilePath, 'utf8')) as {
+        date: string
         cash: number
         positions: Record<string, unknown>
     }
 
+    assert.equal(account.date, '2018-03-10')
     assert.equal(account.cash, 950)
     assert.deepEqual(account.positions, {
         AAPL: [
@@ -73,6 +76,7 @@ async function testDepositIntoDefaultUserAccountSession(): Promise<void> {
             },
         ],
     })
+    assert.equal(savedAccount.date, '2018-03-10')
     assert.equal(savedAccount.cash, 950)
 }
 

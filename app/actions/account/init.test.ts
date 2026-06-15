@@ -4,12 +4,9 @@ import os from 'node:os'
 import path from 'node:path'
 
 import { initializeDefaultUserAccountSession } from './init'
-import { DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
+import { createDefaultAccountState, DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
 
-const DEFAULT_ACCOUNT_STATE = {
-    cash: 0,
-    positions: {},
-}
+const DEFAULT_ACCOUNT_STATE = createDefaultAccountState()
 
 // Build a temporary repo root so init action tests can mutate an isolated session file.
 async function createTempRepoRoot(): Promise<string> {
@@ -23,6 +20,7 @@ async function testInitializeDefaultUserAccountSession(): Promise<void> {
 
     await writeDefaultUserAccountSession(
         {
+            date: '2018-03-10',
             cash: 1200,
             positions: {
                 AAPL: [
@@ -43,6 +41,7 @@ async function testInitializeDefaultUserAccountSession(): Promise<void> {
         cwd: () => tempRepoRoot,
     })
     const savedAccount = JSON.parse(await fs.readFile(sessionFilePath, 'utf8')) as {
+        date: string
         cash: number
         positions: Record<string, unknown>
     }

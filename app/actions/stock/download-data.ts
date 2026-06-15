@@ -4,7 +4,7 @@ import path from 'node:path'
 
 export const DATA_DIRECTORY_NAME = 'market-data'
 export const HISTORY_FILE_NAME = 'history.json'
-export const START_DATE = '2000-01-01'
+export const START_DATE = '2016-01-01'
 export const END_DATE = '2026-01-01'
 
 type NullableNumber = number | null

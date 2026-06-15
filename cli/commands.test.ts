@@ -17,6 +17,7 @@ async function testAccountInitCommand(): Promise<void> {
             initializerWasCalled = true
 
             return {
+                date: '2016-01-01',
                 cash: 0,
                 positions: {},
             }
@@ -28,6 +29,7 @@ async function testAccountInitCommand(): Promise<void> {
     assert.equal(initializerWasCalled, true)
     assert.equal(result.exitCode, 0)
     assert.match(result.output, /user-sessions\/default\.json/)
+    assert.match(result.output, /Date: 2016-01-01/)
 }
 
 // Verify account deposit calls the shared session updater with the provided cash delta.
@@ -38,6 +40,7 @@ async function testAccountDepositCommand(): Promise<void> {
             capturedCashDelta = valueCash
 
             return {
+                date: '2018-03-10',
                 cash: 125.5,
                 positions: {},
             }
@@ -48,6 +51,7 @@ async function testAccountDepositCommand(): Promise<void> {
 
     assert.equal(capturedCashDelta, -25.5)
     assert.equal(result.exitCode, 0)
+    assert.match(result.output, /Date: 2018-03-10/)
     assert.match(result.output, /Cash: 125.5/)
 }
 
@@ -82,7 +86,7 @@ async function testStockDownloadCommand(): Promise<void> {
             return {
                 stockCode: 'AAPL',
                 source: 'Yahoo Finance',
-                range: { start: '2000-01-01', end: '2026-01-01' },
+                range: { start: '2016-01-01', end: '2026-01-01' },
                 historyByDate: {},
                 rowCount: 42,
                 outputPath: 'market-data/AAPL/history.json',

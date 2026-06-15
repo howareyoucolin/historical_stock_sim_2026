@@ -54,7 +54,7 @@ npm run cli -- stock download AAPL
 ```
 
 Downloaded files are stored at `market-data/<STOCK_CODE>/history.json`.
-The current download range is `2000-01-01` through `2026-01-01`.
+The current download range is `2016-01-01` through `2026-01-01`.
 The CLI is only a controller here; the shared stock-download logic lives in `app/actions/`.
 The saved JSON is keyed by date for faster lookup, and each date entry includes only `close`, `isPayoutDate`, and `dividendPerShare`.
 

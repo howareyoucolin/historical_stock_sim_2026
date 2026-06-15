@@ -8,6 +8,7 @@ export interface AccountPosition {
 }
 
 export interface AccountState {
+    date: string
     cash: number
     positions: Record<string, AccountPosition[]>
 }
@@ -15,12 +16,31 @@ export interface AccountState {
 export const USER_SESSIONS_DIRECTORY_NAME = 'user-sessions'
 export const DEFAULT_USER_SESSION_FILE_NAME = 'default.json'
 export const DEFAULT_USER_SESSION_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${DEFAULT_USER_SESSION_FILE_NAME}`
+export const DEFAULT_ACCOUNT_DATE = '2016-01-01'
 
 export interface AccountSessionDependencies {
     cwd?: () => string
     makeDirectory?: (path: string, options?: { recursive?: boolean }) => Promise<unknown>
     readFile?: (path: string, encoding: BufferEncoding) => Promise<string>
     writeFile?: (path: string, data: string, encoding: BufferEncoding) => Promise<unknown>
+}
+
+// Build a fresh default account object so callers never share mutable nested state.
+export function createDefaultAccountState(): AccountState {
+    return {
+        date: DEFAULT_ACCOUNT_DATE,
+        cash: 0,
+        positions: {},
+    }
+}
+
+// Fill in any missing account fields so older session JSON still loads with the current shape.
+export function normalizeAccountState(account: Partial<AccountState>): AccountState {
+    return {
+        date: account.date ?? DEFAULT_ACCOUNT_DATE,
+        cash: account.cash ?? 0,
+        positions: account.positions ?? {},
+    }
 }
 
 // Read the shared default user account and create the default file if it is missing.
@@ -33,13 +53,12 @@ export async function readDefaultUserAccountSession({
     const sessionFilePath = path.join(cwd(), DEFAULT_USER_SESSION_RELATIVE_PATH)
 
     try {
-        return JSON.parse(await readFile(sessionFilePath, 'utf8')) as AccountState
+        const parsedAccount = JSON.parse(await readFile(sessionFilePath, 'utf8')) as Partial<AccountState>
+
+        return normalizeAccountState(parsedAccount)
     } catch (error) {
         if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            const defaultAccountState: AccountState = {
-                cash: 0,
-                positions: {},
-            }
+            const defaultAccountState = createDefaultAccountState()
             await writeDefaultUserAccountSession(defaultAccountState, {
                 cwd,
                 makeDirectory,
