@@ -9,8 +9,6 @@ import {
     buildHistoryPayload,
     createDownloadStockDataAction,
     getHistoryUrl,
-    getPeRatio,
-    getQuoteUrl,
     validateStockCode,
 } from './download-data'
 
@@ -27,13 +25,6 @@ function testGetHistoryUrl(): void {
     assert.match(url, /period1=/)
     assert.match(url, /period2=/)
     assert.match(url, /interval=1d/)
-}
-
-// Verify the Yahoo Finance quote URL requests the current symbol snapshot used for fundamentals.
-function testGetQuoteUrl(): void {
-    const url = getQuoteUrl('AAPL')
-
-    assert.equal(url, 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL')
 }
 
 // Verify history data is generated as a date-keyed lookup for fast reads.
@@ -72,46 +63,21 @@ function testBuildDividendMap(): void {
     assert.equal(dividendMap.get('2000-01-01'), 0.35)
 }
 
-// Verify the quote payload extracts the trailing PE ratio and falls back to null when it is missing.
-function testGetPeRatio(): void {
-    assert.equal(
-        getPeRatio({
-            quoteResponse: {
-                result: [{ trailingPE: 31.25 }],
-            },
-        }),
-        31.25
-    )
-    assert.equal(
-        getPeRatio({
-            quoteResponse: {
-                result: [{}],
-            },
-        }),
-        null
-    )
-}
-
 // Verify the persisted JSON payload includes metadata plus keyed history data.
 function testBuildHistoryPayload(): void {
-    const payload = buildHistoryPayload(
-        'AAPL',
-        {
-            timestamp: [946684800],
-            indicators: {
-                quote: [
-                    {
-                        close: [1.5],
-                    },
-                ],
-            },
+    const payload = buildHistoryPayload('AAPL', {
+        timestamp: [946684800],
+        indicators: {
+            quote: [
+                {
+                    close: [1.5],
+                },
+            ],
         },
-        31.25
-    )
+    })
 
     assert.equal(payload.stockCode, 'AAPL')
     assert.equal(payload.source, 'Yahoo Finance')
-    assert.equal(payload.peRatio, 31.25)
     assert.deepEqual(payload.range, { start: START_DATE, end: END_DATE })
     assert.equal(Object.keys(payload.historyByDate).length, 1)
     assert.deepEqual(payload.historyByDate['2000-01-01'], {
@@ -129,42 +95,34 @@ async function testDownloadStockDataAction(): Promise<void> {
         writePath: null as string | null,
         writeContents: null as string | null,
         writeEncoding: null as BufferEncoding | null,
-        requestedUrls: [] as string[],
+        requestedUrl: null as string | null,
     }
 
     const downloadStockDataAction = createDownloadStockDataAction({
         cwd: () => '/repo',
         fetchRemoteJson: async (url) => {
-            captured.requestedUrls.push(url)
-
-            if (url.includes('/chart/')) {
-                return {
-                    chart: {
-                        result: [
-                            {
-                                timestamp: [946684800],
-                                events: {
-                                    dividends: {
-                                        1: { amount: 0.25, date: 946684800 },
-                                    },
-                                },
-                                indicators: {
-                                    quote: [
-                                        {
-                                            close: [1.5],
-                                        },
-                                    ],
-                                },
-                            },
-                        ],
-                        error: null,
-                    },
-                }
-            }
+            captured.requestedUrl = url
 
             return {
-                quoteResponse: {
-                    result: [{ trailingPE: 31.25 }],
+                chart: {
+                    result: [
+                        {
+                            timestamp: [946684800],
+                            events: {
+                                dividends: {
+                                    1: { amount: 0.25, date: 946684800 },
+                                },
+                            },
+                            indicators: {
+                                quote: [
+                                    {
+                                        close: [1.5],
+                                    },
+                                ],
+                            },
+                        },
+                    ],
+                    error: null,
                 },
             }
         },
@@ -182,13 +140,11 @@ async function testDownloadStockDataAction(): Promise<void> {
     const result = await downloadStockDataAction('aapl')
     const parsedContents = JSON.parse(captured.writeContents || '{}') as {
         stockCode: string
-        peRatio: number | null
         historyByDate: Record<string, { close: number | null; isPayoutDate: boolean; dividendPerShare: number }>
     }
 
     assert.equal(result.stockCode, 'AAPL')
     assert.equal(result.source, 'Yahoo Finance')
-    assert.equal(result.peRatio, 31.25)
     assert.equal(result.rowCount, 1)
     assert.equal(result.outputPath, `${DATA_DIRECTORY_NAME}/AAPL/history.json`)
     assert.deepEqual(result.range, { start: START_DATE, end: END_DATE })
@@ -202,25 +158,20 @@ async function testDownloadStockDataAction(): Promise<void> {
     assert.equal(captured.writePath, `/repo/${DATA_DIRECTORY_NAME}/AAPL/history.json`)
     assert.equal(captured.writeEncoding, 'utf8')
     assert.equal(parsedContents.stockCode, 'AAPL')
-    assert.equal(parsedContents.peRatio, 31.25)
     assert.deepEqual(parsedContents.historyByDate['2000-01-01'], {
         close: 1.5,
         isPayoutDate: true,
         dividendPerShare: 0.25,
     })
-    assert.equal(captured.requestedUrls.length, 2)
-    assert.match(captured.requestedUrls[0] || '', /chart\/AAPL\?/)
-    assert.equal(captured.requestedUrls[1], 'https://query1.finance.yahoo.com/v7/finance/quote?symbols=AAPL')
+    assert.match(captured.requestedUrl || '', /chart\/AAPL\?/)
 }
 
 // Run the focused action tests that protect the reusable stock download logic.
 export async function runDownloadDataActionTests(): Promise<void> {
     testValidateStockCode()
     testGetHistoryUrl()
-    testGetQuoteUrl()
     testBuildHistoryByDate()
     testBuildDividendMap()
-    testGetPeRatio()
     testBuildHistoryPayload()
     await testDownloadStockDataAction()
 }

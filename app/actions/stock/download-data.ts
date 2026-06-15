@@ -20,7 +20,6 @@ export type HistoryByDate = Record<string, HistoryEntry>
 export interface DownloadedHistoryPayload {
     stockCode: string
     source: 'Yahoo Finance'
-    peRatio: NullableNumber
     range: {
         start: string
         end: string
@@ -61,19 +60,9 @@ interface YahooChartPayload {
     }
 }
 
-interface YahooQuoteResult {
-    trailingPE?: number | null
-}
-
-interface YahooQuotePayload {
-    quoteResponse?: {
-        result?: YahooQuoteResult[]
-    }
-}
-
 interface DownloadStockDataActionDependencies {
     cwd?: () => string
-    fetchRemoteJson?: (url: string) => Promise<unknown>
+    fetchRemoteJson?: (url: string) => Promise<YahooChartPayload>
     makeDirectory?: (path: string, options?: { recursive?: boolean }) => Promise<unknown>
     writeFile?: (path: string, data: string, encoding: BufferEncoding) => Promise<unknown>
 }
@@ -111,13 +100,8 @@ export function getHistoryUrl(stockCode: string): string {
     ].join('')
 }
 
-// Build the Yahoo Finance quote endpoint used to fetch the current trailing PE ratio.
-export function getQuoteUrl(stockCode: string): string {
-    return `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(stockCode)}`
-}
-
 // Fetch and parse JSON from an HTTPS endpoint.
-async function fetchJson<Payload>(url: string): Promise<Payload> {
+async function fetchJson(url: string): Promise<YahooChartPayload> {
     return new Promise((resolve, reject) => {
         https
             .get(
@@ -150,7 +134,7 @@ async function fetchJson<Payload>(url: string): Promise<Payload> {
                     })
                     response.on('end', () => {
                         try {
-                            resolve(JSON.parse(rawData) as Payload)
+                            resolve(JSON.parse(rawData) as YahooChartPayload)
                         } catch (error) {
                             reject(new Error(`Failed to parse Yahoo Finance response: ${(error as Error).message}`))
                         }
@@ -213,23 +197,11 @@ export function buildHistoryByDate(chartResult: YahooChartResult): HistoryByDate
     return historyByDate
 }
 
-// Read the trailing PE ratio from the Yahoo Finance quote response when it is available.
-export function getPeRatio(quotePayload: YahooQuotePayload): NullableNumber {
-    const value = quotePayload.quoteResponse?.result?.[0]?.trailingPE
-
-    if (value === null || value === undefined) {
-        return null
-    }
-
-    return value
-}
-
 // Build the persisted JSON payload for a downloaded stock history file.
-export function buildHistoryPayload(stockCode: string, chartResult: YahooChartResult, peRatio: NullableNumber): DownloadedHistoryPayload {
+export function buildHistoryPayload(stockCode: string, chartResult: YahooChartResult): DownloadedHistoryPayload {
     return {
         stockCode,
         source: 'Yahoo Finance',
-        peRatio,
         range: {
             start: START_DATE,
             end: END_DATE,
@@ -251,13 +223,9 @@ export function createDownloadStockDataAction({
 
         validateStockCode(normalizedStockCode)
 
-        const historyUrl = getHistoryUrl(normalizedStockCode)
-        const quoteUrl = getQuoteUrl(normalizedStockCode)
-        const [historyPayload, quotePayload] = (await Promise.all([fetchRemoteJson(historyUrl), fetchRemoteJson(quoteUrl)])) as [
-            YahooChartPayload,
-            YahooQuotePayload,
-        ]
-        const chart = historyPayload.chart
+        const url = getHistoryUrl(normalizedStockCode)
+        const payload = await fetchRemoteJson(url)
+        const chart = payload.chart
         const result = chart?.result?.[0]
         const error = chart?.error
 
@@ -269,7 +237,7 @@ export function createDownloadStockDataAction({
             throw new Error('No stock history was returned by Yahoo Finance.')
         }
 
-        const payloadToWrite = buildHistoryPayload(normalizedStockCode, result, getPeRatio(quotePayload))
+        const payloadToWrite = buildHistoryPayload(normalizedStockCode, result)
         const repoRoot = cwd()
         const outputDirectory = path.join(repoRoot, DATA_DIRECTORY_NAME, normalizedStockCode)
         const outputPath = path.join(outputDirectory, HISTORY_FILE_NAME)
