@@ -1,3 +1,4 @@
+// Render the landing page for the local starter app.
 export default function HomePage() {
     return (
         <main className="page">
