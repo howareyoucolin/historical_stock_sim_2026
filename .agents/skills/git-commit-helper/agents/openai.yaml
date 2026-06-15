@@ -1,0 +1,4 @@
+interface:
+  display_name: "Git Commit Helper"
+  short_description: "Draft and confirm commit messages before committing"
+  default_prompt: "Use $git-commit-helper to draft 3 commit messages, let me choose one, and commit only after I confirm."

@@ -1,0 +1,2 @@
+# Repo-local Codex execpolicy rules for this repository.
+# Add `prefix_rule(...)` entries here when you want repo-scoped approvals.
