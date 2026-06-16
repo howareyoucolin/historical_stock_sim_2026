@@ -291,7 +291,7 @@ export function AccountPanel() {
                     </div>
                     <div className="metaRow">
                         <span>Principal</span>
-                        <strong>{money(summary.principal)}</strong>
+                        <strong>{money(account.cash + summary.principal)}</strong>
                     </div>
                     <div className="metaRow">
                         <span>Current total</span>
