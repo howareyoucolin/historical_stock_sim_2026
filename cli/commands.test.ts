@@ -12,6 +12,7 @@ function testGetHelpText(): void {
     assert.match(getHelpText(), /account deposit <cash>/)
     assert.match(getHelpText(), /date next/)
     assert.match(getHelpText(), /date set <yyyy-mm-dd>/)
+    assert.match(getHelpText(), /history show/)
     assert.match(getHelpText(), /stock download <code>/)
 }
 
@@ -167,6 +168,40 @@ async function testAccountSellInvalidQuantity(): Promise<void> {
     assert.equal(sellWasCalled, false)
     assert.equal(result.exitCode, 1)
     assert.equal(result.output, 'Quantity must be a positive integer.')
+}
+
+// Verify history show calls the shared log presenter and prints its output verbatim.
+async function testHistoryShowCommand(): Promise<void> {
+    let showWasCalled = false
+    const loggedHistory = '2026-06-16T14:23:01.123Z BUY stock=AAPL qty=3 price=105.35 cash=-316.05 sim=2016-01-04'
+    const runCommand = createRunCommand({
+        showHistoryLog: async () => {
+            showWasCalled = true
+
+            return loggedHistory
+        },
+    })
+
+    const result = await runCommand('history show')
+
+    assert.equal(showWasCalled, true)
+    assert.equal(result.exitCode, 0)
+    assert.equal(result.output, loggedHistory)
+}
+
+// Verify bad history command arguments return the expected usage guidance.
+async function testHistoryCommandUsage(): Promise<void> {
+    const runCommand = createRunCommand()
+    const historyResult = await runCommand('history')
+    const badHistoryResult = await runCommand('history wrong')
+    const badShowResult = await runCommand('history show now')
+
+    assert.equal(historyResult.exitCode, 1)
+    assert.equal(historyResult.output, 'Usage: history show')
+    assert.equal(badHistoryResult.exitCode, 1)
+    assert.equal(badHistoryResult.output, 'Usage: history show')
+    assert.equal(badShowResult.exitCode, 1)
+    assert.equal(badShowResult.output, 'Usage: history show')
 }
 
 // Verify date next calls the shared simulation date advancer and returns the updated day.
@@ -411,6 +446,8 @@ export async function runCliCommandTests(): Promise<void> {
     await testAccountDepositCommand()
     await testDateNextCommand()
     await testDateSetCommand()
+    await testHistoryShowCommand()
+    await testHistoryCommandUsage()
     await testAccountDepositInvalidValue()
     await testAccountBuyInvalidQuantity()
     await testAccountSellInvalidQuantity()

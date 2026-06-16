@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 
 import { initializeDefaultUserAccountSession } from './init'
+import { appendHistoryEvent, HISTORY_LOG_RELATIVE_PATH } from '../history/log'
 import { createDefaultAccountState, DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
 
 const DEFAULT_ACCOUNT_STATE = createDefaultAccountState()
@@ -50,7 +51,23 @@ async function testInitializeDefaultUserAccountSession(): Promise<void> {
     assert.deepEqual(savedAccount, DEFAULT_ACCOUNT_STATE)
 }
 
+// Verify account init wipes the history log so the audit trail matches the reset account.
+async function testInitializeDefaultUserAccountSessionClearsHistory(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+    const logFilePath = path.join(tempRepoRoot, HISTORY_LOG_RELATIVE_PATH)
+
+    await appendHistoryEvent(
+        { type: 'DEPOSIT', simDate: '2016-01-04', cashDelta: 1000 },
+        { cwd: () => tempRepoRoot }
+    )
+
+    await initializeDefaultUserAccountSession({ cwd: () => tempRepoRoot })
+
+    await assert.rejects(() => fs.readFile(logFilePath, 'utf8'), /ENOENT/)
+}
+
 // Run the focused init action tests that protect the account reset flow.
 export async function runInitializeAccountActionTests(): Promise<void> {
     await testInitializeDefaultUserAccountSession()
+    await testInitializeDefaultUserAccountSessionClearsHistory()
 }

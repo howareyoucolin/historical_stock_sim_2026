@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME, normalizeStockCode, validateStockCode } from '../stock/download-data'
+import { appendHistoryEvent } from '../history/log'
 import {
     readDefaultUserAccountSession,
     type AccountSessionDependencies,
@@ -103,8 +104,22 @@ export async function buyStockInDefaultUserAccountSession(
         },
     }
 
+    const savedAccount = await writeDefaultUserAccountSession(updatedAccount, dependencies)
+
+    await appendHistoryEvent(
+        {
+            type: 'BUY',
+            simDate: account.date,
+            stockCode: normalizedStockCode,
+            quantity,
+            pricePerShare: costPerShare,
+            cashDelta: -totalCost,
+        },
+        { cwd: dependencies.cwd }
+    )
+
     return {
-        account: await writeDefaultUserAccountSession(updatedAccount, dependencies),
+        account: savedAccount,
         stockCode: normalizedStockCode,
         quantity,
         costPerShare,

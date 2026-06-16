@@ -1,3 +1,4 @@
+import { appendHistoryEvent } from '../history/log'
 import {
     type AccountSessionDependencies,
     readDefaultUserAccountSession,
@@ -20,5 +21,16 @@ export async function depositIntoDefaultUserAccountSession(
         cash: account.cash + valueCash,
     }
 
-    return writeDefaultUserAccountSession(updatedAccount, dependencies)
+    const savedAccount = await writeDefaultUserAccountSession(updatedAccount, dependencies)
+
+    await appendHistoryEvent(
+        {
+            type: 'DEPOSIT',
+            simDate: account.date,
+            cashDelta: valueCash,
+        },
+        { cwd: dependencies.cwd }
+    )
+
+    return savedAccount
 }

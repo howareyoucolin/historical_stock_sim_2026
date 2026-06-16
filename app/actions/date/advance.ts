@@ -2,6 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
+import { appendHistoryEvent } from '../history/log'
 import {
     readDefaultUserAccountSession,
     type AccountSessionDependencies,
@@ -181,9 +182,25 @@ export async function advanceSimulationDate(
     }
 
     const updatedAccount: AccountState = { ...account, date, cash }
+    const savedAccount = await writeDefaultUserAccountSession(updatedAccount, sessionDependencies)
+
+    // Record each credited payout so the history log captures dividends alongside trades and deposits.
+    for (const dividend of dividends) {
+        await appendHistoryEvent(
+            {
+                type: 'DIVIDEND',
+                simDate: dividend.date,
+                stockCode: dividend.stockCode,
+                quantity: dividend.shares,
+                pricePerShare: dividend.perShare,
+                cashDelta: dividend.amount,
+            },
+            { cwd }
+        )
+    }
 
     return {
-        account: await writeDefaultUserAccountSession(updatedAccount, sessionDependencies),
+        account: savedAccount,
         dividends,
         totalDividends: dividends.reduce((total, dividend) => total + dividend.amount, 0),
     }
