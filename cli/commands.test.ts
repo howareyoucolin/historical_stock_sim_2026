@@ -303,6 +303,33 @@ async function testStockScrapeEpsCommand(): Promise<void> {
     assert.match(result.output, /Scraped 77 EPS rows for AAPL\./)
 }
 
+// Verify stock seed runs the watchlist action and reports a per-step summary with a failure exit code.
+async function testStockSeedCommand(): Promise<void> {
+    let seedWasCalled = false
+    const runCommand = createRunCommand({
+        seedWatchlist: async () => {
+            seedWasCalled = true
+
+            return {
+                tickersFile: 'config/tickers.json',
+                tickers: ['AAPL', 'MSFT'],
+                results: [
+                    { stockCode: 'AAPL', download: 'ok', scrapeEps: 'skipped', build: 'ok' },
+                    { stockCode: 'MSFT', download: 'failed', scrapeEps: 'ok', build: 'ok' },
+                ],
+            }
+        },
+    })
+
+    const result = await runCommand('stock seed')
+
+    assert.equal(seedWasCalled, true)
+    assert.match(result.output, /Seeded 2 tickers from config\/tickers.json\./)
+    assert.match(result.output, /download\s+1 ok, 0 skipped, 1 failed/)
+    // A failed step surfaces a non-zero exit code.
+    assert.equal(result.exitCode, 1)
+}
+
 // Verify each stock command reports a skip message when the action returns a skipped result.
 async function testStockCommandsReportSkips(): Promise<void> {
     const runCommand = createRunCommand({
@@ -337,5 +364,6 @@ export async function runCliCommandTests(): Promise<void> {
     await testStockDownloadCommand()
     await testStockScrapeEpsCommand()
     await testStockBuildCommand()
+    await testStockSeedCommand()
     await testStockCommandsReportSkips()
 }

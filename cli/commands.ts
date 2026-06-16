@@ -40,6 +40,7 @@ export function createRunCommand({
     downloadStockData,
     buildStockData,
     scrapeEps,
+    seedWatchlist,
     buyStockInDefaultUserAccount,
     depositIntoDefaultUserAccount,
     initializeDefaultUserAccount,
@@ -61,6 +62,7 @@ export function createRunCommand({
         downloadStockData,
         buildStockData,
         scrapeEps,
+        seedWatchlist,
     })
 
     // Execute a single CLI command and forward business logic to shared actions.

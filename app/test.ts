@@ -8,6 +8,7 @@ import { runSetDateToTomorrowActionTests } from './actions/date/set-to-tomorrow.
 import { runDownloadDataActionTests } from './actions/stock/download-data.test'
 import { runBuildDataActionTests } from './actions/stock/build-data.test'
 import { runScrapeEpsActionTests } from './actions/stock/scrape-eps.test'
+import { runSeedWatchlistActionTests } from './actions/stock/seed-watchlist.test'
 import { runCliCommandTests } from '../cli/commands.test'
 import { runCliOutputTests } from '../cli/output.test'
 
@@ -26,6 +27,7 @@ const TEST_SUITES: TestSuite[] = [
     { label: 'Download stock data action tests', run: runDownloadDataActionTests },
     { label: 'Build stock data action tests', run: runBuildDataActionTests },
     { label: 'Scrape stock EPS action tests', run: runScrapeEpsActionTests },
+    { label: 'Seed watchlist action tests', run: runSeedWatchlistActionTests },
     { label: 'User session store tests', run: runUserSessionStoreTests },
     { label: 'Account buy action tests', run: runBuyAccountActionTests },
     { label: 'Account init action tests', run: runInitializeAccountActionTests },
