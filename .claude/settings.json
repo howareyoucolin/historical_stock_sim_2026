@@ -11,7 +11,10 @@
       "Bash(pkill -f \"next dev\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:8600/)",
       "Bash(curl -s http://localhost:8600/)",
-      "Bash(node -e 'let s=\"\";process.stdin.on\\(\"data\",d=>s+=d\\).on\\(\"end\",\\(\\)=>{const a=JSON.parse\\(s\\);console.log\\(\"date:\",a.date,\"cash:\",a.cash\\);let basis=0;for\\(const [code,lots] of Object.entries\\(a.positions\\)\\){const cb=lots.reduce\\(\\(t,l\\)=>t+l.quantity*l.cost_per_share,0\\);const q=lots.reduce\\(\\(t,l\\)=>t+l.quantity,0\\);basis+=cb;console.log\\(`  ${code}: qty=${q} costBasis=${cb.toFixed\\(2\\)} lots=${lots.length}`\\)}console.log\\(\"TOTAL principal \\(cost basis\\):\", basis.toFixed\\(2\\)\\)}\\)')"
+      "Bash(node -e 'let s=\"\";process.stdin.on\\(\"data\",d=>s+=d\\).on\\(\"end\",\\(\\)=>{const a=JSON.parse\\(s\\);console.log\\(\"date:\",a.date,\"cash:\",a.cash\\);let basis=0;for\\(const [code,lots] of Object.entries\\(a.positions\\)\\){const cb=lots.reduce\\(\\(t,l\\)=>t+l.quantity*l.cost_per_share,0\\);const q=lots.reduce\\(\\(t,l\\)=>t+l.quantity,0\\);basis+=cb;console.log\\(`  ${code}: qty=${q} costBasis=${cb.toFixed\\(2\\)} lots=${lots.length}`\\)}console.log\\(\"TOTAL principal \\(cost basis\\):\", basis.toFixed\\(2\\)\\)}\\)')",
+      "Bash(npm install *)",
+      "Bash(echo \"=== tsc exit: $? ===\")",
+      "Bash(git restore *)"
     ]
   }
 }
