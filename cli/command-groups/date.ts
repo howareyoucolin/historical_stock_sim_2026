@@ -12,7 +12,7 @@ export interface DateCommandDependencies {
 }
 
 export const DATE_HELP_LINES = [
-    '  date next              Advance the simulation date by one day',
+    '  date next              Advance to the next market trading day',
     '  date set <yyyy-mm-dd>  Set the simulation date directly',
 ]
 

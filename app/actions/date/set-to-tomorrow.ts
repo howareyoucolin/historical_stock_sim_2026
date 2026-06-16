@@ -1,20 +1,11 @@
-import {
-    readDefaultUserAccountSession,
-    type AccountSessionDependencies,
-    type AccountState,
-    writeDefaultUserAccountSession,
-} from '../account/model'
-import { addDaysToSimulationDate } from './utils'
+import type { AccountState } from '../account/model'
+import { advanceSimulationDate, type AdvanceSimulationDependencies } from './advance'
 
-// Advance the shared simulation date by one calendar day and persist the updated session.
-export async function setDefaultUserAccountDateToTomorrow(
-    dependencies: AccountSessionDependencies = {}
-): Promise<AccountState> {
-    const account = await readDefaultUserAccountSession(dependencies)
-    const updatedAccount: AccountState = {
-        ...account,
-        date: addDaysToSimulationDate(account.date, 1),
-    }
+export { TRADING_CALENDAR_STOCK_CODE } from './advance'
 
-    return writeDefaultUserAccountSession(updatedAccount, dependencies)
+// Advance the shared simulation date to the next market trading day, crediting any dividends paid that day.
+export async function setDefaultUserAccountDateToTomorrow(dependencies: AdvanceSimulationDependencies = {}): Promise<AccountState> {
+    const { account } = await advanceSimulationDate(null, dependencies)
+
+    return account
 }

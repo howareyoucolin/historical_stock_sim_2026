@@ -24,3 +24,17 @@ export function addDaysToSimulationDate(dateString: string, dayCount: number): s
 
     return parsedDate.toISOString().slice(0, 10)
 }
+
+// Find the earliest trading date strictly after the given date, or null when none exists.
+// ISO YYYY-MM-DD strings sort chronologically, so plain string comparison is safe here.
+export function findNextTradingDate(currentDate: string, tradingDates: string[]): string | null {
+    let nextTradingDate: string | null = null
+
+    for (const tradingDate of tradingDates) {
+        if (tradingDate > currentDate && (nextTradingDate === null || tradingDate < nextTradingDate)) {
+            nextTradingDate = tradingDate
+        }
+    }
+
+    return nextTradingDate
+}
