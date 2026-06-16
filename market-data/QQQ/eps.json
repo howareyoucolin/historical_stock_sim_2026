@@ -1,0 +1,8 @@
+{
+  "stockCode": "QQQ",
+  "metric": "TTM Net EPS",
+  "source": "Macrotrends",
+  "sourceUrl": "https://www.macrotrends.net/stocks/charts/QQQ/invesco-qqq/pe-ratio",
+  "range": null,
+  "epsByDate": {}
+}

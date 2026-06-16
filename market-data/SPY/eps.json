@@ -1,0 +1,8 @@
+{
+  "stockCode": "SPY",
+  "metric": "TTM Net EPS",
+  "source": "Macrotrends",
+  "sourceUrl": "https://www.macrotrends.net/stocks/charts/SPY/state-street-spdr-s-p-500-etf-trust/pe-ratio",
+  "range": null,
+  "epsByDate": {}
+}

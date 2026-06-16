@@ -1,0 +1,8 @@
+{
+  "stockCode": "VOO",
+  "metric": "TTM Net EPS",
+  "source": "N/A (ETF, no Macrotrends page)",
+  "sourceUrl": "https://www.macrotrends.net/stocks/charts/VOO/x/pe-ratio",
+  "range": null,
+  "epsByDate": {}
+}
