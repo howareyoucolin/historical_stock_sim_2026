@@ -58,8 +58,31 @@ async function readLocalStockMarketData(
 }
 
 // Look up the saved closing price and PE ratio for a stock on the account's current simulation date.
-function getMarketDataForDate(stockCode: string, accountDate: string, payload: StockMarketPayload): { close: number; peRatio: number | null } {
-    const entry = payload.historyByDate?.[accountDate]
+interface MarketDataForDate {
+    close: number
+    peRatio: number | null
+    previousClose: number | null
+}
+
+// Find the most recent close strictly before the given date, used for day-change figures.
+function findPreviousClose(historyByDate: Record<string, StockMarketEntry>, accountDate: string): number | null {
+    let previousDate: string | null = null
+
+    for (const day of Object.keys(historyByDate)) {
+        const close = historyByDate[day].close
+
+        if (day < accountDate && close !== null && close !== undefined && (previousDate === null || day > previousDate)) {
+            previousDate = day
+        }
+    }
+
+    return previousDate === null ? null : (historyByDate[previousDate].close ?? null)
+}
+
+// Look up the close, PE ratio, and prior close for a stock on the account's current simulation date.
+function getMarketDataForDate(stockCode: string, accountDate: string, payload: StockMarketPayload): MarketDataForDate {
+    const historyByDate = payload.historyByDate ?? {}
+    const entry = historyByDate[accountDate]
 
     if (!entry) {
         throw new Error(`No price data found for ${stockCode} on ${accountDate}.`)
@@ -69,28 +92,38 @@ function getMarketDataForDate(stockCode: string, accountDate: string, payload: S
         throw new Error(`Closing price for ${stockCode} on ${accountDate} is unavailable.`)
     }
 
-    return { close: entry.close, peRatio: entry.peRatio ?? null }
+    return { close: entry.close, peRatio: entry.peRatio ?? null, previousClose: findPreviousClose(historyByDate, accountDate) }
 }
 
-// Aggregate all lots for a stock code into the single row shown in the CLI holdings table.
-function buildAccountStockTableRow(stockCode: string, positions: AccountPosition[], currentPrice: number, peRatio: number | null): AccountStockTableRow {
+// Aggregate all lots for a stock code into the single row shown in the holdings table.
+function buildAccountStockTableRow(stockCode: string, positions: AccountPosition[], marketData: MarketDataForDate): AccountStockTableRow {
+    const { close: currentPrice, peRatio, previousClose } = marketData
     const quantity = positions.reduce((total, position) => total + position.quantity, 0)
     const totalCostBasis = positions.reduce((total, position) => total + position.quantity * position.cost_per_share, 0)
     const averageCost = quantity === 0 ? 0 : totalCostBasis / quantity
     const totalValue = currentPrice * quantity
     const totalGainLoss = totalValue - totalCostBasis
     const percentGainLoss = totalCostBasis === 0 ? 0 : (totalGainLoss / totalCostBasis) * 100
+    const priceChange = previousClose === null ? 0 : currentPrice - previousClose
+    const priceChangePercent = previousClose === null || previousClose === 0 ? 0 : (priceChange / previousClose) * 100
+    const purchaseDate = positions.reduce((earliest, position) => (position.purchase_date < earliest ? position.purchase_date : earliest), positions[0]?.purchase_date ?? '')
 
     return {
         stockCode,
         averageCost,
         currentPrice,
+        priceChange,
+        priceChangePercent,
+        dayChangeValue: priceChange * quantity,
         peRatio,
         quantity,
         totalCostBasis,
         totalValue,
         totalGainLoss,
         percentGainLoss,
+        purchaseDate,
+        // Populated once every row is known so each position can be expressed as a share of the group.
+        percentOfGroup: 0,
     }
 }
 
@@ -107,9 +140,16 @@ async function buildAccountStockTableRows(
 
     for (const [stockCode, positions] of stockEntries) {
         const marketPayload = await readLocalStockMarketData(stockCode, dependencies)
-        const { close, peRatio } = getMarketDataForDate(stockCode, account.date, marketPayload)
+        const marketData = getMarketDataForDate(stockCode, account.date, marketPayload)
 
-        rows.push(buildAccountStockTableRow(stockCode, positions, close, peRatio))
+        rows.push(buildAccountStockTableRow(stockCode, positions, marketData))
+    }
+
+    // Express each holding as a percentage of the group's total market value.
+    const groupValue = rows.reduce((total, row) => total + row.totalValue, 0)
+
+    for (const row of rows) {
+        row.percentOfGroup = groupValue === 0 ? 0 : (row.totalValue / groupValue) * 100
     }
 
     return rows
@@ -138,18 +178,26 @@ function buildAccountStockTableSummary(rows: AccountStockTableRow[]): AccountSto
             totalCurrentValue: summary.totalCurrentValue + row.totalValue,
             totalGainLoss: summary.totalGainLoss + row.totalGainLoss,
             percentGainLoss: 0,
+            totalDayChange: summary.totalDayChange + row.dayChangeValue,
+            dayChangePercent: 0,
         }),
         {
             principal: 0,
             totalCurrentValue: 0,
             totalGainLoss: 0,
             percentGainLoss: 0,
+            totalDayChange: 0,
+            dayChangePercent: 0,
         }
     )
+
+    // Day-change percent is measured against the prior day's value (current value minus the day's change).
+    const previousValue = summary.totalCurrentValue - summary.totalDayChange
 
     return {
         ...summary,
         percentGainLoss: summary.principal === 0 ? 0 : (summary.totalGainLoss / summary.principal) * 100,
+        dayChangePercent: previousValue === 0 ? 0 : (summary.totalDayChange / previousValue) * 100,
     }
 }
 

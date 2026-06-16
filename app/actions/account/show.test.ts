@@ -6,7 +6,7 @@ import path from 'node:path'
 import { DATA_DIRECTORY_NAME, END_DATE, HISTORY_FILE_NAME, START_DATE } from '../stock/download-data'
 import { DATA_FILE_NAME } from '../stock/build-data'
 import { createDefaultAccountState, DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
-import { fetchDefaultUserAccountSession, showDefaultUserAccountSession } from './show'
+import { buildDefaultUserAccountSessionView, fetchDefaultUserAccountSession, showDefaultUserAccountSession } from './show'
 
 const DEFAULT_ACCOUNT_STATE = createDefaultAccountState()
 
@@ -197,6 +197,42 @@ async function testShowDefaultUserAccountSessionIncludesPeRatio(): Promise<void>
     )
 }
 
+// Verify the view computes day-change, % of group, and purchase date from the prior trading day.
+async function testBuildViewComputesDayChangeAndGroup(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+
+    await writeLocalStockData(tempRepoRoot, 'AAPL', {
+        '2018-03-09': { close: 140, isPayoutDate: false, dividendPerShare: 0, ttmEps: 8, peRatio: 17.5 },
+        '2018-03-10': { close: 150, isPayoutDate: false, dividendPerShare: 0, ttmEps: 8, peRatio: 18.75 },
+    })
+    await writeLocalStockData(tempRepoRoot, 'MSFT', {
+        '2018-03-09': { close: 42, isPayoutDate: false, dividendPerShare: 0, ttmEps: 3, peRatio: 14 },
+        '2018-03-10': { close: 40, isPayoutDate: false, dividendPerShare: 0, ttmEps: 3, peRatio: 13.3 },
+    })
+
+    const view = await buildDefaultUserAccountSessionView(
+        {
+            date: '2018-03-10',
+            cash: 0,
+            positions: {
+                AAPL: [{ quantity: 2, cost_per_share: 100, purchase_date: '2018-03-01' }],
+                MSFT: [{ quantity: 4, cost_per_share: 40, purchase_date: '2018-03-05' }],
+            },
+        },
+        { cwd: () => tempRepoRoot }
+    )
+
+    const [aapl, msft] = view.rows
+
+    assert.equal(aapl.priceChange, 10)
+    assert.equal(aapl.dayChangeValue, 20)
+    assert.equal(aapl.purchaseDate, '2018-03-01')
+    assert.equal(aapl.percentOfGroup.toFixed(2), '65.22') // 300 / (300 + 160)
+    assert.equal(msft.priceChange, -2)
+    assert.equal(msft.dayChangeValue, -8)
+    assert.equal(view.summary.totalDayChange, 12)
+}
+
 // Verify the show action reports an empty holdings state without trying to render a stock table.
 async function testShowDefaultUserAccountSessionWithoutTrackedStocks(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
@@ -223,5 +259,6 @@ export async function runShowAccountActionTests(): Promise<void> {
     await testFetchDefaultUserAccountSessionCreatesDefaultFile()
     await testShowDefaultUserAccountSession()
     await testShowDefaultUserAccountSessionIncludesPeRatio()
+    await testBuildViewComputesDayChangeAndGroup()
     await testShowDefaultUserAccountSessionWithoutTrackedStocks()
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 
-import { createEmptyDefaultUserAccountSessionView, type AccountStockTableRow, type AccountStockTableSummary, type DefaultUserAccountSessionView } from '../actions/account/view-model'
+import { createEmptyDefaultUserAccountSessionView, type AccountStockTableRow, type DefaultUserAccountSessionView } from '../actions/account/view-model'
 import { createDefaultAccountState } from '../actions/account/state'
 
 const EMPTY_ACCOUNT_VIEW: DefaultUserAccountSessionView = createEmptyDefaultUserAccountSessionView(createDefaultAccountState())
@@ -10,43 +10,57 @@ const EMPTY_ACCOUNT_VIEW: DefaultUserAccountSessionView = createEmptyDefaultUser
 interface AccountResponse {
     view: DefaultUserAccountSessionView
     sessionFile: string
+    message?: string
+    error?: string
 }
 
-// Format a numeric value as a fixed two-decimal currency-like string for the holdings UI.
-function formatCurrency(value: number): string {
-    return value.toFixed(2)
+// Format a number with thousands separators and two decimals for monetary display.
+function money(value: number): string {
+    return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 }
 
-// Format a numeric value as a fixed two-decimal percentage string for the holdings UI.
-function formatPercent(value: number): string {
+// Format a signed monetary value so gains and losses read clearly in the table.
+function signedMoney(value: number): string {
+    return `${value >= 0 ? '+' : '-'}${money(Math.abs(value))}`
+}
+
+// Format a signed percentage value for change columns.
+function signedPercent(value: number): string {
+    return `${value >= 0 ? '+' : '-'}${Math.abs(value).toFixed(2)}%`
+}
+
+// Format a plain percentage value (e.g. share of group).
+function percent(value: number): string {
     return `${value.toFixed(2)}%`
 }
 
-// Build the summary stats shown above the browser holdings table.
-function buildSummaryItems(summary: AccountStockTableSummary, accountDate: string, cash: number): Array<{ label: string; value: string }> {
-    return [
-        { label: 'Date', value: accountDate },
-        { label: 'Cash', value: formatCurrency(cash) },
-        { label: 'Basis', value: formatCurrency(summary.principal) },
-        { label: 'Value', value: formatCurrency(summary.totalCurrentValue) },
-        { label: 'P/L', value: formatCurrency(summary.totalGainLoss) },
-        { label: 'P/L%', value: formatPercent(summary.percentGainLoss) },
-    ]
+// Map a numeric change to a CSS tone class so positive and negative values are colored.
+function tone(value: number): string {
+    if (value > 0) {
+        return 'pos'
+    }
+
+    if (value < 0) {
+        return 'neg'
+    }
+
+    return ''
 }
 
-// Render the browser account controls and current shared account snapshot.
+// Render the full-width portfolio dashboard with a trading sidebar and holdings table.
 export function AccountPanel() {
     const [accountView, setAccountView] = useState<DefaultUserAccountSessionView>(EMPTY_ACCOUNT_VIEW)
     const [sessionFile, setSessionFile] = useState('user-sessions/default.json')
     const [statusMessage, setStatusMessage] = useState('Loading the shared account session...')
-    const [isSaving, setIsSaving] = useState(false)
+    const [symbol, setSymbol] = useState('')
+    const [quantity, setQuantity] = useState('')
+    const [isBusy, setIsBusy] = useState(false)
 
-    // Fetch the shared account snapshot from the server-backed user session file.
     useEffect(() => {
         void loadAccountSnapshot()
     }, [])
 
-    // Load the current account object and session file path from the shared API.
+    // Load the current account snapshot from the shared API.
     async function loadAccountSnapshot(): Promise<void> {
         const response = await fetch('/api/account', { cache: 'no-store' })
         const payload = (await response.json()) as AccountResponse
@@ -56,92 +70,193 @@ export function AccountPanel() {
         setStatusMessage(`Loaded shared session from ${payload.sessionFile}.`)
     }
 
-    // Reset the shared account session file to the default simulation shape.
-    async function handleAccountInit(): Promise<void> {
-        setIsSaving(true)
+    // Submit a buy or sell order for the symbol and quantity entered in the sidebar.
+    async function submitTrade(action: 'buy' | 'sell'): Promise<void> {
+        const normalizedSymbol = symbol.trim().toUpperCase()
+        const parsedQuantity = Number(quantity)
+
+        if (normalizedSymbol === '') {
+            setStatusMessage('Enter a stock symbol to trade.')
+            return
+        }
+
+        if (!Number.isInteger(parsedQuantity) || parsedQuantity <= 0) {
+            setStatusMessage('Quantity must be a positive whole number.')
+            return
+        }
+
+        setIsBusy(true)
 
         try {
-            const response = await fetch('/api/account', {
+            const response = await fetch('/api/account/trade', {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action, stockCode: normalizedSymbol, quantity: parsedQuantity }),
             })
+            const payload = (await response.json()) as AccountResponse
+
+            if (!response.ok || payload.error) {
+                setStatusMessage(payload.error ?? 'Trade failed.')
+                return
+            }
+
+            setAccountView(payload.view)
+            setSessionFile(payload.sessionFile)
+            setStatusMessage(payload.message ?? 'Trade complete.')
+            setQuantity('')
+        } finally {
+            setIsBusy(false)
+        }
+    }
+
+    // Reset the shared account session file to the default simulation shape.
+    async function resetAccount(): Promise<void> {
+        setIsBusy(true)
+
+        try {
+            const response = await fetch('/api/account', { method: 'POST' })
             const payload = (await response.json()) as AccountResponse
 
             setAccountView(payload.view)
             setSessionFile(payload.sessionFile)
             setStatusMessage(`Reset shared session in ${payload.sessionFile}.`)
         } finally {
-            setIsSaving(false)
+            setIsBusy(false)
         }
     }
 
-    const summaryItems = buildSummaryItems(accountView.summary, accountView.account.date, accountView.account.cash)
+    // Prefill the trade form with a held position so it can be quickly sold.
+    function prefillFromRow(row: AccountStockTableRow): void {
+        setSymbol(row.stockCode)
+        setQuantity(String(row.quantity))
+    }
+
+    const { account, rows, summary } = accountView
+    const headerMetrics = [
+        { label: 'Cash', value: money(account.cash), tone: '' },
+        { label: 'Total Market Value', value: money(summary.totalCurrentValue), tone: '' },
+        { label: 'Day Change', value: `${signedMoney(summary.totalDayChange)} (${signedPercent(summary.dayChangePercent)})`, tone: tone(summary.totalDayChange) },
+        { label: 'Unrealized Gain/Loss', value: `${signedMoney(summary.totalGainLoss)} (${signedPercent(summary.percentGainLoss)})`, tone: tone(summary.totalGainLoss) },
+    ]
 
     return (
-        <main className="page">
-            <section className="card accountCard">
-                <div className="cardHeader">
-                    <div className="heroCopy">
-                        <p className="eyebrow">StockSimulate2026</p>
-                        <h1>Account View</h1>
-                        <p className="copy">
-                            Review the shared simulation account in <code>{sessionFile}</code>, including current holdings priced on the active simulation date.
-                        </p>
-                    </div>
-                    <div className="actions">
-                        <button className="primaryButton" type="button" onClick={() => void handleAccountInit()} disabled={isSaving}>
-                            {isSaving ? 'Resetting...' : 'Account Init'}
+        <div className="appShell">
+            <aside className="sidebar">
+                <div className="brand">
+                    <p className="eyebrow">StockSimulate 2026</p>
+                    <h1>Portfolio</h1>
+                </div>
+
+                <section className="tradeBox">
+                    <h2>Trade</h2>
+                    <label className="field">
+                        <span>Symbol</span>
+                        <input
+                            value={symbol}
+                            onChange={(event) => setSymbol(event.target.value.toUpperCase())}
+                            placeholder="AAPL"
+                            autoComplete="off"
+                        />
+                    </label>
+                    <label className="field">
+                        <span>Quantity</span>
+                        <input value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="10" inputMode="numeric" />
+                    </label>
+                    <div className="tradeButtons">
+                        <button className="buyButton" type="button" onClick={() => void submitTrade('buy')} disabled={isBusy}>
+                            Buy
+                        </button>
+                        <button className="sellButton" type="button" onClick={() => void submitTrade('sell')} disabled={isBusy}>
+                            Sell
                         </button>
                     </div>
+                </section>
+
+                <div className="sidebarMeta">
+                    <div className="metaRow">
+                        <span>Simulation date</span>
+                        <strong>{account.date}</strong>
+                    </div>
+                    <div className="metaRow">
+                        <span>Cash</span>
+                        <strong>{money(account.cash)}</strong>
+                    </div>
                 </div>
+
                 <p className="status">{statusMessage}</p>
-                <div className="storageMeta">
-                    <span>Session file</span>
+
+                <button className="resetButton" type="button" onClick={() => void resetAccount()} disabled={isBusy}>
+                    Reset account
+                </button>
+                <p className="sessionPath">
                     <code>{sessionFile}</code>
-                </div>
-                <div className="summaryGrid">
-                    {summaryItems.map((item) => (
-                        <article className="summaryCard" key={item.label}>
-                            <span className="summaryLabel">{item.label}</span>
-                            <strong className="summaryValue">{item.value}</strong>
+                </p>
+            </aside>
+
+            <main className="content">
+                <header className="accountHeader">
+                    {headerMetrics.map((metric) => (
+                        <article className="metric" key={metric.label}>
+                            <span className="metricLabel">{metric.label}</span>
+                            <strong className={`metricValue ${metric.tone}`}>{metric.value}</strong>
                         </article>
                     ))}
-                </div>
-                <section className="holdingsSection">
-                    <div className="sectionHeading">
-                        <div>
-                            <p className="sectionEyebrow">Holdings</p>
-                            <h2>Tracked stocks</h2>
-                        </div>
-                        <span className="rowCount">{accountView.rows.length} symbols</span>
+                </header>
+
+                <section className="holdings">
+                    <div className="holdingsHead">
+                        <h2>Stocks / ETFs</h2>
+                        <span className="rowCount">{rows.length} positions</span>
                     </div>
-                    {accountView.rows.length === 0 ? (
-                        <div className="emptyState">
-                            No tracked stocks yet. Download price history and buy shares to populate the table.
-                        </div>
+
+                    {rows.length === 0 ? (
+                        <div className="emptyState">No holdings yet. Use the Trade panel to buy your first position.</div>
                     ) : (
                         <div className="tableScroll">
                             <table className="holdingsTable">
                                 <thead>
                                     <tr>
-                                        <th scope="col">Stock</th>
-                                        <th scope="col">Average cost</th>
-                                        <th scope="col">Current price</th>
+                                        <th className="alignLeft" scope="col">Symbol</th>
                                         <th scope="col">Quantity</th>
-                                        <th scope="col">Total value</th>
-                                        <th scope="col">Gain / loss</th>
-                                        <th scope="col">Gain / loss %</th>
+                                        <th scope="col">Last Price</th>
+                                        <th scope="col">$ Chg</th>
+                                        <th scope="col">% Chg</th>
+                                        <th scope="col">Market Value</th>
+                                        <th scope="col">Day Chg $</th>
+                                        <th scope="col">Unit Cost</th>
+                                        <th scope="col">Total Cost</th>
+                                        <th scope="col">$ Gain/Loss</th>
+                                        <th scope="col">% Gain/Loss</th>
+                                        <th scope="col">Purchase Date</th>
+                                        <th scope="col">% of Group</th>
+                                        <th className="alignRight" scope="col">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {accountView.rows.map((row: AccountStockTableRow) => (
+                                    {rows.map((row) => (
                                         <tr key={row.stockCode}>
-                                            <th scope="row">{row.stockCode}</th>
-                                            <td>{formatCurrency(row.averageCost)}</td>
-                                            <td>{formatCurrency(row.currentPrice)}</td>
+                                            <th className="alignLeft symbol" scope="row">
+                                                <button type="button" className="symbolButton" onClick={() => prefillFromRow(row)}>
+                                                    {row.stockCode}
+                                                </button>
+                                            </th>
                                             <td>{row.quantity}</td>
-                                            <td>{formatCurrency(row.totalValue)}</td>
-                                            <td>{formatCurrency(row.totalGainLoss)}</td>
-                                            <td>{formatPercent(row.percentGainLoss)}</td>
+                                            <td>{money(row.currentPrice)}</td>
+                                            <td className={tone(row.priceChange)}>{signedMoney(row.priceChange)}</td>
+                                            <td className={tone(row.priceChange)}>{signedPercent(row.priceChangePercent)}</td>
+                                            <td>{money(row.totalValue)}</td>
+                                            <td className={tone(row.dayChangeValue)}>{signedMoney(row.dayChangeValue)}</td>
+                                            <td>{money(row.averageCost)}</td>
+                                            <td>{money(row.totalCostBasis)}</td>
+                                            <td className={tone(row.totalGainLoss)}>{signedMoney(row.totalGainLoss)}</td>
+                                            <td className={tone(row.totalGainLoss)}>{signedPercent(row.percentGainLoss)}</td>
+                                            <td>{row.purchaseDate}</td>
+                                            <td>{percent(row.percentOfGroup)}</td>
+                                            <td className="alignRight">
+                                                <button type="button" className="rowSell" onClick={() => prefillFromRow(row)}>
+                                                    Sell
+                                                </button>
+                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
@@ -149,7 +264,7 @@ export function AccountPanel() {
                         </div>
                     )}
                 </section>
-            </section>
-        </main>
+            </main>
+        </div>
     )
 }

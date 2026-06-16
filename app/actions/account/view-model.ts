@@ -4,12 +4,17 @@ export interface AccountStockTableRow {
     stockCode: string
     averageCost: number
     currentPrice: number
+    priceChange: number
+    priceChangePercent: number
+    dayChangeValue: number
     peRatio: number | null
     quantity: number
     totalCostBasis: number
     totalValue: number
     totalGainLoss: number
     percentGainLoss: number
+    purchaseDate: string
+    percentOfGroup: number
 }
 
 export interface AccountStockTableSummary {
@@ -17,6 +22,8 @@ export interface AccountStockTableSummary {
     totalCurrentValue: number
     totalGainLoss: number
     percentGainLoss: number
+    totalDayChange: number
+    dayChangePercent: number
 }
 
 export interface DefaultUserAccountSessionView {
@@ -32,6 +39,8 @@ export function createEmptyAccountStockTableSummary(): AccountStockTableSummary 
         totalCurrentValue: 0,
         totalGainLoss: 0,
         percentGainLoss: 0,
+        totalDayChange: 0,
+        dayChangePercent: 0,
     }
 }
 
