@@ -30,6 +30,14 @@ export interface DownloadedHistoryPayload {
 export interface DownloadStockDataResult extends DownloadedHistoryPayload {
     rowCount: number
     outputPath: string
+    skipped: false
+}
+
+// Result returned when a stock action is skipped because its output file already exists.
+export interface SkippedStockActionResult {
+    skipped: true
+    stockCode: string
+    outputPath: string
 }
 
 interface YahooDividendEvent {
@@ -63,6 +71,7 @@ interface YahooChartPayload {
 interface DownloadStockDataActionDependencies {
     cwd?: () => string
     fetchRemoteJson?: (url: string) => Promise<YahooChartPayload>
+    fileExists?: (path: string) => Promise<boolean>
     makeDirectory?: (path: string, options?: { recursive?: boolean }) => Promise<unknown>
     writeFile?: (path: string, data: string, encoding: BufferEncoding) => Promise<unknown>
 }
@@ -147,6 +156,16 @@ async function fetchJson(url: string): Promise<YahooChartPayload> {
     })
 }
 
+// Report whether a path already exists on disk.
+export async function pathExists(targetPath: string): Promise<boolean> {
+    try {
+        await fs.access(targetPath)
+        return true
+    } catch {
+        return false
+    }
+}
+
 // Convert undefined quote values into explicit JSON nulls.
 function toNullableValue(value: number | null | undefined): NullableNumber {
     if (value === null || value === undefined) {
@@ -214,14 +233,24 @@ export function buildHistoryPayload(stockCode: string, chartResult: YahooChartRe
 export function createDownloadStockDataAction({
     cwd = process.cwd,
     fetchRemoteJson = fetchJson,
+    fileExists = pathExists,
     makeDirectory = fs.mkdir,
     writeFile = fs.writeFile,
 }: DownloadStockDataActionDependencies = {}) {
-    // Download a stock history from Yahoo Finance and save it to the repo.
-    return async function downloadStockDataAction(stockCode: string): Promise<DownloadStockDataResult> {
+    // Download a stock history from Yahoo Finance and save it to the repo, skipping
+    // the download when the history file already exists.
+    return async function downloadStockDataAction(stockCode: string): Promise<DownloadStockDataResult | SkippedStockActionResult> {
         const normalizedStockCode = normalizeStockCode(stockCode)
 
         validateStockCode(normalizedStockCode)
+
+        const repoRoot = cwd()
+        const outputDirectory = path.join(repoRoot, DATA_DIRECTORY_NAME, normalizedStockCode)
+        const outputPath = path.join(outputDirectory, HISTORY_FILE_NAME)
+
+        if (await fileExists(outputPath)) {
+            return { skipped: true, stockCode: normalizedStockCode, outputPath: path.relative(repoRoot, outputPath) }
+        }
 
         const url = getHistoryUrl(normalizedStockCode)
         const payload = await fetchRemoteJson(url)
@@ -238,9 +267,6 @@ export function createDownloadStockDataAction({
         }
 
         const payloadToWrite = buildHistoryPayload(normalizedStockCode, result)
-        const repoRoot = cwd()
-        const outputDirectory = path.join(repoRoot, DATA_DIRECTORY_NAME, normalizedStockCode)
-        const outputPath = path.join(outputDirectory, HISTORY_FILE_NAME)
 
         await makeDirectory(outputDirectory, { recursive: true })
         await writeFile(outputPath, `${JSON.stringify(payloadToWrite, null, 2)}\n`, 'utf8')
@@ -249,6 +275,7 @@ export function createDownloadStockDataAction({
             ...payloadToWrite,
             rowCount: Object.keys(payloadToWrite.historyByDate).length,
             outputPath: path.relative(repoRoot, outputPath),
+            skipped: false,
         }
     }
 }

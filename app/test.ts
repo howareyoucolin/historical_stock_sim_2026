@@ -7,6 +7,7 @@ import { runSetDateToSpecificDateActionTests } from './actions/date/set-to-speci
 import { runSetDateToTomorrowActionTests } from './actions/date/set-to-tomorrow.test'
 import { runDownloadDataActionTests } from './actions/stock/download-data.test'
 import { runBuildDataActionTests } from './actions/stock/build-data.test'
+import { runScrapeEpsActionTests } from './actions/stock/scrape-eps.test'
 import { runCliCommandTests } from '../cli/commands.test'
 import { runCliOutputTests } from '../cli/output.test'
 
@@ -24,6 +25,7 @@ interface TestSuite {
 const TEST_SUITES: TestSuite[] = [
     { label: 'Download stock data action tests', run: runDownloadDataActionTests },
     { label: 'Build stock data action tests', run: runBuildDataActionTests },
+    { label: 'Scrape stock EPS action tests', run: runScrapeEpsActionTests },
     { label: 'User session store tests', run: runUserSessionStoreTests },
     { label: 'Account buy action tests', run: runBuyAccountActionTests },
     { label: 'Account init action tests', run: runInitializeAccountActionTests },

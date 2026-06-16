@@ -236,6 +236,7 @@ async function testStockDownloadCommand(): Promise<void> {
                 historyByDate: {},
                 rowCount: 42,
                 outputPath: 'market-data/AAPL/history.json',
+                skipped: false,
             }
         },
     })
@@ -264,6 +265,7 @@ async function testStockBuildCommand(): Promise<void> {
                 historyByDate: {},
                 rowCount: 99,
                 outputPath: 'market-data/AAPL/data.json',
+                skipped: false,
             }
         },
     })
@@ -272,6 +274,51 @@ async function testStockBuildCommand(): Promise<void> {
     assert.equal(requestedStockCode, 'AAPL')
     assert.equal(result.exitCode, 0)
     assert.match(result.output, /Built 99 rows for AAPL\./)
+}
+
+// Verify stock scrape-eps routes through the dedicated stock command handler.
+async function testStockScrapeEpsCommand(): Promise<void> {
+    let requestedStockCode = ''
+    const runCommand = createRunCommand({
+        scrapeEps: async (stockCode) => {
+            requestedStockCode = stockCode
+
+            return {
+                stockCode: 'AAPL',
+                metric: 'TTM Net EPS',
+                source: 'Macrotrends',
+                sourceUrl: 'https://www.macrotrends.net/stocks/charts/AAPL/apple/pe-ratio',
+                range: { start: '2006-12-31', end: '2026-03-31' },
+                epsByDate: {},
+                rowCount: 77,
+                outputPath: 'market-data/AAPL/eps.json',
+                skipped: false,
+            }
+        },
+    })
+    const result = await runCommand('stock scrape-eps AAPL')
+
+    assert.equal(requestedStockCode, 'AAPL')
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /Scraped 77 EPS rows for AAPL\./)
+}
+
+// Verify each stock command reports a skip message when the action returns a skipped result.
+async function testStockCommandsReportSkips(): Promise<void> {
+    const runCommand = createRunCommand({
+        downloadStockData: async () => ({ skipped: true, stockCode: 'AAPL', outputPath: 'market-data/AAPL/history.json' }),
+        scrapeEps: async () => ({ skipped: true, stockCode: 'AAPL', outputPath: 'market-data/AAPL/eps.json' }),
+        buildStockData: async () => ({ skipped: true, stockCode: 'AAPL', outputPath: 'market-data/AAPL/data.json' }),
+    })
+
+    const downloadResult = await runCommand('stock download AAPL')
+    const scrapeResult = await runCommand('stock scrape-eps AAPL')
+    const buildResult = await runCommand('stock build AAPL')
+
+    assert.equal(downloadResult.exitCode, 0)
+    assert.equal(downloadResult.output, 'Skipped AAPL: market-data/AAPL/history.json already exists.')
+    assert.equal(scrapeResult.output, 'Skipped AAPL: market-data/AAPL/eps.json already exists.')
+    assert.equal(buildResult.output, 'Skipped AAPL: market-data/AAPL/data.json already exists.')
 }
 
 // Run the focused tests that protect CLI account command wiring.
@@ -288,5 +335,7 @@ export async function runCliCommandTests(): Promise<void> {
     await testAccountCommandUsage()
     await testDateCommandUsage()
     await testStockDownloadCommand()
+    await testStockScrapeEpsCommand()
     await testStockBuildCommand()
+    await testStockCommandsReportSkips()
 }

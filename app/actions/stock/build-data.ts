@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME, normalizeStockCode, validateStockCode } from './download-data'
+import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME, normalizeStockCode, pathExists, validateStockCode, type SkippedStockActionResult } from './download-data'
 
 export const EPS_FILE_NAME = 'eps.json'
 export const DATA_FILE_NAME = 'data.json'
@@ -48,11 +48,13 @@ export interface BuiltDataPayload {
 export interface BuildStockDataResult extends BuiltDataPayload {
     rowCount: number
     outputPath: string
+    skipped: false
 }
 
 interface BuildStockDataActionDependencies {
     cwd?: () => string
     readFile?: (path: string, encoding: BufferEncoding) => Promise<string>
+    fileExists?: (path: string) => Promise<boolean>
     makeDirectory?: (path: string, options?: { recursive?: boolean }) => Promise<unknown>
     writeFile?: (path: string, data: string, encoding: BufferEncoding) => Promise<unknown>
 }
@@ -158,17 +160,25 @@ async function readSourceJson<T>(readFile: (path: string, encoding: BufferEncodi
 export function createBuildStockDataAction({
     cwd = process.cwd,
     readFile = fs.readFile,
+    fileExists = pathExists,
     makeDirectory = fs.mkdir,
     writeFile = fs.writeFile,
 }: BuildStockDataActionDependencies = {}) {
-    // Combine a stock's downloaded price history and EPS series into a single data.json file.
-    return async function buildStockDataAction(stockCode: string): Promise<BuildStockDataResult> {
+    // Combine a stock's downloaded price history and EPS series into a single
+    // data.json file, skipping the build when that file already exists.
+    return async function buildStockDataAction(stockCode: string): Promise<BuildStockDataResult | SkippedStockActionResult> {
         const normalizedStockCode = normalizeStockCode(stockCode)
 
         validateStockCode(normalizedStockCode)
 
         const repoRoot = cwd()
         const stockDirectory = path.join(repoRoot, DATA_DIRECTORY_NAME, normalizedStockCode)
+        const outputPath = path.join(stockDirectory, DATA_FILE_NAME)
+
+        if (await fileExists(outputPath)) {
+            return { skipped: true, stockCode: normalizedStockCode, outputPath: path.relative(repoRoot, outputPath) }
+        }
+
         const historyPath = path.join(stockDirectory, HISTORY_FILE_NAME)
         const epsPath = path.join(stockDirectory, EPS_FILE_NAME)
 
@@ -176,7 +186,6 @@ export function createBuildStockDataAction({
         const eps = await readSourceJson<EpsFile>(readFile, epsPath, 'EPS')
 
         const payload = buildDataPayload(normalizedStockCode, history, eps)
-        const outputPath = path.join(stockDirectory, DATA_FILE_NAME)
 
         await makeDirectory(stockDirectory, { recursive: true })
         await writeFile(outputPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8')
@@ -185,6 +194,7 @@ export function createBuildStockDataAction({
             ...payload,
             rowCount: Object.keys(payload.historyByDate).length,
             outputPath: path.relative(repoRoot, outputPath),
+            skipped: false,
         }
     }
 }

@@ -39,6 +39,7 @@ export function parseCommand(input: string): { command: string; args: string[] }
 export function createRunCommand({
     downloadStockData,
     buildStockData,
+    scrapeEps,
     buyStockInDefaultUserAccount,
     depositIntoDefaultUserAccount,
     initializeDefaultUserAccount,
@@ -59,6 +60,7 @@ export function createRunCommand({
     const runStockCommand = createStockCommandHandler({
         downloadStockData,
         buildStockData,
+        scrapeEps,
     })
 
     // Execute a single CLI command and forward business logic to shared actions.

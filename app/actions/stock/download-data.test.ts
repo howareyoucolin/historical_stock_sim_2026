@@ -100,6 +100,7 @@ async function testDownloadStockDataAction(): Promise<void> {
 
     const downloadStockDataAction = createDownloadStockDataAction({
         cwd: () => '/repo',
+        fileExists: async () => false,
         fetchRemoteJson: async (url) => {
             captured.requestedUrl = url
 
@@ -138,6 +139,12 @@ async function testDownloadStockDataAction(): Promise<void> {
     })
 
     const result = await downloadStockDataAction('aapl')
+
+    if (result.skipped) {
+        assert.fail('expected the download to run when history.json does not exist')
+        return
+    }
+
     const parsedContents = JSON.parse(captured.writeContents || '{}') as {
         stockCode: string
         historyByDate: Record<string, { close: number | null; isPayoutDate: boolean; dividendPerShare: number }>
@@ -166,6 +173,31 @@ async function testDownloadStockDataAction(): Promise<void> {
     assert.match(captured.requestedUrl || '', /chart\/AAPL\?/)
 }
 
+// Verify the download is skipped without fetching when history.json already exists.
+async function testDownloadStockDataActionSkipsExistingFile(): Promise<void> {
+    let fetchWasCalled = false
+    let writeWasCalled = false
+    const downloadStockDataAction = createDownloadStockDataAction({
+        cwd: () => '/repo',
+        fileExists: async () => true,
+        fetchRemoteJson: async () => {
+            fetchWasCalled = true
+            return { chart: { result: [], error: null } }
+        },
+        writeFile: async () => {
+            writeWasCalled = true
+        },
+    })
+
+    const result = await downloadStockDataAction('aapl')
+
+    assert.equal(result.skipped, true)
+    assert.equal(result.stockCode, 'AAPL')
+    assert.equal(result.outputPath, `${DATA_DIRECTORY_NAME}/AAPL/history.json`)
+    assert.equal(fetchWasCalled, false)
+    assert.equal(writeWasCalled, false)
+}
+
 // Run the focused action tests that protect the reusable stock download logic.
 export async function runDownloadDataActionTests(): Promise<void> {
     testValidateStockCode()
@@ -174,4 +206,5 @@ export async function runDownloadDataActionTests(): Promise<void> {
     testBuildDividendMap()
     testBuildHistoryPayload()
     await testDownloadStockDataAction()
+    await testDownloadStockDataActionSkipsExistingFile()
 }

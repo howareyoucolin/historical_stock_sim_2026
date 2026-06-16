@@ -92,6 +92,7 @@ async function testBuildStockDataAction(): Promise<void> {
 
     const buildStockDataAction = createBuildStockDataAction({
         cwd: () => '/repo',
+        fileExists: async () => false,
         readFile: async (filePath) => {
             reads.push(filePath)
 
@@ -113,6 +114,12 @@ async function testBuildStockDataAction(): Promise<void> {
     })
 
     const result = await buildStockDataAction('aapl')
+
+    if (result.skipped) {
+        assert.fail('expected the build to run when data.json does not exist')
+        return
+    }
+
     const parsed = JSON.parse(captured.writeContents || '{}') as {
         historyByDate: Record<string, { ttmEps: number | null; peRatio: number | null }>
     }
@@ -130,12 +137,38 @@ async function testBuildStockDataAction(): Promise<void> {
 async function testBuildStockDataActionMissingSource(): Promise<void> {
     const buildStockDataAction = createBuildStockDataAction({
         cwd: () => '/repo',
+        fileExists: async () => false,
         readFile: async () => {
             throw new Error('ENOENT')
         },
     })
 
     await assert.rejects(buildStockDataAction('AAPL'), /Missing price history file/)
+}
+
+// Verify the build is skipped without reading sources when data.json already exists.
+async function testBuildStockDataActionSkipsExistingFile(): Promise<void> {
+    let readWasCalled = false
+    let writeWasCalled = false
+    const buildStockDataAction = createBuildStockDataAction({
+        cwd: () => '/repo',
+        fileExists: async () => true,
+        readFile: async () => {
+            readWasCalled = true
+            return '{}'
+        },
+        writeFile: async () => {
+            writeWasCalled = true
+        },
+    })
+
+    const result = await buildStockDataAction('aapl')
+
+    assert.equal(result.skipped, true)
+    assert.equal(result.stockCode, 'AAPL')
+    assert.equal(result.outputPath, `${DATA_DIRECTORY_NAME}/AAPL/${DATA_FILE_NAME}`)
+    assert.equal(readWasCalled, false)
+    assert.equal(writeWasCalled, false)
 }
 
 // Run the focused action tests that protect the reusable stock build logic.
@@ -147,4 +180,5 @@ export async function runBuildDataActionTests(): Promise<void> {
     testBuildDataPayload()
     await testBuildStockDataAction()
     await testBuildStockDataActionMissingSource()
+    await testBuildStockDataActionSkipsExistingFile()
 }
