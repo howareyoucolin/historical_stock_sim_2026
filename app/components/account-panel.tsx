@@ -55,6 +55,7 @@ export function AccountPanel() {
     const [symbol, setSymbol] = useState('')
     const [quantity, setQuantity] = useState('')
     const [isBusy, setIsBusy] = useState(false)
+    const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
 
     useEffect(() => {
         void loadAccountSnapshot()
@@ -140,8 +141,18 @@ export function AccountPanel() {
     ]
 
     return (
-        <div className="appShell">
+        <div className={`appShell ${isSidebarCollapsed ? 'sidebarCollapsed' : ''}`}>
             <aside className="sidebar">
+                <button
+                    className="collapseToggle"
+                    type="button"
+                    onClick={() => setIsSidebarCollapsed((collapsed) => !collapsed)}
+                    aria-label={isSidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                >
+                    {isSidebarCollapsed ? '»' : '« Collapse'}
+                </button>
+                {!isSidebarCollapsed && (
+                <div className="sidebarBody">
                 <div className="brand">
                     <p className="eyebrow">StockSimulate 2026</p>
                     <h1>Portfolio</h1>
@@ -191,6 +202,8 @@ export function AccountPanel() {
                 <p className="sessionPath">
                     <code>{sessionFile}</code>
                 </p>
+                </div>
+                )}
             </aside>
 
             <main className="content">
@@ -229,7 +242,6 @@ export function AccountPanel() {
                                         <th scope="col">% Gain/Loss</th>
                                         <th scope="col">Purchase Date</th>
                                         <th scope="col">% of Group</th>
-                                        <th className="alignRight" scope="col">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -252,11 +264,6 @@ export function AccountPanel() {
                                             <td className={tone(row.totalGainLoss)}>{signedPercent(row.percentGainLoss)}</td>
                                             <td>{row.purchaseDate}</td>
                                             <td>{percent(row.percentOfGroup)}</td>
-                                            <td className="alignRight">
-                                                <button type="button" className="rowSell" onClick={() => prefillFromRow(row)}>
-                                                    Sell
-                                                </button>
-                                            </td>
                                         </tr>
                                     ))}
                                 </tbody>
