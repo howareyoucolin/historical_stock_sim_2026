@@ -3,6 +3,7 @@ import path from 'node:path'
 
 import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME, normalizeStockCode, validateStockCode } from '../stock/download-data'
 import { appendHistoryEvent } from '../history/log'
+import { classifyHoldingTerm } from '../date/utils'
 import {
     readDefaultUserAccountSession,
     type AccountSessionDependencies,
@@ -67,9 +68,18 @@ function getSalePriceForDate(stockCode: string, accountDate: string, historyPayl
     return historyEntry.close
 }
 
-// Reduce the held lots by the sold quantity, oldest first (FIFO), dropping any lot that is fully sold.
-function reduceLotsFifo(lots: AccountPosition[], quantity: number): AccountPosition[] {
+// A portion of a single purchase batch consumed by a sale, kept separate per lot so each batch
+// can be recorded on its own history row with its own holding term.
+interface ConsumedLot {
+    quantity: number
+    purchaseDate: string
+}
+
+// Consume the sold quantity from held lots oldest first (FIFO), returning both the per-batch
+// portions sold and the lots that remain (with any partially sold lot reduced in place).
+function consumeLotsFifo(lots: AccountPosition[], quantity: number): { consumed: ConsumedLot[]; remaining: AccountPosition[] } {
     let remaining = quantity
+    const consumed: ConsumedLot[] = []
     const remainingLots: AccountPosition[] = []
 
     for (const lot of lots) {
@@ -79,15 +89,17 @@ function reduceLotsFifo(lots: AccountPosition[], quantity: number): AccountPosit
         }
 
         if (lot.quantity <= remaining) {
+            consumed.push({ quantity: lot.quantity, purchaseDate: lot.purchase_date })
             remaining -= lot.quantity
             continue
         }
 
+        consumed.push({ quantity: remaining, purchaseDate: lot.purchase_date })
         remainingLots.push({ ...lot, quantity: lot.quantity - remaining })
         remaining = 0
     }
 
-    return remainingLots
+    return { consumed, remaining: remainingLots }
 }
 
 // Sell shares from the shared default account using the locally saved close price for the account date.
@@ -116,7 +128,7 @@ export async function sellStockInDefaultUserAccountSession(
     const pricePerShare = getSalePriceForDate(normalizedStockCode, account.date, historyPayload)
     const totalProceeds = pricePerShare * quantity
 
-    const remainingLots = reduceLotsFifo(lots, quantity)
+    const { consumed, remaining: remainingLots } = consumeLotsFifo(lots, quantity)
     const updatedPositions = { ...account.positions }
 
     // Drop the holding entirely once its last shares are sold so the table stays clean.
@@ -134,17 +146,22 @@ export async function sellStockInDefaultUserAccountSession(
 
     const savedAccount = await writeDefaultUserAccountSession(updatedAccount, dependencies)
 
-    await appendHistoryEvent(
-        {
-            type: 'SELL',
-            simDate: account.date,
-            stockCode: normalizedStockCode,
-            quantity,
-            pricePerShare,
-            cashDelta: totalProceeds,
-        },
-        { cwd: dependencies.cwd }
-    )
+    // Record one history row per purchase batch sold, tagging each with its short/long holding term.
+    for (const lot of consumed) {
+        await appendHistoryEvent(
+            {
+                type: 'SELL',
+                simDate: account.date,
+                stockCode: normalizedStockCode,
+                quantity: lot.quantity,
+                pricePerShare,
+                acquiredDate: lot.purchaseDate,
+                term: classifyHoldingTerm(lot.purchaseDate, account.date),
+                cashDelta: pricePerShare * lot.quantity,
+            },
+            { cwd: dependencies.cwd }
+        )
+    }
 
     return {
         account: savedAccount,

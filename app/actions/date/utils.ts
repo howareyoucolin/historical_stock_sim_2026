@@ -25,6 +25,19 @@ export function addDaysToSimulationDate(dateString: string, dayCount: number): s
     return parsedDate.toISOString().slice(0, 10)
 }
 
+// Classify a holding period as long-term when the shares were held strictly more than one year
+// (sold after the one-year anniversary of purchase), mirroring the standard capital-gains rule.
+// Both inputs are normalized YYYY-MM-DD strings, so chronological comparison is plain string order.
+export function classifyHoldingTerm(purchaseDate: string, sellDate: string): 'SHORT' | 'LONG' {
+    const purchase = new Date(`${normalizeSimulationDate(purchaseDate)}T00:00:00Z`)
+    const oneYearAnniversary = new Date(
+        Date.UTC(purchase.getUTCFullYear() + 1, purchase.getUTCMonth(), purchase.getUTCDate())
+    )
+    const anniversaryDate = oneYearAnniversary.toISOString().slice(0, 10)
+
+    return normalizeSimulationDate(sellDate) > anniversaryDate ? 'LONG' : 'SHORT'
+}
+
 // Find the earliest trading date strictly after the given date, or null when none exists.
 // ISO YYYY-MM-DD strings sort chronologically, so plain string comparison is safe here.
 export function findNextTradingDate(currentDate: string, tradingDates: string[]): string | null {

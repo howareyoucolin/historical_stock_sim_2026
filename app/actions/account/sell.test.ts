@@ -5,6 +5,7 @@ import path from 'node:path'
 
 import { DATA_DIRECTORY_NAME, END_DATE, HISTORY_FILE_NAME, START_DATE } from '../stock/download-data'
 import { sellStockInDefaultUserAccountSession } from './sell'
+import { HISTORY_LOG_RELATIVE_PATH } from '../history/log'
 import { DEFAULT_ACCOUNT_DATE, DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
 
 // Build a temporary repo root so sell action tests can mutate isolated account and market data files.
@@ -139,6 +140,53 @@ async function testSellStockInDefaultUserAccountSessionMissingPriceDate(): Promi
     await assert.rejects(() => sellStockInDefaultUserAccountSession('AAPL', 1, { cwd: () => tempRepoRoot }), /No price data found for AAPL on 2016-01-04/)
 }
 
+// Verify a sale spanning multiple purchase batches records one history row per batch, each tagged
+// with its short/long holding term (including the exact one-year boundary, which stays short-term).
+async function testSellStockRecordsPerBatchHistoryWithTerm(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+    const logFilePath = path.join(tempRepoRoot, HISTORY_LOG_RELATIVE_PATH)
+
+    await writeDefaultUserAccountSession(
+        {
+            date: DEFAULT_ACCOUNT_DATE,
+            cash: 0,
+            positions: {
+                AAPL: [
+                    // Held well over a year before the 2016-01-04 sale date.
+                    { quantity: 2, cost_per_share: 10, purchase_date: '2014-06-01' },
+                    // Bought exactly one year before the sale: a one-year hold is still short-term.
+                    { quantity: 1, cost_per_share: 11, purchase_date: '2015-01-04' },
+                    // Bought on the sale date itself.
+                    { quantity: 2, cost_per_share: 12, purchase_date: DEFAULT_ACCOUNT_DATE },
+                ],
+            },
+        },
+        { cwd: () => tempRepoRoot }
+    )
+    await writeLocalStockHistory(tempRepoRoot, 'AAPL', {
+        [DEFAULT_ACCOUNT_DATE]: { close: 15, isPayoutDate: false, dividendPerShare: 0 },
+    })
+
+    const result = await sellStockInDefaultUserAccountSession('AAPL', 4, { cwd: () => tempRepoRoot })
+
+    assert.equal(result.quantity, 4)
+    assert.equal(result.totalProceeds, 60)
+    // The newest lot keeps its leftover share after the FIFO sale consumes the first two batches.
+    assert.deepEqual(result.account.positions.AAPL, [{ quantity: 1, cost_per_share: 12, purchase_date: DEFAULT_ACCOUNT_DATE }])
+
+    // Strip the leading timestamp from each line so the recorded batches can be compared directly.
+    const recordedRows = (await fs.readFile(logFilePath, 'utf8'))
+        .trim()
+        .split('\n')
+        .map((line) => line.slice(line.indexOf(' ') + 1))
+
+    assert.deepEqual(recordedRows, [
+        'SELL stock=AAPL qty=2 price=15.00 acquired=2014-06-01 term=LONG cash=+30.00 sim=2016-01-04',
+        'SELL stock=AAPL qty=1 price=15.00 acquired=2015-01-04 term=SHORT cash=+15.00 sim=2016-01-04',
+        'SELL stock=AAPL qty=1 price=15.00 acquired=2016-01-04 term=SHORT cash=+15.00 sim=2016-01-04',
+    ])
+}
+
 // Run the focused sell action tests that protect date-based pricing and FIFO account mutations.
 export async function runSellAccountActionTests(): Promise<void> {
     await testSellStockInDefaultUserAccountSessionInvalidQuantity()
@@ -146,4 +194,5 @@ export async function runSellAccountActionTests(): Promise<void> {
     await testSellStockInDefaultUserAccountSessionRemovesEmptyHolding()
     await testSellStockInDefaultUserAccountSessionInsufficientShares()
     await testSellStockInDefaultUserAccountSessionMissingPriceDate()
+    await testSellStockRecordsPerBatchHistoryWithTerm()
 }

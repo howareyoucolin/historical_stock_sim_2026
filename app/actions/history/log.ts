@@ -8,8 +8,13 @@ export const HISTORY_LOG_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${HIST
 
 export type HistoryEventType = 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT'
 
+// Capital-gains holding classification applied to sold lots: held more than one year is long-term.
+export type HoldingTerm = 'SHORT' | 'LONG'
+
 // A single recorded account activity. `quantity` and `pricePerShare` are optional so cash-only
 // events (deposits) can omit them; for dividends they carry the share count and per-share payout.
+// `acquiredDate` and `term` are set on sell rows so each sold purchase batch is recorded on its
+// own line with its holding term.
 export interface HistoryEvent {
     type: HistoryEventType
     simDate: string
@@ -17,6 +22,8 @@ export interface HistoryEvent {
     stockCode?: string
     quantity?: number
     pricePerShare?: number
+    acquiredDate?: string
+    term?: HoldingTerm
 }
 
 export interface HistoryLogDependencies {
@@ -50,6 +57,14 @@ function formatHistoryLogLine(event: HistoryEvent, timestamp: Date): string {
 
     if (event.pricePerShare !== undefined) {
         tokens.push(`price=${event.pricePerShare.toFixed(2)}`)
+    }
+
+    if (event.acquiredDate) {
+        tokens.push(`acquired=${event.acquiredDate}`)
+    }
+
+    if (event.term) {
+        tokens.push(`term=${event.term}`)
     }
 
     tokens.push(`cash=${formatSignedCurrency(event.cashDelta)}`, `sim=${event.simDate}`)
