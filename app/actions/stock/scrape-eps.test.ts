@@ -60,9 +60,12 @@ function testBuildEpsPayload(): void {
     assert.deepEqual(payload.range, { start: '2025-12-31', end: '2026-03-31' })
 }
 
-// Verify building a payload fails clearly when no EPS rows were found.
-function testBuildEpsPayloadWithoutData(): void {
-    assert.throws(() => buildEpsPayload('AAPL', {}, 'https://example.test/pe-ratio'), /No TTM Net EPS data/)
+// Verify an empty EPS series is allowed (e.g. ETFs) and yields a null range.
+function testBuildEpsPayloadAllowsEmpty(): void {
+    const payload = buildEpsPayload('SPY', {}, 'https://example.test/pe-ratio')
+
+    assert.deepEqual(payload.epsByDate, {})
+    assert.equal(payload.range, null)
 }
 
 // Verify the action fetches the page, writes eps.json, and reports the saved file.
@@ -136,12 +139,55 @@ async function testScrapeEpsActionSkipsExistingFile(): Promise<void> {
     assert.equal(writeWasCalled, false)
 }
 
+// Verify a valid page with the EPS header but no rows (an ETF) writes an empty
+// eps.json instead of failing.
+async function testScrapeEpsActionWritesEmptyForEtf(): Promise<void> {
+    // Has the "TTM Net EPS" header, but the only row is the live price row with no EPS.
+    const etfHtml =
+        '<table><tr><th>TTM Net EPS</th></tr>' +
+        '<tr><td style="text-align:center;">2026-06-15</td><td style="text-align:center;">590.12</td><td style="text-align:center;"></td><td style="text-align:center;">0</td></tr></table>'
+    let writeContents = ''
+    const scrapeEpsAction = createScrapeEpsAction({
+        cwd: () => '/repo',
+        fileExists: async () => false,
+        fetchPage: async () => ({ html: etfHtml, resolvedUrl: 'https://www.macrotrends.net/stocks/charts/SPY/spy/pe-ratio' }),
+        makeDirectory: async () => {},
+        writeFile: async (_filePath, contents) => {
+            writeContents = contents
+        },
+    })
+
+    const result = await scrapeEpsAction('SPY')
+
+    if (result.skipped) {
+        assert.fail('expected the scrape to run')
+        return
+    }
+
+    assert.equal(result.rowCount, 0)
+    assert.equal(result.range, null)
+    assert.deepEqual(JSON.parse(writeContents).epsByDate, {})
+}
+
+// Verify a page missing the EPS table entirely fails loudly (broken scrape / layout change).
+async function testScrapeEpsActionThrowsWhenTableMissing(): Promise<void> {
+    const scrapeEpsAction = createScrapeEpsAction({
+        cwd: () => '/repo',
+        fileExists: async () => false,
+        fetchPage: async () => ({ html: '<html><body>nothing useful</body></html>', resolvedUrl: 'https://example.test/pe-ratio' }),
+    })
+
+    await assert.rejects(scrapeEpsAction('AAPL'), /No TTM Net EPS table/)
+}
+
 // Run the focused action tests that protect the EPS scrape logic.
 export async function runScrapeEpsActionTests(): Promise<void> {
     testGetPeRatioUrl()
     testParseEpsByDate()
     testBuildEpsPayload()
-    testBuildEpsPayloadWithoutData()
+    testBuildEpsPayloadAllowsEmpty()
     await testScrapeEpsAction()
     await testScrapeEpsActionSkipsExistingFile()
+    await testScrapeEpsActionWritesEmptyForEtf()
+    await testScrapeEpsActionThrowsWhenTableMissing()
 }

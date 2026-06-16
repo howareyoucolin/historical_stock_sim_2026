@@ -12,6 +12,17 @@ export const EPS_SOURCE = 'Macrotrends'
 const BROWSER_USER_AGENT =
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
 
+// Macrotrends rate-limits bursts with a multi-second cooldown, so failed requests
+// are retried with an exponential backoff long enough to ride out the cooldown;
+// this doubles as throttling when many tickers are scraped in a row.
+const MAX_FETCH_ATTEMPTS = 6
+const RETRY_BASE_DELAY_MS = 4000
+
+// Pause for a number of milliseconds.
+function delay(milliseconds: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, milliseconds))
+}
+
 interface FetchedPage {
     html: string
     resolvedUrl: string
@@ -22,7 +33,7 @@ export interface ScrapeEpsPayload {
     metric: string
     source: string
     sourceUrl: string
-    range: { start: string; end: string }
+    range: { start: string; end: string } | null
     epsByDate: Record<string, number>
 }
 
@@ -46,9 +57,9 @@ export function getPeRatioUrl(stockCode: string): string {
     return `https://www.macrotrends.net/stocks/charts/${encodeURIComponent(stockCode)}/x/pe-ratio`
 }
 
-// Fetch a page over HTTPS, following redirects, and report the final URL so the
-// resolved Macrotrends company page can be recorded as the data source.
-function fetchPage(url: string): Promise<FetchedPage> {
+// Fetch a page over HTTPS once, following redirects, and report the final URL so
+// the resolved Macrotrends company page can be recorded as the data source.
+function fetchPageOnce(url: string): Promise<FetchedPage> {
     return new Promise((resolve, reject) => {
         https
             .get(url, { headers: { 'User-Agent': BROWSER_USER_AGENT, Accept: 'text/html' } }, (response) => {
@@ -57,7 +68,7 @@ function fetchPage(url: string): Promise<FetchedPage> {
                 if (statusCode >= 300 && statusCode < 400 && headers.location) {
                     response.resume()
                     const nextUrl = new URL(headers.location, url).toString()
-                    void fetchPage(nextUrl).then(resolve).catch(reject)
+                    void fetchPageOnce(nextUrl).then(resolve).catch(reject)
                     return
                 }
 
@@ -81,6 +92,27 @@ function fetchPage(url: string): Promise<FetchedPage> {
                 reject(new Error(`Macrotrends request failed: ${error.message}`))
             })
     })
+}
+
+// Fetch a page, retrying with a growing backoff so transient rate-limiting
+// recovers instead of failing the whole scrape.
+async function fetchPage(url: string): Promise<FetchedPage> {
+    let lastError: Error = new Error('Macrotrends request was never attempted.')
+
+    for (let attempt = 1; attempt <= MAX_FETCH_ATTEMPTS; attempt += 1) {
+        try {
+            return await fetchPageOnce(url)
+        } catch (error) {
+            lastError = error as Error
+
+            if (attempt < MAX_FETCH_ATTEMPTS) {
+                // Exponential backoff: 4s, 8s, 16s, 32s, 64s.
+                await delay(RETRY_BASE_DELAY_MS * 2 ** (attempt - 1))
+            }
+        }
+    }
+
+    throw lastError
 }
 
 // Read the plain text of each cell in a single table row.
@@ -118,13 +150,10 @@ export function parseEpsByDate(html: string): Record<string, number> {
     return epsByDate
 }
 
-// Build the persisted JSON payload for a scraped EPS file.
+// Build the persisted JSON payload for a scraped EPS file. An empty series is
+// allowed (e.g. ETFs have no earnings) and yields a null range.
 export function buildEpsPayload(stockCode: string, epsByDate: Record<string, number>, sourceUrl: string): ScrapeEpsPayload {
     const dates = Object.keys(epsByDate).sort()
-
-    if (dates.length === 0) {
-        throw new Error('No TTM Net EPS data was found on the Macrotrends page.')
-    }
 
     // Emit dates oldest-first to match the existing eps.json convention.
     const sortedEpsByDate: Record<string, number> = {}
@@ -138,7 +167,7 @@ export function buildEpsPayload(stockCode: string, epsByDate: Record<string, num
         metric: EPS_METRIC,
         source: EPS_SOURCE,
         sourceUrl,
-        range: { start: dates[0], end: dates[dates.length - 1] },
+        range: dates.length > 0 ? { start: dates[0], end: dates[dates.length - 1] } : null,
         epsByDate: sortedEpsByDate,
     }
 }
@@ -168,6 +197,15 @@ export function createScrapeEpsAction({
 
         const { html, resolvedUrl } = await fetchRemotePage(getPeRatioUrl(normalizedStockCode))
         const epsByDate = parseEpsByDate(html)
+
+        // A valid page always carries the EPS column header. Its absence alongside
+        // zero rows means the scrape broke (or the layout changed) rather than the
+        // instrument simply having no earnings, so fail loudly instead of writing
+        // an empty file. ETFs keep the header but report no rows, which is allowed.
+        if (Object.keys(epsByDate).length === 0 && !html.includes(EPS_METRIC)) {
+            throw new Error('No TTM Net EPS table was found on the Macrotrends page (the page may have changed).')
+        }
+
         const payload = buildEpsPayload(normalizedStockCode, epsByDate, resolvedUrl)
 
         await makeDirectory(outputDirectory, { recursive: true })
