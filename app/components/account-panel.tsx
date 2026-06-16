@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 
 import { createEmptyDefaultUserAccountSessionView, type AccountStockTableRow, type DefaultUserAccountSessionView } from '../actions/account/view-model'
 import { createDefaultAccountState } from '../actions/account/state'
+import { TradingCalendar } from './trading-calendar'
 
 const EMPTY_ACCOUNT_VIEW: DefaultUserAccountSessionView = createEmptyDefaultUserAccountSessionView(createDefaultAccountState())
 
@@ -56,9 +57,11 @@ export function AccountPanel() {
     const [isBusy, setIsBusy] = useState(false)
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
     const [isResetModalOpen, setIsResetModalOpen] = useState(false)
+    const [tradingDates, setTradingDates] = useState<string[]>([])
 
     useEffect(() => {
         void loadAccountSnapshot()
+        void loadTradingCalendar()
     }, [])
 
     // Load the current account snapshot from the shared API.
@@ -68,6 +71,40 @@ export function AccountPanel() {
 
         setAccountView(payload.view)
         setStatusMessage('Loaded shared account session.')
+    }
+
+    // Load the trading calendar so the date picker can restrict to real market days.
+    async function loadTradingCalendar(): Promise<void> {
+        const response = await fetch('/api/account/date', { cache: 'no-store' })
+        const payload = (await response.json()) as { tradingDates?: string[] }
+
+        if (payload.tradingDates) {
+            setTradingDates(payload.tradingDates)
+        }
+    }
+
+    // Advance the simulation date (one trading day, or forward to a chosen target) and refresh the view.
+    async function advanceDate(requestBody: { action: 'next' } | { action: 'set'; date: string }): Promise<void> {
+        setIsBusy(true)
+
+        try {
+            const response = await fetch('/api/account/date', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(requestBody),
+            })
+            const payload = (await response.json()) as AccountResponse
+
+            if (!response.ok || payload.error) {
+                setStatusMessage(payload.error ?? 'Date change failed.')
+                return
+            }
+
+            setAccountView(payload.view)
+            setStatusMessage(payload.message ?? 'Date advanced.')
+        } finally {
+            setIsBusy(false)
+        }
     }
 
     // Submit a buy or sell order for the symbol and quantity entered in the sidebar.
@@ -179,6 +216,20 @@ export function AccountPanel() {
                             Sell
                         </button>
                     </div>
+                </section>
+
+                <section className="dateBox">
+                    <h2>Time travel</h2>
+                    <button className="nextDayButton" type="button" onClick={() => void advanceDate({ action: 'next' })} disabled={isBusy}>
+                        Go to next day
+                    </button>
+                    <p className="fastForwardLabel">Fast forward to…</p>
+                    <TradingCalendar
+                        tradingDates={tradingDates}
+                        currentDate={account.date}
+                        disabled={isBusy}
+                        onSelect={(date) => void advanceDate({ action: 'set', date })}
+                    />
                 </section>
 
                 <div className="sidebarMeta">

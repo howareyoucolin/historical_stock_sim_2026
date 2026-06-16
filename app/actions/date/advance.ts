@@ -63,6 +63,16 @@ async function readTradingCalendar(cwd: () => string, readMarketDataFile: (path:
     }
 }
 
+// Expose the sorted trading calendar so the UI can restrict date pickers to real market days.
+export async function getTradingCalendarDates({
+    cwd = process.cwd,
+    readMarketDataFile = fs.readFile,
+}: AdvanceSimulationDependencies = {}): Promise<string[]> {
+    const dates = await readTradingCalendar(cwd, readMarketDataFile)
+
+    return dates.sort()
+}
+
 // Read a held stock's daily history for dividend lookups; a missing file simply yields no
 // dividends so a gap in local data never blocks advancing the simulation date.
 async function readStockHistoryMap(

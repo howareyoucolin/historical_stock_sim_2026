@@ -181,6 +181,132 @@ body {
     cursor: not-allowed;
 }
 
+/* ---- Time travel (date controls + calendar) ---- */
+.dateBox {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-strong);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dateBox h2 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.nextDayButton {
+    font: inherit;
+    font-weight: 600;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: var(--accent);
+    color: #fff;
+    cursor: pointer;
+}
+
+.nextDayButton:hover {
+    background: var(--accent-strong);
+}
+
+.nextDayButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.fastForwardLabel {
+    margin: 4px 0 0;
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.calendar {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.calendarNav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.calendarNav button {
+    font: inherit;
+    font-size: 1rem;
+    line-height: 1;
+    width: 26px;
+    height: 26px;
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    background: #fff;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.calendarNav button:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.calendarMonth {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.calendarGrid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 3px;
+}
+
+.calendarWeekday {
+    text-align: center;
+    font-size: 0.66rem;
+    color: var(--muted);
+    padding: 2px 0;
+}
+
+.calendarCell {
+    font: inherit;
+    font-size: 0.78rem;
+    min-height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    background: transparent;
+    color: #2b2320;
+    cursor: pointer;
+}
+
+.calendarCell:disabled {
+    color: rgba(122, 106, 93, 0.38);
+    cursor: not-allowed;
+}
+
+/* Selectable future trading days stand out with the warm accent. */
+.calendarCell:not(:disabled) {
+    background: var(--accent-soft);
+    color: var(--accent-strong);
+    font-weight: 600;
+}
+
+.calendarCell:not(:disabled):hover {
+    background: var(--accent);
+    color: #fff;
+}
+
+.calendarCell.empty {
+    background: none;
+    cursor: default;
+}
+
 .sidebarMeta {
     display: flex;
     flex-direction: column;
