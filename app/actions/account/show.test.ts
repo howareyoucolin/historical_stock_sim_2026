@@ -4,6 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 
 import { DATA_DIRECTORY_NAME, END_DATE, HISTORY_FILE_NAME, START_DATE } from '../stock/download-data'
+import { DATA_FILE_NAME } from '../stock/build-data'
 import { createDefaultAccountState, DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
 import { fetchDefaultUserAccountSession, showDefaultUserAccountSession } from './show'
 
@@ -29,6 +30,18 @@ async function writeLocalStockHistory(
         `${JSON.stringify({ stockCode, source: 'Yahoo Finance', range: { start: START_DATE, end: END_DATE }, historyByDate }, null, 2)}\n`,
         'utf8'
     )
+}
+
+// Write a combined data file (data.json) carrying close prices and PE ratios, matching `stock build` output.
+async function writeLocalStockData(
+    tempRepoRoot: string,
+    stockCode: string,
+    historyByDate: Record<string, { close: number | null; isPayoutDate: boolean; dividendPerShare: number; ttmEps: number | null; peRatio: number | null }>
+): Promise<void> {
+    const outputDirectory = path.join(tempRepoRoot, DATA_DIRECTORY_NAME, stockCode)
+
+    await fs.mkdir(outputDirectory, { recursive: true })
+    await fs.writeFile(path.join(outputDirectory, DATA_FILE_NAME), `${JSON.stringify({ stockCode, historyByDate }, null, 2)}\n`, 'utf8')
 }
 
 // Verify the fetch action returns the existing shared session JSON without changing its contents.
@@ -137,10 +150,49 @@ async function testShowDefaultUserAccountSession(): Promise<void> {
             'Cash: 1200.00',
             'Basis: 530.00 | Value: 610.00 | P/L: 80.00 | P/L%: 15.09%',
             '',
-            'stock_code | average_cost | current_price | quantity | total_value | total_gain_loss | percent_gain_loss',
-            '-----------+--------------+---------------+----------+-------------+-----------------+------------------',
-            'AAPL       |       110.00 |        150.00 |        3 |      450.00 |          120.00 |            36.36%',
-            'MSFT       |        50.00 |         40.00 |        4 |      160.00 |          -40.00 |           -20.00%',
+            'stock_code | average_cost | current_price | pe_ratio | quantity | total_value | total_gain_loss | percent_gain_loss',
+            '-----------+--------------+---------------+----------+----------+-------------+-----------------+------------------',
+            'AAPL       |       110.00 |        150.00 |        - |        3 |      450.00 |          120.00 |            36.36%',
+            'MSFT       |        50.00 |         40.00 |        - |        4 |      160.00 |          -40.00 |           -20.00%',
+        ].join('\n')
+    )
+}
+
+// Verify the show action renders the PE ratio from the combined data file, with a dash when EPS is unavailable (e.g. ETFs).
+async function testShowDefaultUserAccountSessionIncludesPeRatio(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+
+    await writeDefaultUserAccountSession(
+        {
+            date: '2018-03-10',
+            cash: 1200,
+            positions: {
+                AAPL: [{ quantity: 2, cost_per_share: 100, purchase_date: '2018-03-01' }],
+                SPY: [{ quantity: 1, cost_per_share: 250, purchase_date: '2018-03-01' }],
+            },
+        },
+        { cwd: () => tempRepoRoot }
+    )
+    await writeLocalStockData(tempRepoRoot, 'AAPL', {
+        '2018-03-10': { close: 150, isPayoutDate: false, dividendPerShare: 0, ttmEps: 8.14, peRatio: 18.42 },
+    })
+    await writeLocalStockData(tempRepoRoot, 'SPY', {
+        '2018-03-10': { close: 270, isPayoutDate: false, dividendPerShare: 0, ttmEps: null, peRatio: null },
+    })
+
+    const output = await showDefaultUserAccountSession({ cwd: () => tempRepoRoot })
+
+    assert.equal(
+        output,
+        [
+            'Date: 2018-03-10',
+            'Cash: 1200.00',
+            'Basis: 450.00 | Value: 570.00 | P/L: 120.00 | P/L%: 26.67%',
+            '',
+            'stock_code | average_cost | current_price | pe_ratio | quantity | total_value | total_gain_loss | percent_gain_loss',
+            '-----------+--------------+---------------+----------+----------+-------------+-----------------+------------------',
+            'AAPL       |       100.00 |        150.00 |    18.42 |        2 |      300.00 |          100.00 |            50.00%',
+            'SPY        |       250.00 |        270.00 |        - |        1 |      270.00 |           20.00 |             8.00%',
         ].join('\n')
     )
 }
@@ -170,5 +222,6 @@ export async function runShowAccountActionTests(): Promise<void> {
     await testFetchDefaultUserAccountSession()
     await testFetchDefaultUserAccountSessionCreatesDefaultFile()
     await testShowDefaultUserAccountSession()
+    await testShowDefaultUserAccountSessionIncludesPeRatio()
     await testShowDefaultUserAccountSessionWithoutTrackedStocks()
 }

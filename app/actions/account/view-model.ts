@@ -4,6 +4,7 @@ export interface AccountStockTableRow {
     stockCode: string
     averageCost: number
     currentPrice: number
+    peRatio: number | null
     quantity: number
     totalCostBasis: number
     totalValue: number

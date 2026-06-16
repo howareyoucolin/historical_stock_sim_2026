@@ -3,10 +3,16 @@ import path from 'node:path'
 
 import type { AccountStockTableRow, AccountStockTableSummary, DefaultUserAccountSessionView } from './view-model'
 import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
+import { DATA_FILE_NAME } from '../stock/build-data'
 import { readDefaultUserAccountSession, type AccountPosition, type AccountSessionDependencies, type AccountState, DEFAULT_USER_SESSION_RELATIVE_PATH } from './model'
 
-interface StockHistoryPayload {
-    historyByDate?: Record<string, { close?: number | null }>
+interface StockMarketEntry {
+    close?: number | null
+    peRatio?: number | null
+}
+
+interface StockMarketPayload {
+    historyByDate?: Record<string, StockMarketEntry>
 }
 
 interface ShowAccountSessionDependencies extends AccountSessionDependencies {
@@ -20,48 +26,54 @@ export async function fetchDefaultUserAccountSession(
     return readDefaultUserAccountSession(dependencies)
 }
 
-// Read the saved local price history for a stock code so the CLI can value the current holdings table.
-async function readLocalStockHistory(
+// Read a stock's saved market data, preferring the combined data file (which carries
+// the PE ratio) and falling back to the raw price history for stocks that have been
+// downloaded but not yet built.
+async function readLocalStockMarketData(
     stockCode: string,
     {
         cwd = process.cwd,
         readMarketDataFile = fs.readFile,
     }: ShowAccountSessionDependencies
-): Promise<StockHistoryPayload> {
-    const historyFilePath = path.join(cwd(), DATA_DIRECTORY_NAME, stockCode, HISTORY_FILE_NAME)
+): Promise<StockMarketPayload> {
+    const stockDirectory = path.join(cwd(), DATA_DIRECTORY_NAME, stockCode)
 
-    try {
-        return JSON.parse(await readMarketDataFile(historyFilePath, 'utf8')) as StockHistoryPayload
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            throw new Error(`No local history file found for ${stockCode}. Run \`stock download ${stockCode}\` first.`)
+    for (const fileName of [DATA_FILE_NAME, HISTORY_FILE_NAME]) {
+        try {
+            return JSON.parse(await readMarketDataFile(path.join(stockDirectory, fileName), 'utf8')) as StockMarketPayload
+        } catch (error) {
+            if (error instanceof SyntaxError) {
+                throw new Error(`Invalid stock data JSON for ${stockCode}: ${error.message}`)
+            }
+
+            // A missing combined data file just means we fall back to price history;
+            // any other error (or a missing history file too) is surfaced below.
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+                throw error
+            }
         }
-
-        if (error instanceof SyntaxError) {
-            throw new Error(`Invalid stock history JSON for ${stockCode}: ${error.message}`)
-        }
-
-        throw error
     }
+
+    throw new Error(`No local data found for ${stockCode}. Run \`stock download ${stockCode}\` first.`)
 }
 
-// Look up the saved closing price for a stock on the account's current simulation date.
-function getCurrentPriceForDate(stockCode: string, accountDate: string, historyPayload: StockHistoryPayload): number {
-    const historyEntry = historyPayload.historyByDate?.[accountDate]
+// Look up the saved closing price and PE ratio for a stock on the account's current simulation date.
+function getMarketDataForDate(stockCode: string, accountDate: string, payload: StockMarketPayload): { close: number; peRatio: number | null } {
+    const entry = payload.historyByDate?.[accountDate]
 
-    if (!historyEntry) {
+    if (!entry) {
         throw new Error(`No price data found for ${stockCode} on ${accountDate}.`)
     }
 
-    if (historyEntry.close === null || historyEntry.close === undefined) {
+    if (entry.close === null || entry.close === undefined) {
         throw new Error(`Closing price for ${stockCode} on ${accountDate} is unavailable.`)
     }
 
-    return historyEntry.close
+    return { close: entry.close, peRatio: entry.peRatio ?? null }
 }
 
 // Aggregate all lots for a stock code into the single row shown in the CLI holdings table.
-function buildAccountStockTableRow(stockCode: string, positions: AccountPosition[], currentPrice: number): AccountStockTableRow {
+function buildAccountStockTableRow(stockCode: string, positions: AccountPosition[], currentPrice: number, peRatio: number | null): AccountStockTableRow {
     const quantity = positions.reduce((total, position) => total + position.quantity, 0)
     const totalCostBasis = positions.reduce((total, position) => total + position.quantity * position.cost_per_share, 0)
     const averageCost = quantity === 0 ? 0 : totalCostBasis / quantity
@@ -73,6 +85,7 @@ function buildAccountStockTableRow(stockCode: string, positions: AccountPosition
         stockCode,
         averageCost,
         currentPrice,
+        peRatio,
         quantity,
         totalCostBasis,
         totalValue,
@@ -93,10 +106,10 @@ async function buildAccountStockTableRows(
     const rows: AccountStockTableRow[] = []
 
     for (const [stockCode, positions] of stockEntries) {
-        const historyPayload = await readLocalStockHistory(stockCode, dependencies)
-        const currentPrice = getCurrentPriceForDate(stockCode, account.date, historyPayload)
+        const marketPayload = await readLocalStockMarketData(stockCode, dependencies)
+        const { close, peRatio } = getMarketDataForDate(stockCode, account.date, marketPayload)
 
-        rows.push(buildAccountStockTableRow(stockCode, positions, currentPrice))
+        rows.push(buildAccountStockTableRow(stockCode, positions, close, peRatio))
     }
 
     return rows
@@ -110,6 +123,11 @@ function formatCurrency(value: number): string {
 // Format a percentage value for the stock table.
 function formatPercent(value: number): string {
     return `${value.toFixed(2)}%`
+}
+
+// Format the PE ratio, showing a dash when earnings are unavailable (e.g. ETFs or unbuilt stocks).
+function formatPeRatio(peRatio: number | null): string {
+    return peRatio === null ? '-' : peRatio.toFixed(2)
 }
 
 // Aggregate the overall portfolio values shown above the stock table.
@@ -186,6 +204,7 @@ function formatAccountStockTable(rows: AccountStockTableRow[]): string {
         'stock_code',
         'average_cost',
         'current_price',
+        'pe_ratio',
         'quantity',
         'total_value',
         'total_gain_loss',
@@ -195,6 +214,7 @@ function formatAccountStockTable(rows: AccountStockTableRow[]): string {
         row.stockCode,
         formatCurrency(row.averageCost),
         formatCurrency(row.currentPrice),
+        formatPeRatio(row.peRatio),
         `${row.quantity}`,
         formatCurrency(row.totalValue),
         formatCurrency(row.totalGainLoss),
