@@ -90,6 +90,8 @@ body {
     display: flex;
     flex-direction: column;
     gap: 18px;
+    flex: 1;
+    min-height: 0;
 }
 
 .brand .eyebrow {
@@ -207,21 +209,91 @@ body {
     min-height: 1.2em;
 }
 
+/* Small, low-emphasis reset pinned to the bottom-left so it is hard to hit by accident. */
 .resetButton {
+    margin-top: auto;
+    align-self: flex-start;
+    padding: 5px 12px;
+    font-size: 0.76rem;
+    font-weight: 500;
     background: transparent;
     border-color: var(--border-strong);
     color: var(--muted);
 }
 
-.sessionPath {
-    margin: 0;
-    font-size: 0.72rem;
+.resetButton:hover {
+    border-color: var(--neg);
+    color: var(--neg);
+}
+
+.status code {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+}
+
+/* ---- Confirmation modal ---- */
+.modalOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(43, 35, 32, 0.45);
+}
+
+.modalCard {
+    width: min(100%, 380px);
+    background: var(--surface-strong);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 22px;
+    box-shadow: 0 24px 60px rgba(60, 30, 20, 0.25);
+}
+
+.modalCard h3 {
+    margin: 0 0 8px;
+    font-size: 1.1rem;
+}
+
+.modalCard p {
+    margin: 0 0 18px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.45;
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.modalCancel,
+.modalConfirm {
+    font: inherit;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.modalCancel {
+    background: transparent;
+    border: 1px solid var(--border-strong);
     color: var(--muted);
 }
 
-.sessionPath code,
-.status code {
-    font-family: 'SFMono-Regular', Consolas, monospace;
+.modalConfirm {
+    background: var(--neg);
+    border: 1px solid transparent;
+    color: #fff;
+}
+
+.modalCancel:disabled,
+.modalConfirm:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 /* ---- Content ---- */

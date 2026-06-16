@@ -50,12 +50,12 @@ function tone(value: number): string {
 // Render the full-width portfolio dashboard with a trading sidebar and holdings table.
 export function AccountPanel() {
     const [accountView, setAccountView] = useState<DefaultUserAccountSessionView>(EMPTY_ACCOUNT_VIEW)
-    const [sessionFile, setSessionFile] = useState('user-sessions/default.json')
     const [statusMessage, setStatusMessage] = useState('Loading the shared account session...')
     const [symbol, setSymbol] = useState('')
     const [quantity, setQuantity] = useState('')
     const [isBusy, setIsBusy] = useState(false)
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
+    const [isResetModalOpen, setIsResetModalOpen] = useState(false)
 
     useEffect(() => {
         void loadAccountSnapshot()
@@ -67,8 +67,7 @@ export function AccountPanel() {
         const payload = (await response.json()) as AccountResponse
 
         setAccountView(payload.view)
-        setSessionFile(payload.sessionFile)
-        setStatusMessage(`Loaded shared session from ${payload.sessionFile}.`)
+        setStatusMessage('Loaded shared account session.')
     }
 
     // Submit a buy or sell order for the symbol and quantity entered in the sidebar.
@@ -102,7 +101,6 @@ export function AccountPanel() {
             }
 
             setAccountView(payload.view)
-            setSessionFile(payload.sessionFile)
             setStatusMessage(payload.message ?? 'Trade complete.')
             setQuantity('')
         } finally {
@@ -119,8 +117,7 @@ export function AccountPanel() {
             const payload = (await response.json()) as AccountResponse
 
             setAccountView(payload.view)
-            setSessionFile(payload.sessionFile)
-            setStatusMessage(`Reset shared session in ${payload.sessionFile}.`)
+            setStatusMessage('Account reset to the default starting state.')
         } finally {
             setIsBusy(false)
         }
@@ -141,6 +138,7 @@ export function AccountPanel() {
     ]
 
     return (
+        <>
         <div className={`appShell ${isSidebarCollapsed ? 'sidebarCollapsed' : ''}`}>
             <aside className="sidebar">
                 <button
@@ -196,12 +194,9 @@ export function AccountPanel() {
 
                 <p className="status">{statusMessage}</p>
 
-                <button className="resetButton" type="button" onClick={() => void resetAccount()} disabled={isBusy}>
-                    Reset account
+                <button className="resetButton" type="button" onClick={() => setIsResetModalOpen(true)} disabled={isBusy}>
+                    Reset
                 </button>
-                <p className="sessionPath">
-                    <code>{sessionFile}</code>
-                </p>
                 </div>
                 )}
             </aside>
@@ -273,5 +268,31 @@ export function AccountPanel() {
                 </section>
             </main>
         </div>
+
+        {isResetModalOpen && (
+            <div className="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+                <div className="modalCard">
+                    <h3 id="resetTitle">Reset account?</h3>
+                    <p>This clears all holdings and cash and restores the default starting state. This cannot be undone.</p>
+                    <div className="modalActions">
+                        <button type="button" className="modalCancel" onClick={() => setIsResetModalOpen(false)} disabled={isBusy}>
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            className="modalConfirm"
+                            onClick={() => {
+                                setIsResetModalOpen(false)
+                                void resetAccount()
+                            }}
+                            disabled={isBusy}
+                        >
+                            Reset account
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
     )
 }
