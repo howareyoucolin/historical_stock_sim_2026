@@ -4,8 +4,8 @@ import type { ReactNode } from 'react'
 import './globals.css'
 
 export const metadata: Metadata = {
-    title: 'Hello World',
-    description: 'Simple Next.js starter',
+    title: 'StockSimulate 2026',
+    description: 'Practice investing with a simulated stock portfolio using real historical market data.',
 }
 
 // Render the shared document shell for every app route.
