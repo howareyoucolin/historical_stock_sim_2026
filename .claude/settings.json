@@ -5,7 +5,10 @@
       "Bash(git rm *)",
       "Bash(node -e 'const t=require\\(\"./config/tickers.json\"\\); console.log\\(\"tickers:\",t.length,\"| BRK.B present:\",t.includes\\(\"BRK.B\"\\)\\)')",
       "Bash(git add *)",
-      "Bash(node -e 'const j=require\\(\"./market-data/AAPL/data.json\"\\); const k=Object.keys\\(j.historyByDate\\); const payout=k.find\\(d=>j.historyByDate[d].isPayoutDate\\); console.log\\(\"sample payout date entry:\", payout, JSON.stringify\\(j.historyByDate[payout]\\)\\)')"
+      "Bash(node -e 'const j=require\\(\"./market-data/AAPL/data.json\"\\); const k=Object.keys\\(j.historyByDate\\); const payout=k.find\\(d=>j.historyByDate[d].isPayoutDate\\); console.log\\(\"sample payout date entry:\", payout, JSON.stringify\\(j.historyByDate[payout]\\)\\)')",
+      "Bash(echo \"dev started pid $!\")",
+      "Bash(curl -s http://localhost:8600/api/account)",
+      "Bash(pkill -f \"next dev\")"
     ]
   }
 }
