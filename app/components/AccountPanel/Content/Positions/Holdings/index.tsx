@@ -1,8 +1,8 @@
 'use client'
 
 import './style.css'
-import { useAppDispatch, useAppSelector } from '../../../../store/hooks'
-import { money, percent, signedMoney, signedPercent, tone } from '../../../shared/format'
+import { useAppDispatch, useAppSelector } from '../../../../../store/hooks'
+import { money, percent, signedMoney, signedPercent, tone } from '../../../../shared/format'
 import { prefillTradeFromRow } from './actions'
 
 // Render the dense holdings table from the store. Clicking a symbol prefills the trade form via

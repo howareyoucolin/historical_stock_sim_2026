@@ -1,9 +1,9 @@
 'use client'
 
 import './style.css'
-import { useAppDispatch, useAppSelector } from '../../../../store/hooks'
-import { openDepositModal } from '../../../../store/uiSlice'
-import { money, signedMoney, signedPercent, tone } from '../../../shared/format'
+import { useAppDispatch, useAppSelector } from '../../../../../store/hooks'
+import { openDepositModal } from '../../../../../store/uiSlice'
+import { money, signedMoney, signedPercent, tone } from '../../../../shared/format'
 
 // Render the portfolio metric cards (cash, market value, day change, gain/loss) from the store.
 // The cash card carries the Deposit button, which opens the deposit modal.

@@ -1,0 +1,4 @@
+.positionsTab {
+    display: flex;
+    flex-direction: column;
+}

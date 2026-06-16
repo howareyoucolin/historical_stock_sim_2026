@@ -106,6 +106,27 @@ export async function clearHistoryLog({
     }
 }
 
+// Read the history log as an ordered list of raw entry lines for programmatic consumers such as
+// the browser history tab; returns an empty array when nothing has been recorded yet.
+export async function readHistoryLogEntries({
+    cwd = process.cwd,
+    readFile = fs.readFile,
+}: HistoryLogDependencies = {}): Promise<string[]> {
+    const logFilePath = path.join(cwd(), HISTORY_LOG_RELATIVE_PATH)
+
+    try {
+        const contents = (await readFile(logFilePath, 'utf8')).trim()
+
+        return contents.length === 0 ? [] : contents.split('\n')
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            return []
+        }
+
+        throw error
+    }
+}
+
 // Read the history log for display, returning a friendly placeholder when nothing is recorded yet.
 export async function showHistoryLog({
     cwd = process.cwd,

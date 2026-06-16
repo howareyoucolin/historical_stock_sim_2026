@@ -16,6 +16,7 @@ interface AccountSliceState {
     status: string
     isBusy: boolean
     tradingDates: string[]
+    historyEntries: string[]
 }
 
 const initialState: AccountSliceState = {
@@ -23,6 +24,7 @@ const initialState: AccountSliceState = {
     status: 'Loading the shared account session...',
     isBusy: false,
     tradingDates: [],
+    historyEntries: [],
 }
 
 // Hold the server-owned account snapshot plus the transient busy/status flags the UI reacts to.
@@ -42,8 +44,11 @@ const accountSlice = createSlice({
         setTradingDates(state, action: PayloadAction<string[]>) {
             state.tradingDates = action.payload
         },
+        setHistoryEntries(state, action: PayloadAction<string[]>) {
+            state.historyEntries = action.payload
+        },
     },
 })
 
-export const { setView, setStatus, setBusy, setTradingDates } = accountSlice.actions
+export const { setView, setStatus, setBusy, setTradingDates, setHistoryEntries } = accountSlice.actions
 export default accountSlice.reducer

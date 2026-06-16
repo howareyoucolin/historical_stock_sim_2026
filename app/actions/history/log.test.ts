@@ -6,7 +6,7 @@ import path from 'node:path'
 import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME, START_DATE, END_DATE } from '../stock/download-data'
 import { buyStockInDefaultUserAccountSession } from '../account/buy'
 import { DEFAULT_ACCOUNT_DATE, writeDefaultUserAccountSession } from '../account/model'
-import { appendHistoryEvent, clearHistoryLog, showHistoryLog, HISTORY_LOG_RELATIVE_PATH } from './log'
+import { appendHistoryEvent, clearHistoryLog, readHistoryLogEntries, showHistoryLog, HISTORY_LOG_RELATIVE_PATH } from './log'
 
 // Build a temporary repo root so history log tests can write to an isolated log file.
 async function createTempRepoRoot(): Promise<string> {
@@ -122,6 +122,27 @@ async function testClearHistoryLog(): Promise<void> {
     assert.equal(await showHistoryLog({ cwd: () => tempRepoRoot }), 'No history events recorded yet.')
 }
 
+// Verify the entries reader returns one line per event and an empty array when nothing is recorded.
+async function testReadHistoryLogEntries(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+
+    assert.deepEqual(await readHistoryLogEntries({ cwd: () => tempRepoRoot }), [])
+
+    await appendHistoryEvent(
+        { type: 'DEPOSIT', simDate: '2016-01-04', cashDelta: 1000 },
+        { cwd: () => tempRepoRoot, now: fixedNow }
+    )
+    await appendHistoryEvent(
+        { type: 'SELL', simDate: '2016-03-01', stockCode: 'AAPL', quantity: 2, pricePerShare: 110, cashDelta: 220 },
+        { cwd: () => tempRepoRoot, now: fixedNow }
+    )
+
+    assert.deepEqual(await readHistoryLogEntries({ cwd: () => tempRepoRoot }), [
+        '2026-06-16T14:23:01.123Z DEPOSIT cash=+1000.00 sim=2016-01-04',
+        '2026-06-16T14:23:01.123Z SELL stock=AAPL qty=2 price=110.00 cash=+220.00 sim=2016-03-01',
+    ])
+}
+
 // Run the focused history log tests that protect log formatting, display, and action wiring.
 export async function runHistoryLogActionTests(): Promise<void> {
     await testAppendHistoryEventFormatsLines()
@@ -129,4 +150,5 @@ export async function runHistoryLogActionTests(): Promise<void> {
     await testShowHistoryLogReturnsEntries()
     await testBuyAppendsHistoryEvent()
     await testClearHistoryLog()
+    await testReadHistoryLogEntries()
 }

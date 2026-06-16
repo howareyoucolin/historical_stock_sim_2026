@@ -5,12 +5,16 @@ export interface CalendarPosition {
     left: number
 }
 
+// The content-area tabs shown above the main column.
+export type ContentTab = 'summary' | 'positions' | 'histories' | 'analysis'
+
 interface UiSliceState {
     isSidebarCollapsed: boolean
     isResetModalOpen: boolean
     isDepositModalOpen: boolean
     isCalendarOpen: boolean
     calendarPosition: CalendarPosition | null
+    activeTab: ContentTab
 }
 
 const initialState: UiSliceState = {
@@ -19,6 +23,8 @@ const initialState: UiSliceState = {
     isDepositModalOpen: false,
     isCalendarOpen: false,
     calendarPosition: null,
+    // Default to Positions so real holdings show on load rather than a placeholder tab.
+    activeTab: 'positions',
 }
 
 // Track purely presentational toggles (sidebar, modals, calendar popover) so any component can read
@@ -49,6 +55,9 @@ const uiSlice = createSlice({
         closeCalendar(state) {
             state.isCalendarOpen = false
         },
+        setActiveTab(state, action: PayloadAction<ContentTab>) {
+            state.activeTab = action.payload
+        },
     },
 })
 
@@ -60,5 +69,6 @@ export const {
     closeDepositModal,
     openCalendar,
     closeCalendar,
+    setActiveTab,
 } = uiSlice.actions
 export default uiSlice.reducer
