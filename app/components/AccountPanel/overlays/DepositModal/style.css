@@ -1,0 +1,20 @@
+.depositConfirm {
+    font: inherit;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: var(--pos);
+    color: #fff;
+    cursor: pointer;
+}
+
+.depositConfirm:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* Space the deposit amount input from the modal action buttons. */
+.modalCard .field {
+    margin-bottom: 18px;
+}

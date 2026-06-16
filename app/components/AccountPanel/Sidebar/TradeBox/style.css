@@ -1,0 +1,53 @@
+.tradeBox {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-strong);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tradeBox h2 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.tradeFields {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 10px;
+}
+
+.tradeButtons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-top: 2px;
+}
+
+.buyButton,
+.sellButton {
+    font: inherit;
+    font-weight: 600;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+}
+
+.buyButton {
+    background: var(--pos);
+    color: #fff;
+}
+
+.sellButton {
+    background: var(--neg);
+    color: #fff;
+}
+
+.buyButton:disabled,
+.sellButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}

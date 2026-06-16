@@ -1,0 +1,73 @@
+/* ---- Sidebar ---- */
+.sidebar {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100vh;
+    overflow-y: auto;
+    padding: 16px;
+    border-right: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.appShell.sidebarCollapsed .sidebar {
+    padding: 16px 8px;
+    align-items: center;
+}
+
+.collapseToggle {
+    font: inherit;
+    font-size: 0.8rem;
+    align-self: flex-end;
+    padding: 6px 10px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface-strong);
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.appShell.sidebarCollapsed .collapseToggle {
+    align-self: center;
+}
+
+.collapseToggle:hover {
+    color: var(--accent);
+    border-color: var(--accent);
+}
+
+.sidebarBody {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    flex: 1;
+    min-height: 0;
+}
+
+.brand .eyebrow {
+    margin: 0;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.68rem;
+    color: var(--accent);
+}
+
+.brand h1 {
+    margin: 3px 0 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+}
+
+.status {
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--muted);
+    min-height: 1.2em;
+}
+
+.status code {
+    font-family: 'SFMono-Regular', Consolas, monospace;
+}

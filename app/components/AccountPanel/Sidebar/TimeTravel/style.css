@@ -1,0 +1,58 @@
+/* ---- Time travel (date controls) ---- */
+.dateBox {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface-strong);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.dateBox h2 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.dateButtons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.nextDayButton,
+.fastForwardButton {
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 9px 8px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.nextDayButton {
+    background: #1c1815;
+    color: #fff;
+}
+
+.nextDayButton:hover {
+    background: #000;
+}
+
+.fastForwardButton {
+    background: transparent;
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.fastForwardButton:hover {
+    background: var(--accent-soft);
+}
+
+.nextDayButton:disabled,
+.fastForwardButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}

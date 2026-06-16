@@ -1,0 +1,25 @@
+/* App shell: collapsible trade sidebar beside a full-width content column. */
+.appShell {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.appShell.sidebarCollapsed {
+    grid-template-columns: 52px 1fr;
+}
+
+@media (max-width: 880px) {
+    .appShell,
+    .appShell.sidebarCollapsed {
+        grid-template-columns: 1fr;
+    }
+
+    .sidebar {
+        position: static;
+        height: auto;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+    }
+}

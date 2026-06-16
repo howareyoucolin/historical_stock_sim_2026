@@ -1,0 +1,57 @@
+.accountHeader {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 14px;
+    margin-bottom: 20px;
+}
+
+.metric {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--surface);
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.metricLabel {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+}
+
+.metricValue {
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+
+.metricValueRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.depositButton {
+    flex-shrink: 0;
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+}
+
+.depositButton:hover {
+    background: var(--accent-soft);
+}
+
+.depositButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}

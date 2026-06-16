@@ -2,12 +2,9 @@
 
 import { useEffect, useMemo, useState } from 'react'
 
-interface TradingCalendarProps {
-    tradingDates: string[]
-    currentDate: string
-    disabled: boolean
-    onSelect: (date: string) => void
-}
+import './style.css'
+import { useAppDispatch, useAppSelector } from '../../../../../store/hooks'
+import { selectTradingDate } from './actions'
 
 const WEEKDAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']
 const MONTH_LABELS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
@@ -22,8 +19,15 @@ function isoDate(year: number, monthIndex: number, day: number): string {
     return `${year}-${pad(monthIndex + 1)}-${pad(day)}`
 }
 
-// Render a month-grid date picker where only future trading days (weekday, non-holiday) are selectable.
-export function TradingCalendar({ tradingDates, currentDate, disabled, onSelect }: TradingCalendarProps) {
+// Render a month-grid date picker where only future trading days (weekday, non-holiday) are
+// selectable. The trading calendar, current date, and busy flag are read from the store; the
+// visible month is local view state.
+export function TradingCalendar() {
+    const dispatch = useAppDispatch()
+    const tradingDates = useAppSelector((state) => state.account.tradingDates)
+    const currentDate = useAppSelector((state) => state.account.view.account.date)
+    const disabled = useAppSelector((state) => state.account.isBusy)
+
     const tradingSet = useMemo(() => new Set(tradingDates), [tradingDates])
     const [year, setYear] = useState(() => Number(currentDate.slice(0, 4)))
     const [monthIndex, setMonthIndex] = useState(() => Number(currentDate.slice(5, 7)) - 1)
@@ -79,7 +83,7 @@ export function TradingCalendar({ tradingDates, currentDate, disabled, onSelect 
                             key={date}
                             className="calendarCell"
                             disabled={!isSelectable}
-                            onClick={() => onSelect(date)}
+                            onClick={() => void dispatch(selectTradingDate(date))}
                             title={isSelectable ? `Fast forward to ${date}` : 'Market closed'}
                         >
                             {day}
