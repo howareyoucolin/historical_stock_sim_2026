@@ -123,12 +123,19 @@ body {
     font-size: 1rem;
 }
 
+.tradeFields {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 10px;
+}
+
 .field {
     display: flex;
     flex-direction: column;
     gap: 5px;
     font-size: 0.82rem;
     color: var(--muted);
+    min-width: 0;
 }
 
 .field input {
@@ -197,30 +204,104 @@ body {
     font-size: 1rem;
 }
 
-.nextDayButton {
+.dateButtons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.nextDayButton,
+.fastForwardButton {
     font: inherit;
+    font-size: 0.82rem;
     font-weight: 600;
-    padding: 9px 12px;
+    padding: 9px 8px;
     border-radius: 8px;
     border: 1px solid transparent;
-    background: var(--accent);
-    color: #fff;
     cursor: pointer;
+    white-space: nowrap;
+}
+
+.nextDayButton {
+    background: #1c1815;
+    color: #fff;
 }
 
 .nextDayButton:hover {
-    background: var(--accent-strong);
+    background: #000;
 }
 
-.nextDayButton:disabled {
+.fastForwardButton {
+    background: transparent;
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.fastForwardButton:hover {
+    background: var(--accent-soft);
+}
+
+.nextDayButton:disabled,
+.fastForwardButton:disabled {
     opacity: 0.55;
     cursor: not-allowed;
 }
 
-.fastForwardLabel {
-    margin: 4px 0 0;
-    font-size: 0.82rem;
+/* Calendar popover anchored to the right of the sidebar. */
+.popoverBackdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.calendarPopover {
+    position: fixed;
+    z-index: 40;
+    top: 88px;
+    left: 312px;
+    width: 256px;
+    background: var(--surface-strong);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    box-shadow: 0 18px 44px rgba(60, 30, 20, 0.22);
+}
+
+.popoverHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
     color: var(--muted);
+}
+
+.popoverClose {
+    font: inherit;
+    font-size: 1.1rem;
+    line-height: 1;
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.popoverClose:hover {
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+@media (max-width: 880px) {
+    .calendarPopover {
+        left: 12px;
+        right: 12px;
+        width: auto;
+    }
 }
 
 .calendar {
@@ -416,10 +497,27 @@ body {
     color: #fff;
 }
 
+.depositConfirm {
+    font: inherit;
+    font-weight: 600;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    background: var(--pos);
+    color: #fff;
+    cursor: pointer;
+}
+
 .modalCancel:disabled,
-.modalConfirm:disabled {
+.modalConfirm:disabled,
+.depositConfirm:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+}
+
+/* Space the deposit amount input from the modal action buttons. */
+.modalCard .field {
+    margin-bottom: 18px;
 }
 
 /* ---- Content ---- */
@@ -455,6 +553,35 @@ body {
 .metricValue {
     font-size: 1.25rem;
     font-weight: 600;
+}
+
+.metricValueRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.depositButton {
+    flex-shrink: 0;
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 600;
+    padding: 4px 12px;
+    border-radius: 7px;
+    border: 1px solid var(--accent);
+    background: transparent;
+    color: var(--accent);
+    cursor: pointer;
+}
+
+.depositButton:hover {
+    background: var(--accent-soft);
+}
+
+.depositButton:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
 }
 
 .holdings {

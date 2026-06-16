@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { createEmptyDefaultUserAccountSessionView, type AccountStockTableRow, type DefaultUserAccountSessionView } from '../actions/account/view-model'
 import { createDefaultAccountState } from '../actions/account/state'
@@ -57,7 +57,12 @@ export function AccountPanel() {
     const [isBusy, setIsBusy] = useState(false)
     const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
     const [isResetModalOpen, setIsResetModalOpen] = useState(false)
+    const [isDepositModalOpen, setIsDepositModalOpen] = useState(false)
+    const [depositAmount, setDepositAmount] = useState('')
+    const [isCalendarOpen, setIsCalendarOpen] = useState(false)
+    const [calendarPosition, setCalendarPosition] = useState<{ top: number; left: number } | null>(null)
     const [tradingDates, setTradingDates] = useState<string[]>([])
+    const fastForwardRef = useRef<HTMLButtonElement>(null)
 
     useEffect(() => {
         void loadAccountSnapshot()
@@ -81,6 +86,20 @@ export function AccountPanel() {
         if (payload.tradingDates) {
             setTradingDates(payload.tradingDates)
         }
+    }
+
+    // Open the calendar popover anchored to the right of the Fast Forward button.
+    function openCalendar(): void {
+        const rect = fastForwardRef.current?.getBoundingClientRect()
+
+        if (rect) {
+            // Align the popover top with the button, clamped so it stays within the viewport.
+            const top = Math.max(8, Math.min(rect.top, window.innerHeight - 360))
+
+            setCalendarPosition({ top, left: rect.right + 8 })
+        }
+
+        setIsCalendarOpen(true)
     }
 
     // Advance the simulation date (one trading day, or forward to a chosen target) and refresh the view.
@@ -145,6 +164,39 @@ export function AccountPanel() {
         }
     }
 
+    // Deposit the entered cash amount into the shared account and refresh the view.
+    async function submitDeposit(): Promise<void> {
+        const parsedAmount = Number(depositAmount)
+
+        if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+            setStatusMessage('Deposit amount must be a positive number.')
+            return
+        }
+
+        setIsBusy(true)
+
+        try {
+            const response = await fetch('/api/account/deposit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ amount: parsedAmount }),
+            })
+            const payload = (await response.json()) as AccountResponse
+
+            if (!response.ok || payload.error) {
+                setStatusMessage(payload.error ?? 'Deposit failed.')
+                return
+            }
+
+            setAccountView(payload.view)
+            setStatusMessage(payload.message ?? 'Deposit complete.')
+            setDepositAmount('')
+            setIsDepositModalOpen(false)
+        } finally {
+            setIsBusy(false)
+        }
+    }
+
     // Reset the shared account session file to the default simulation shape.
     async function resetAccount(): Promise<void> {
         setIsBusy(true)
@@ -195,19 +247,21 @@ export function AccountPanel() {
 
                 <section className="tradeBox">
                     <h2>Trade</h2>
-                    <label className="field">
-                        <span>Symbol</span>
-                        <input
-                            value={symbol}
-                            onChange={(event) => setSymbol(event.target.value.toUpperCase())}
-                            placeholder="AAPL"
-                            autoComplete="off"
-                        />
-                    </label>
-                    <label className="field">
-                        <span>Quantity</span>
-                        <input value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="10" inputMode="numeric" />
-                    </label>
+                    <div className="tradeFields">
+                        <label className="field">
+                            <span>Symbol</span>
+                            <input
+                                value={symbol}
+                                onChange={(event) => setSymbol(event.target.value.toUpperCase())}
+                                placeholder="AAPL"
+                                autoComplete="off"
+                            />
+                        </label>
+                        <label className="field">
+                            <span>Quantity</span>
+                            <input value={quantity} onChange={(event) => setQuantity(event.target.value)} placeholder="10" inputMode="numeric" />
+                        </label>
+                    </div>
                     <div className="tradeButtons">
                         <button className="buyButton" type="button" onClick={() => void submitTrade('buy')} disabled={isBusy}>
                             Buy
@@ -220,16 +274,14 @@ export function AccountPanel() {
 
                 <section className="dateBox">
                     <h2>Time travel</h2>
-                    <button className="nextDayButton" type="button" onClick={() => void advanceDate({ action: 'next' })} disabled={isBusy}>
-                        Go to next day
-                    </button>
-                    <p className="fastForwardLabel">Fast forward to…</p>
-                    <TradingCalendar
-                        tradingDates={tradingDates}
-                        currentDate={account.date}
-                        disabled={isBusy}
-                        onSelect={(date) => void advanceDate({ action: 'set', date })}
-                    />
+                    <div className="dateButtons">
+                        <button className="nextDayButton" type="button" onClick={() => void advanceDate({ action: 'next' })} disabled={isBusy}>
+                            Next Day
+                        </button>
+                        <button ref={fastForwardRef} className="fastForwardButton" type="button" onClick={openCalendar} disabled={isBusy}>
+                            Fast Forward
+                        </button>
+                    </div>
                 </section>
 
                 <div className="sidebarMeta">
@@ -238,8 +290,12 @@ export function AccountPanel() {
                         <strong>{account.date}</strong>
                     </div>
                     <div className="metaRow">
-                        <span>Cash</span>
-                        <strong>{money(account.cash)}</strong>
+                        <span>Principal</span>
+                        <strong>{money(summary.principal)}</strong>
+                    </div>
+                    <div className="metaRow">
+                        <span>Current total</span>
+                        <strong>{money(account.cash + summary.totalCurrentValue)}</strong>
                     </div>
                 </div>
 
@@ -257,7 +313,16 @@ export function AccountPanel() {
                     {headerMetrics.map((metric) => (
                         <article className="metric" key={metric.label}>
                             <span className="metricLabel">{metric.label}</span>
-                            <strong className={`metricValue ${metric.tone}`}>{metric.value}</strong>
+                            {metric.label === 'Cash' ? (
+                                <div className="metricValueRow">
+                                    <strong className={`metricValue ${metric.tone}`}>{metric.value}</strong>
+                                    <button className="depositButton" type="button" onClick={() => setIsDepositModalOpen(true)} disabled={isBusy}>
+                                        Deposit
+                                    </button>
+                                </div>
+                            ) : (
+                                <strong className={`metricValue ${metric.tone}`}>{metric.value}</strong>
+                            )}
                         </article>
                     ))}
                 </header>
@@ -286,7 +351,6 @@ export function AccountPanel() {
                                         <th scope="col">Total Cost</th>
                                         <th scope="col">$ Gain/Loss</th>
                                         <th scope="col">% Gain/Loss</th>
-                                        <th scope="col">Purchase Date</th>
                                         <th scope="col">% of Group</th>
                                     </tr>
                                 </thead>
@@ -308,7 +372,6 @@ export function AccountPanel() {
                                             <td>{money(row.totalCostBasis)}</td>
                                             <td className={tone(row.totalGainLoss)}>{signedMoney(row.totalGainLoss)}</td>
                                             <td className={tone(row.totalGainLoss)}>{signedPercent(row.percentGainLoss)}</td>
-                                            <td>{row.purchaseDate}</td>
                                             <td>{percent(row.percentOfGroup)}</td>
                                         </tr>
                                     ))}
@@ -319,6 +382,62 @@ export function AccountPanel() {
                 </section>
             </main>
         </div>
+
+        {isCalendarOpen && (
+            <>
+                <div className="popoverBackdrop" onClick={() => setIsCalendarOpen(false)} />
+                <div
+                    className="calendarPopover"
+                    role="dialog"
+                    aria-label="Fast forward to a date"
+                    style={calendarPosition ? { top: calendarPosition.top, left: calendarPosition.left } : undefined}
+                >
+
+                    <div className="popoverHead">
+                        <span>Fast forward to…</span>
+                        <button type="button" className="popoverClose" onClick={() => setIsCalendarOpen(false)} aria-label="Close calendar">
+                            ×
+                        </button>
+                    </div>
+                    <TradingCalendar
+                        tradingDates={tradingDates}
+                        currentDate={account.date}
+                        disabled={isBusy}
+                        onSelect={(date) => {
+                            setIsCalendarOpen(false)
+                            void advanceDate({ action: 'set', date })
+                        }}
+                    />
+                </div>
+            </>
+        )}
+
+        {isDepositModalOpen && (
+            <div className="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="depositTitle">
+                <div className="modalCard">
+                    <h3 id="depositTitle">Deposit cash</h3>
+                    <p>Add funds to your account&apos;s available cash.</p>
+                    <label className="field">
+                        <span>Amount</span>
+                        <input
+                            value={depositAmount}
+                            onChange={(event) => setDepositAmount(event.target.value)}
+                            placeholder="1000"
+                            inputMode="decimal"
+                            autoFocus
+                        />
+                    </label>
+                    <div className="modalActions">
+                        <button type="button" className="modalCancel" onClick={() => setIsDepositModalOpen(false)} disabled={isBusy}>
+                            Cancel
+                        </button>
+                        <button type="button" className="depositConfirm" onClick={() => void submitDeposit()} disabled={isBusy}>
+                            Deposit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
 
         {isResetModalOpen && (
             <div className="modalOverlay" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
