@@ -8,6 +8,7 @@ function testGetHelpText(): void {
     assert.match(getHelpText(), /account init/)
     assert.match(getHelpText(), /account show/)
     assert.match(getHelpText(), /account buy <code> <qty>/)
+    assert.match(getHelpText(), /account sell <code> <qty>/)
     assert.match(getHelpText(), /account deposit <cash>/)
     assert.match(getHelpText(), /date next/)
     assert.match(getHelpText(), /date set <yyyy-mm-dd>/)
@@ -121,6 +122,53 @@ async function testAccountBuyCommand(): Promise<void> {
     assert.equal(result.output, '3 stocks of AAPL successfully bought.')
 }
 
+// Verify account sell calls the shared sell action with the provided stock code and quantity and returns a short success message.
+async function testAccountSellCommand(): Promise<void> {
+    let capturedStockCode = ''
+    let capturedQuantity = 0
+    const runCommand = createRunCommand({
+        sellStockInDefaultUserAccount: async (stockCode, quantity) => {
+            capturedStockCode = stockCode
+            capturedQuantity = quantity
+
+            return {
+                stockCode: 'AAPL',
+                quantity: 2,
+                pricePerShare: 12.5,
+                totalProceeds: 25,
+                account: {
+                    date: DEFAULT_ACCOUNT_DATE,
+                    cash: 1025,
+                    positions: {},
+                },
+            }
+        },
+    })
+
+    const result = await runCommand('account sell aapl 2')
+
+    assert.equal(capturedStockCode, 'aapl')
+    assert.equal(capturedQuantity, 2)
+    assert.equal(result.exitCode, 0)
+    assert.equal(result.output, '2 stocks of AAPL successfully sold.')
+}
+
+// Verify invalid sell quantities are rejected before the shared sell action runs.
+async function testAccountSellInvalidQuantity(): Promise<void> {
+    let sellWasCalled = false
+    const runCommand = createRunCommand({
+        sellStockInDefaultUserAccount: async () => {
+            sellWasCalled = true
+            throw new Error('This should not run.')
+        },
+    })
+    const result = await runCommand('account sell AAPL nope')
+
+    assert.equal(sellWasCalled, false)
+    assert.equal(result.exitCode, 1)
+    assert.equal(result.output, 'Quantity must be a positive integer.')
+}
+
 // Verify date next calls the shared simulation date advancer and returns the updated day.
 async function testDateNextCommand(): Promise<void> {
     let nextWasCalled = false
@@ -194,17 +242,22 @@ async function testAccountCommandUsage(): Promise<void> {
     const badShowResult = await runCommand('account show now')
     const badDepositResult = await runCommand('account deposit')
     const badBuyResult = await runCommand('account buy AAPL')
+    const badSellResult = await runCommand('account sell AAPL')
+
+    const expectedUsage = 'Usage: account <init|show|deposit <value_cash>|buy <stock_code> <quantity>|sell <stock_code> <quantity>>'
 
     assert.equal(accountResult.exitCode, 1)
-    assert.equal(accountResult.output, 'Usage: account <init|show|deposit <value_cash>|buy <stock_code> <quantity>>')
+    assert.equal(accountResult.output, expectedUsage)
     assert.equal(badAccountResult.exitCode, 1)
-    assert.equal(badAccountResult.output, 'Usage: account <init|show|deposit <value_cash>|buy <stock_code> <quantity>>')
+    assert.equal(badAccountResult.output, expectedUsage)
     assert.equal(badShowResult.exitCode, 1)
     assert.equal(badShowResult.output, 'Usage: account show')
     assert.equal(badDepositResult.exitCode, 1)
     assert.equal(badDepositResult.output, 'Usage: account deposit <value_cash>')
     assert.equal(badBuyResult.exitCode, 1)
     assert.equal(badBuyResult.output, 'Usage: account buy <stock_code> <quantity>')
+    assert.equal(badSellResult.exitCode, 1)
+    assert.equal(badSellResult.output, 'Usage: account sell <stock_code> <quantity>')
 }
 
 // Verify bad date command arguments return the expected usage guidance.
@@ -354,11 +407,13 @@ export async function runCliCommandTests(): Promise<void> {
     await testAccountInitCommand()
     await testAccountShowCommand()
     await testAccountBuyCommand()
+    await testAccountSellCommand()
     await testAccountDepositCommand()
     await testDateNextCommand()
     await testDateSetCommand()
     await testAccountDepositInvalidValue()
     await testAccountBuyInvalidQuantity()
+    await testAccountSellInvalidQuantity()
     await testAccountCommandUsage()
     await testDateCommandUsage()
     await testStockDownloadCommand()

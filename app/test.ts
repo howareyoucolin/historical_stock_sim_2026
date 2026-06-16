@@ -1,5 +1,6 @@
 import { runUserSessionStoreTests } from './actions/account/model.test'
 import { runBuyAccountActionTests } from './actions/account/buy.test'
+import { runSellAccountActionTests } from './actions/account/sell.test'
 import { runInitializeAccountActionTests } from './actions/account/init.test'
 import { runDepositAccountActionTests } from './actions/account/deposit.test'
 import { runShowAccountActionTests } from './actions/account/show.test'
@@ -30,6 +31,7 @@ const TEST_SUITES: TestSuite[] = [
     { label: 'Seed watchlist action tests', run: runSeedWatchlistActionTests },
     { label: 'User session store tests', run: runUserSessionStoreTests },
     { label: 'Account buy action tests', run: runBuyAccountActionTests },
+    { label: 'Account sell action tests', run: runSellAccountActionTests },
     { label: 'Account init action tests', run: runInitializeAccountActionTests },
     { label: 'Account deposit action tests', run: runDepositAccountActionTests },
     { label: 'Account show action tests', run: runShowAccountActionTests },

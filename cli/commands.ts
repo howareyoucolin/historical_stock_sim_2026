@@ -42,6 +42,7 @@ export function createRunCommand({
     scrapeEps,
     seedWatchlist,
     buyStockInDefaultUserAccount,
+    sellStockInDefaultUserAccount,
     depositIntoDefaultUserAccount,
     initializeDefaultUserAccount,
     showDefaultUserAccount,
@@ -50,6 +51,7 @@ export function createRunCommand({
 }: CommandDependencies = {}) {
     const runAccountCommand = createAccountCommandHandler({
         buyStockInDefaultUserAccount,
+        sellStockInDefaultUserAccount,
         initializeDefaultUserAccount,
         depositIntoDefaultUserAccount,
         showDefaultUserAccount,
