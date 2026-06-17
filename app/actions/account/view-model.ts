@@ -1,5 +1,17 @@
 import type { AccountState } from './state'
 
+// A single purchase batch within a holding, surfaced so the holdings table can expand
+// a symbol into its underlying lots.
+export interface AccountStockLotRow {
+    purchaseDate: string
+    quantity: number
+    unitCost: number
+    totalCost: number
+    marketValue: number
+    gainLoss: number
+    percentGainLoss: number
+}
+
 export interface AccountStockTableRow {
     stockCode: string
     averageCost: number
@@ -15,6 +27,7 @@ export interface AccountStockTableRow {
     percentGainLoss: number
     purchaseDate: string
     percentOfGroup: number
+    lots: AccountStockLotRow[]
 }
 
 export interface AccountStockTableSummary {

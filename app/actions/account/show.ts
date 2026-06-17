@@ -1,7 +1,7 @@
 import fs from 'node:fs/promises'
 import path from 'node:path'
 
-import type { AccountStockTableRow, AccountStockTableSummary, DefaultUserAccountSessionView } from './view-model'
+import type { AccountStockLotRow, AccountStockTableRow, AccountStockTableSummary, DefaultUserAccountSessionView } from './view-model'
 import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
 import { DATA_FILE_NAME } from '../stock/build-data'
 import { readDefaultUserAccountSession, type AccountPosition, type AccountSessionDependencies, type AccountState, DEFAULT_USER_SESSION_RELATIVE_PATH } from './model'
@@ -95,6 +95,27 @@ function getMarketDataForDate(stockCode: string, accountDate: string, payload: S
     return { close: entry.close, peRatio: entry.peRatio ?? null, previousClose: findPreviousClose(historyByDate, accountDate) }
 }
 
+// Build the per-lot detail rows shown when a holding is expanded, oldest purchase first.
+function buildAccountStockLotRows(positions: AccountPosition[], currentPrice: number): AccountStockLotRow[] {
+    return [...positions]
+        .sort((left, right) => left.purchase_date.localeCompare(right.purchase_date))
+        .map((position) => {
+            const totalCost = position.quantity * position.cost_per_share
+            const marketValue = currentPrice * position.quantity
+            const gainLoss = marketValue - totalCost
+
+            return {
+                purchaseDate: position.purchase_date,
+                quantity: position.quantity,
+                unitCost: position.cost_per_share,
+                totalCost,
+                marketValue,
+                gainLoss,
+                percentGainLoss: totalCost === 0 ? 0 : (gainLoss / totalCost) * 100,
+            }
+        })
+}
+
 // Aggregate all lots for a stock code into the single row shown in the holdings table.
 function buildAccountStockTableRow(stockCode: string, positions: AccountPosition[], marketData: MarketDataForDate): AccountStockTableRow {
     const { close: currentPrice, peRatio, previousClose } = marketData
@@ -124,6 +145,7 @@ function buildAccountStockTableRow(stockCode: string, positions: AccountPosition
         purchaseDate,
         // Populated once every row is known so each position can be expressed as a share of the group.
         percentOfGroup: 0,
+        lots: buildAccountStockLotRows(positions, currentPrice),
     }
 }
 

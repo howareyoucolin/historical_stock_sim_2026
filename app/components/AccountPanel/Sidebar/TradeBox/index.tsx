@@ -22,7 +22,6 @@ export function TradeBox() {
                     <input
                         value={symbol}
                         onChange={(event) => dispatch(setSymbol(event.target.value.toUpperCase()))}
-                        placeholder="AAPL"
                         autoComplete="off"
                     />
                 </label>
@@ -31,7 +30,6 @@ export function TradeBox() {
                     <input
                         value={quantity}
                         onChange={(event) => dispatch(setQuantity(event.target.value))}
-                        placeholder="10"
                         inputMode="numeric"
                     />
                 </label>

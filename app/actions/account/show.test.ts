@@ -233,6 +233,48 @@ async function testBuildViewComputesDayChangeAndGroup(): Promise<void> {
     assert.equal(view.summary.totalDayChange, 12)
 }
 
+// Verify each holding carries its purchase lots, sorted oldest first with per-lot gain/loss figures.
+async function testBuildViewBreaksDownLots(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+
+    await writeLocalStockData(tempRepoRoot, 'AAPL', {
+        '2018-03-10': { close: 150, isPayoutDate: false, dividendPerShare: 0, ttmEps: 8, peRatio: 18.75 },
+    })
+
+    const view = await buildDefaultUserAccountSessionView(
+        {
+            date: '2018-03-10',
+            cash: 0,
+            positions: {
+                AAPL: [
+                    { quantity: 4, cost_per_share: 120, purchase_date: '2018-03-05' },
+                    { quantity: 2, cost_per_share: 100, purchase_date: '2018-03-01' },
+                ],
+            },
+        },
+        { cwd: () => tempRepoRoot }
+    )
+
+    const [aapl] = view.rows
+
+    // Lots are surfaced oldest first regardless of stored order.
+    assert.deepEqual(
+        aapl.lots.map((lot) => lot.purchaseDate),
+        ['2018-03-01', '2018-03-05']
+    )
+
+    const [older, newer] = aapl.lots
+
+    assert.equal(older.quantity, 2)
+    assert.equal(older.totalCost, 200)
+    assert.equal(older.marketValue, 300)
+    assert.equal(older.gainLoss, 100)
+    assert.equal(older.percentGainLoss, 50)
+
+    assert.equal(newer.totalCost, 480) // 4 shares * 120 cost
+    assert.equal(newer.gainLoss, 120) // 4 * 150 market value 600 - 480 cost
+}
+
 // Verify the show action reports an empty holdings state without trying to render a stock table.
 async function testShowDefaultUserAccountSessionWithoutTrackedStocks(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
@@ -260,5 +302,6 @@ export async function runShowAccountActionTests(): Promise<void> {
     await testShowDefaultUserAccountSession()
     await testShowDefaultUserAccountSessionIncludesPeRatio()
     await testBuildViewComputesDayChangeAndGroup()
+    await testBuildViewBreaksDownLots()
     await testShowDefaultUserAccountSessionWithoutTrackedStocks()
 }
