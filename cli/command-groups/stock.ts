@@ -1,5 +1,8 @@
 import { buildStockDataAction } from '../../app/actions/stock/build-data'
 import { downloadStockDataAction } from '../../app/actions/stock/download-data'
+import { showStockHistory } from '../../app/actions/stock/history'
+import { showStockList } from '../../app/actions/stock/list'
+import { showStockStatus } from '../../app/actions/stock/status'
 import { scrapeEpsAction } from '../../app/actions/stock/scrape-eps'
 import { seedWatchlistAction, type StepOutcome, type SeedWatchlistSummary } from '../../app/actions/stock/seed-watchlist'
 import type { CommandResult } from '../command-types'
@@ -10,6 +13,9 @@ export interface StockCommandDependencies {
     buildStockData?: typeof buildStockDataAction
     scrapeEps?: typeof scrapeEpsAction
     seedWatchlist?: typeof seedWatchlistAction
+    showStockHistory?: typeof showStockHistory
+    showStockStatus?: typeof showStockStatus
+    showStockList?: typeof showStockList
 }
 
 // Build the CLI message shown when a stock action is skipped because its file already exists.
@@ -44,6 +50,9 @@ export const STOCK_HELP_LINES = [
     '  stock download <code>    Download price history from Yahoo Finance',
     '  stock scrape-eps <code>  Scrape TTM Net EPS from Macrotrends into eps.json',
     '  stock build <code>       Combine downloaded history and EPS into data.json',
+    '  stock history <code>     Show data.json from its start through the account date',
+    '  stock status <code>      Show the stock data for the account simulation date',
+    '  stock list               List every available stock code',
     '  stock seed               Run download, scrape-eps, and build for every watchlist ticker',
 ]
 
@@ -53,6 +62,9 @@ export function createStockCommandHandler({
     buildStockData = buildStockDataAction,
     scrapeEps = scrapeEpsAction,
     seedWatchlist = seedWatchlistAction,
+    showStockHistory: showHistory = showStockHistory,
+    showStockStatus: showStatus = showStockStatus,
+    showStockList: showList = showStockList,
 }: StockCommandDependencies = {}) {
     // Run `stock download <code>` and report the saved history file back to the CLI.
     async function runDownload(args: string[]): Promise<CommandResult> {
@@ -129,6 +141,57 @@ export function createStockCommandHandler({
         }
     }
 
+    // Run `stock history <code>` and print the saved data series through the account's date.
+    async function runHistory(args: string[]): Promise<CommandResult> {
+        if (args.length !== 1) {
+            return { output: 'Usage: stock history <code>', shouldExit: false, exitCode: 1 }
+        }
+
+        try {
+            const output = await showHistory(args[0])
+
+            return { output, shouldExit: false, exitCode: 0 }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error)
+
+            return { output: `History failed: ${message}`, shouldExit: false, exitCode: 1 }
+        }
+    }
+
+    // Run `stock status <code>` and print the stock's data for the account's simulation date.
+    async function runStatus(args: string[]): Promise<CommandResult> {
+        if (args.length !== 1) {
+            return { output: 'Usage: stock status <code>', shouldExit: false, exitCode: 1 }
+        }
+
+        try {
+            const output = await showStatus(args[0])
+
+            return { output, shouldExit: false, exitCode: 0 }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error)
+
+            return { output: `Status failed: ${message}`, shouldExit: false, exitCode: 1 }
+        }
+    }
+
+    // Run `stock list` and print every available stock code.
+    async function runList(args: string[]): Promise<CommandResult> {
+        if (args.length !== 0) {
+            return { output: 'Usage: stock list', shouldExit: false, exitCode: 1 }
+        }
+
+        try {
+            const output = await showList()
+
+            return { output, shouldExit: false, exitCode: 0 }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error)
+
+            return { output: `List failed: ${message}`, shouldExit: false, exitCode: 1 }
+        }
+    }
+
     // Run `stock seed` to process every watchlist ticker, streaming live progress.
     async function runSeed(args: string[]): Promise<CommandResult> {
         if (args.length !== 0) {
@@ -158,8 +221,14 @@ export function createStockCommandHandler({
                 return runSeed(args.slice(1))
             case 'build':
                 return runBuild(args.slice(1))
+            case 'history':
+                return runHistory(args.slice(1))
+            case 'status':
+                return runStatus(args.slice(1))
+            case 'list':
+                return runList(args.slice(1))
             default:
-                return { output: 'Usage: stock <download <code>|scrape-eps <code>|build <code>|seed>', shouldExit: false, exitCode: 1 }
+                return { output: 'Usage: stock <download <code>|scrape-eps <code>|build <code>|history <code>|status <code>|list|seed>', shouldExit: false, exitCode: 1 }
         }
     }
 }

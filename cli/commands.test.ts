@@ -14,6 +14,9 @@ function testGetHelpText(): void {
     assert.match(getHelpText(), /date set <yyyy-mm-dd>/)
     assert.match(getHelpText(), /history show/)
     assert.match(getHelpText(), /stock download <code>/)
+    assert.match(getHelpText(), /stock history <code>/)
+    assert.match(getHelpText(), /stock status <code>/)
+    assert.match(getHelpText(), /stock list/)
 }
 
 // Verify account init calls the shared session initializer and returns a short success message.
@@ -418,6 +421,90 @@ async function testStockSeedCommand(): Promise<void> {
     assert.equal(result.exitCode, 1)
 }
 
+// Verify stock history routes through the dedicated stock command handler with the requested code.
+async function testStockHistoryCommand(): Promise<void> {
+    let requestedStockCode = ''
+    const runCommand = createRunCommand({
+        showStockHistory: async (stockCode) => {
+            requestedStockCode = stockCode
+
+            return 'History for AAPL from 2010-01-04 to 2020-02-14 (2543 trading days):'
+        },
+    })
+
+    const result = await runCommand('stock history AAPL')
+
+    assert.equal(requestedStockCode, 'AAPL')
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /History for AAPL from 2010-01-04 to 2020-02-14/)
+}
+
+// Verify stock history without a code reports its usage line and a non-zero exit code.
+async function testStockHistoryCommandUsage(): Promise<void> {
+    const runCommand = createRunCommand()
+
+    const result = await runCommand('stock history')
+
+    assert.equal(result.exitCode, 1)
+    assert.equal(result.output, 'Usage: stock history <code>')
+}
+
+// Verify stock status routes through the dedicated stock command handler with the requested code.
+async function testStockStatusCommand(): Promise<void> {
+    let requestedStockCode = ''
+    const runCommand = createRunCommand({
+        showStockStatus: async (stockCode) => {
+            requestedStockCode = stockCode
+
+            return 'AAPL status on 2020-02-14:'
+        },
+    })
+
+    const result = await runCommand('stock status AAPL')
+
+    assert.equal(requestedStockCode, 'AAPL')
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /AAPL status on 2020-02-14:/)
+}
+
+// Verify stock status without a code reports its usage line and a non-zero exit code.
+async function testStockStatusCommandUsage(): Promise<void> {
+    const runCommand = createRunCommand()
+
+    const result = await runCommand('stock status')
+
+    assert.equal(result.exitCode, 1)
+    assert.equal(result.output, 'Usage: stock status <code>')
+}
+
+// Verify stock list routes through the dedicated stock command handler.
+async function testStockListCommand(): Promise<void> {
+    let listWasCalled = false
+    const runCommand = createRunCommand({
+        showStockList: async () => {
+            listWasCalled = true
+
+            return '2 stocks available:\n\nAAPL  MSFT'
+        },
+    })
+
+    const result = await runCommand('stock list')
+
+    assert.equal(listWasCalled, true)
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /2 stocks available:/)
+}
+
+// Verify stock list rejects extra arguments with its usage line and a non-zero exit code.
+async function testStockListCommandUsage(): Promise<void> {
+    const runCommand = createRunCommand()
+
+    const result = await runCommand('stock list AAPL')
+
+    assert.equal(result.exitCode, 1)
+    assert.equal(result.output, 'Usage: stock list')
+}
+
 // Verify each stock command reports a skip message when the action returns a skipped result.
 async function testStockCommandsReportSkips(): Promise<void> {
     const runCommand = createRunCommand({
@@ -456,6 +543,12 @@ export async function runCliCommandTests(): Promise<void> {
     await testStockDownloadCommand()
     await testStockScrapeEpsCommand()
     await testStockBuildCommand()
+    await testStockHistoryCommand()
+    await testStockHistoryCommandUsage()
+    await testStockStatusCommand()
+    await testStockStatusCommandUsage()
+    await testStockListCommand()
+    await testStockListCommandUsage()
     await testStockSeedCommand()
     await testStockCommandsReportSkips()
 }

@@ -51,6 +51,9 @@ export function createRunCommand({
     setDefaultUserAccountDateToTomorrow,
     setDefaultUserAccountDateToSpecificDate,
     showHistoryLog,
+    showStockHistory,
+    showStockStatus,
+    showStockList,
 }: CommandDependencies = {}) {
     const runAccountCommand = createAccountCommandHandler({
         buyStockInDefaultUserAccount,
@@ -71,6 +74,9 @@ export function createRunCommand({
         buildStockData,
         scrapeEps,
         seedWatchlist,
+        showStockHistory,
+        showStockStatus,
+        showStockList,
     })
 
     // Execute a single CLI command and forward business logic to shared actions.
