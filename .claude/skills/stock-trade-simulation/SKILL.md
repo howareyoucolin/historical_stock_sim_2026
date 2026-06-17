@@ -41,13 +41,15 @@ When the user asks to start a new simulation:
    until these are clear:
    - The strategy itself: which stocks/sectors, entry and exit rules, position
      sizing, risk limits, rebalance cadence.
-   - **End date / time horizon** (required — the run loop depends on it).
+   - **End date / time horizon** — defaults to `2026-01-01` unless the user
+     specifies otherwise; the run loop advances until this date is reached.
    - Whether the extra first-day deposit is one-time or a recurring contribution
      (and its cadence), since the default below is a single one-time deposit.
    Favor strategies expressed as mechanical rules over discretionary calls — they
    are easier to execute faithfully and to audit.
 2. **Confirm setup overrides** (use these defaults unless the user says otherwise):
    - Start date: `2016-01-04`
+   - End date: `2026-01-01`
    - Initial cash deposit: `200000`
    - Additional first-day deposit: `2500` (one-time)
 3. **Refresh:** `account init` — resets the account and wipes the history and
@@ -124,4 +126,5 @@ notes are also how the user audits that your decisions came from observed data.
 - Never use post-date / real-world knowledge; keep decisions traceable to observed data.
 - Maximize gain *within* the strategy's rules — don't override the strategy.
 - Always run on the default session; never reset the data at the end.
-- Ask for and confirm the strategy and end date before the first trade.
+- Ask for and confirm the strategy before the first trade; the end date
+  defaults to `2026-01-01` unless the user specifies one.
