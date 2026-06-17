@@ -43,15 +43,19 @@ When the user asks to start a new simulation:
      sizing, risk limits, rebalance cadence.
    - **End date / time horizon** — defaults to `2026-01-01` unless the user
      specifies otherwise; the run loop advances until this date is reached.
-   - Whether the extra first-day deposit is one-time or a recurring contribution
-     (and its cadence), since the default below is a single one-time deposit.
+   - The contribution schedule, only if the user wants to change it: the default
+     is a recurring `2500` deposit on the first trading day of every month (see
+     below). Confirm a different amount, cadence, or a one-time-only deposit only
+     when the user asks.
    Favor strategies expressed as mechanical rules over discretionary calls — they
    are easier to execute faithfully and to audit.
 2. **Confirm setup overrides** (use these defaults unless the user says otherwise):
    - Start date: `2016-01-04`
    - End date: `2026-01-01`
    - Initial cash deposit: `200000`
-   - Additional first-day deposit: `2500` (one-time)
+   - Recurring contribution: `2500` deposited on the first trading day of every
+     month, for the whole run (not a one-time deposit). The first month's `2500`
+     is added alongside the initial deposit on the start day.
 3. **Refresh:** `account init` — resets the account and wipes the history and
    value logs for a clean run.
 4. **Set the start date** if it differs from the post-init default. If the chosen
@@ -59,7 +63,9 @@ When the user asks to start a new simulation:
    depositing or trading (`date set <date>` steps forward to the next trading day).
 5. **Fund on that first trading day**, as two deposits so the audit trail is
    explicit: `account deposit 200000`, then `account deposit 2500` (or the user's
-   amounts). A batch file is a good way to run setup in one shot.
+   amounts) — the second is the first month's recurring contribution. A batch
+   file is a good way to run setup in one shot. Then keep depositing `2500` on
+   the first trading day of every subsequent month during the run (see step 2).
 
 ## 2. Run the simulation (observe → decide → act → advance)
 
@@ -77,6 +83,12 @@ When the user asks to start a new simulation:
 - **Advance** with `date next <n>` (see pacing below) — dividends are credited
   automatically and reported; re-observe after advancing since prices only move
   with the date.
+- **Make the recurring contribution.** Whenever an advance lands you in a new
+  calendar month, `account deposit 2500` on that first observed trading day of
+  the month (before buying), then deploy it per the strategy. This continues the
+  monthly contribution set up in step 1 (use the user's amount/cadence if they
+  overrode it). Track the last month you contributed so you deposit exactly once
+  per month.
 
 ### Pace it like a real investor
 
