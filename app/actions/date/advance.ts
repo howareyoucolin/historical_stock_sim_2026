@@ -9,12 +9,14 @@ import {
     type AccountState,
     writeDefaultUserAccountSession,
 } from '../account/model'
+import { recordDailyValue, type DailyValueSnapshot } from '../account/values-log'
 import { findNextTradingDate, normalizeSimulationDate } from './utils'
 
 // SPY trades every NYSE session, so its saved history doubles as the market trading calendar.
 export const TRADING_CALENDAR_STOCK_CODE = 'SPY'
 
 interface MarketHistoryEntry {
+    close?: number | null
     isPayoutDate?: boolean
     dividendPerShare?: number
 }
@@ -151,7 +153,32 @@ export async function advanceSimulationDate(
     let cash = account.cash
     const dividends: DividendPayout[] = []
 
-    // Move to the next trading day and credit any dividends paid by held stocks on that day.
+    // Track each holding's most recent close so a day missing local data carries the prior price
+    // forward instead of dropping the position from the portfolio value for that day.
+    const lastCloseByStock: Record<string, number> = {}
+    for (const stockCode of Object.keys(sharesByStock)) {
+        const startingClose = historyByStock[stockCode]?.[date]?.close
+
+        if (typeof startingClose === 'number') {
+            lastCloseByStock[stockCode] = startingClose
+        }
+    }
+
+    // Total portfolio value on the current day: cash plus the market value of every held position.
+    const portfolioValueSnapshot = (): DailyValueSnapshot => {
+        const holdingsValue = Object.entries(sharesByStock).reduce(
+            (total, [stockCode, shares]) => total + shares * (lastCloseByStock[stockCode] ?? 0),
+            0
+        )
+
+        return { date, value: cash + holdingsValue }
+    }
+
+    // Daily total-value snapshots, one per trading day stepped, recorded after the account is saved.
+    const valueSnapshots: DailyValueSnapshot[] = []
+
+    // Move to the next trading day, credit any dividends paid by held stocks, refresh their closing
+    // prices, and capture the resulting total portfolio value for that day.
     const stepToNextTradingDay = (): void => {
         const nextDate = findNextTradingDate(date, calendar)
 
@@ -164,6 +191,10 @@ export async function advanceSimulationDate(
         for (const [stockCode, shares] of Object.entries(sharesByStock)) {
             const entry = historyByStock[stockCode]?.[date]
 
+            if (typeof entry?.close === 'number') {
+                lastCloseByStock[stockCode] = entry.close
+            }
+
             if (entry?.isPayoutDate && entry.dividendPerShare) {
                 const amount = shares * entry.dividendPerShare
 
@@ -171,6 +202,8 @@ export async function advanceSimulationDate(
                 dividends.push({ stockCode, date, shares, perShare: entry.dividendPerShare, amount })
             }
         }
+
+        valueSnapshots.push(portfolioValueSnapshot())
     }
 
     if (normalizedTarget === null) {
@@ -183,6 +216,11 @@ export async function advanceSimulationDate(
 
     const updatedAccount: AccountState = { ...account, date, cash }
     const savedAccount = await writeDefaultUserAccountSession(updatedAccount, sessionDependencies)
+
+    // Persist the daily value series so the summary graph can plot how the portfolio moved over time.
+    for (const snapshot of valueSnapshots) {
+        await recordDailyValue(snapshot, { cwd })
+    }
 
     // Record each credited payout so the history log captures dividends alongside trades and deposits.
     for (const dividend of dividends) {

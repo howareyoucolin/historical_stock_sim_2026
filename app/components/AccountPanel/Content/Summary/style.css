@@ -1,8 +1,222 @@
-.summaryTab {
+.summary {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    padding: 16px;
+}
+
+.summaryEmpty {
     padding: 48px 18px;
     text-align: center;
     color: var(--muted);
     border: 1px dashed var(--border-strong);
     border-radius: 14px;
     background: var(--surface);
+}
+
+.summaryHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 10px;
+}
+
+.summaryLabel {
+    display: block;
+    font-size: 0.64rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+}
+
+.summaryValue {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.summaryChange {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.summaryChangeAmount {
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+.summaryRange {
+    display: block;
+    margin-top: 1px;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--muted);
+}
+
+.summaryChartWrap {
+    position: relative;
+    width: 100%;
+    touch-action: none;
+}
+
+.summaryChart {
+    display: block;
+    cursor: crosshair;
+}
+
+.chartGrid {
+    stroke: var(--border);
+    stroke-width: 1;
+}
+
+/* Axis labels are absolutely positioned HTML so their font size never scales with the chart. */
+.chartYLabel,
+.chartXLabel {
+    position: absolute;
+    font-size: 11px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+    white-space: nowrap;
+}
+
+.chartYLabel {
+    left: 0;
+    text-align: right;
+    transform: translateY(-50%);
+}
+
+.chartXLabel {
+    transform: translateX(0);
+}
+
+.chartXLabel.end {
+    transform: translateX(-100%);
+}
+
+.chartLine {
+    fill: none;
+    stroke: var(--muted);
+    stroke-width: 2;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.chartLine.pos {
+    stroke: var(--pos);
+}
+
+.chartLine.neg {
+    stroke: var(--neg);
+}
+
+.chartArea {
+    stroke: none;
+    fill: rgba(122, 106, 93, 0.12);
+}
+
+.chartArea.pos {
+    fill: rgba(47, 143, 87, 0.12);
+}
+
+.chartArea.neg {
+    fill: rgba(192, 57, 43, 0.12);
+}
+
+/* ---- Hover marker + tooltip ---- */
+.chartMarkerLine {
+    stroke: var(--border-strong);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    vector-effect: non-scaling-stroke;
+}
+
+.chartMarkerDot {
+    fill: var(--muted);
+    stroke: var(--surface);
+    stroke-width: 2;
+}
+
+.chartMarkerDot.pos {
+    fill: var(--pos);
+}
+
+.chartMarkerDot.neg {
+    fill: var(--neg);
+}
+
+.chartTooltip {
+    position: absolute;
+    transform: translate(-50%, calc(-100% - 12px));
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 6px 9px;
+    background: var(--surface-strong);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(43, 35, 32, 0.12);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.chartTooltipDate {
+    font-size: 0.66rem;
+    color: var(--muted);
+}
+
+.chartTooltipValue {
+    font-size: 0.86rem;
+    font-weight: 700;
+}
+
+.chartTooltipChange {
+    font-size: 0.72rem;
+    font-weight: 600;
+}
+
+/* ---- Stale-data refresh overlay ---- */
+.summaryStaleOverlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px;
+    text-align: center;
+    background: rgba(255, 250, 244, 0.72);
+    backdrop-filter: blur(2px);
+    border-radius: 10px;
+    z-index: 3;
+}
+
+.summaryStaleText {
+    margin: 0;
+    max-width: 32ch;
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.summaryRefreshButton {
+    font: inherit;
+    font-weight: 700;
+    font-size: 0.84rem;
+    color: var(--surface-strong);
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+}
+
+.summaryRefreshButton:hover {
+    background: var(--accent-strong);
 }

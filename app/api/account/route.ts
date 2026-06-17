@@ -5,6 +5,7 @@ import {
 } from '../../actions/account/model'
 import { initializeDefaultUserAccountSession } from '../../actions/account/init'
 import { buildDefaultUserAccountSessionView, fetchDefaultUserAccountSessionView } from '../../actions/account/show'
+import { recordViewValueSnapshot } from '../../actions/account/values-log'
 
 export const runtime = 'nodejs'
 
@@ -22,6 +23,9 @@ export async function GET(): Promise<Response> {
 export async function POST(): Promise<Response> {
     const account = await initializeDefaultUserAccountSession()
     const view = await buildDefaultUserAccountSessionView(account)
+
+    // Seed the freshly cleared value log so the graph has a starting anchor point after a reset.
+    await recordViewValueSnapshot(view)
 
     return NextResponse.json({
         view,

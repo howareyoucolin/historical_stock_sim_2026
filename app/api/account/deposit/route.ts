@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { DEFAULT_USER_SESSION_RELATIVE_PATH } from '../../../actions/account/model'
 import { depositIntoDefaultUserAccountSession } from '../../../actions/account/deposit'
 import { buildDefaultUserAccountSessionView } from '../../../actions/account/show'
+import { recordViewValueSnapshot } from '../../../actions/account/values-log'
 
 export const runtime = 'nodejs'
 
@@ -27,6 +28,7 @@ export async function POST(request: Request): Promise<Response> {
     try {
         const account = await depositIntoDefaultUserAccountSession(body.amount)
         const view = await buildDefaultUserAccountSessionView(account)
+        await recordViewValueSnapshot(view)
 
         return NextResponse.json({
             view,

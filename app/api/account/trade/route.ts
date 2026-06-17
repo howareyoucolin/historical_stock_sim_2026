@@ -4,6 +4,7 @@ import { DEFAULT_USER_SESSION_RELATIVE_PATH } from '../../../actions/account/mod
 import { buyStockInDefaultUserAccountSession } from '../../../actions/account/buy'
 import { sellStockInDefaultUserAccountSession } from '../../../actions/account/sell'
 import { buildDefaultUserAccountSessionView } from '../../../actions/account/show'
+import { recordViewValueSnapshot } from '../../../actions/account/values-log'
 
 export const runtime = 'nodejs'
 
@@ -43,6 +44,7 @@ export async function POST(request: Request): Promise<Response> {
                 ? await buyStockInDefaultUserAccountSession(stockCode, quantity)
                 : await sellStockInDefaultUserAccountSession(stockCode, quantity)
         const view = await buildDefaultUserAccountSessionView(result.account)
+        await recordViewValueSnapshot(view)
         const verb = action === 'buy' ? 'Bought' : 'Sold'
 
         return NextResponse.json({

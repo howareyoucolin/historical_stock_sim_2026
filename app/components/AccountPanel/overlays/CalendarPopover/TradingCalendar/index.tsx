@@ -32,6 +32,19 @@ export function TradingCalendar() {
     const [year, setYear] = useState(() => Number(currentDate.slice(0, 4)))
     const [monthIndex, setMonthIndex] = useState(() => Number(currentDate.slice(5, 7)) - 1)
 
+    // The simulation only moves forward, so the earliest navigable month is the current one.
+    const currentYear = Number(currentDate.slice(0, 4))
+    const currentMonthIndex = Number(currentDate.slice(5, 7)) - 1
+
+    // Offer the current year through the last year with market data; never past years, since no day
+    // before the simulation date is selectable.
+    const yearOptions = useMemo(() => {
+        const dataMaxYear = tradingDates.length === 0 ? currentYear : Number(tradingDates[tradingDates.length - 1].slice(0, 4))
+        const maxYear = Math.max(dataMaxYear, currentYear)
+
+        return Array.from({ length: maxYear - currentYear + 1 }, (_, index) => currentYear + index)
+    }, [tradingDates, currentYear])
+
     // Re-center the calendar on the simulation month whenever the date advances.
     useEffect(() => {
         setYear(Number(currentDate.slice(0, 4)))
@@ -42,9 +55,12 @@ export function TradingCalendar() {
     const daysInMonth = new Date(Date.UTC(year, monthIndex + 1, 0)).getUTCDate()
     const cells: Array<number | null> = [...Array(firstWeekday).fill(null), ...Array.from({ length: daysInMonth }, (_, index) => index + 1)]
 
-    // Step the displayed month by a number of months, wrapping the year as needed.
-    function shiftMonth(delta: number): void {
-        const next = new Date(Date.UTC(year, monthIndex + delta, 1))
+    const atEarliestMonth = year === currentYear && monthIndex <= currentMonthIndex
+
+    // Move the visible month to a target, clamped so navigation never lands before the current month.
+    function goToMonth(targetYear: number, targetMonthIndex: number): void {
+        const floor = Date.UTC(currentYear, currentMonthIndex, 1)
+        const next = new Date(Math.max(Date.UTC(targetYear, targetMonthIndex, 1), floor))
 
         setYear(next.getUTCFullYear())
         setMonthIndex(next.getUTCMonth())
@@ -53,13 +69,26 @@ export function TradingCalendar() {
     return (
         <div className="calendar">
             <div className="calendarNav">
-                <button type="button" onClick={() => shiftMonth(-1)} aria-label="Previous month">
+                <button type="button" onClick={() => goToMonth(year, monthIndex - 1)} disabled={disabled || atEarliestMonth} aria-label="Previous month">
                     ‹
                 </button>
-                <span className="calendarMonth">
-                    {MONTH_LABELS[monthIndex]} {year}
+                <span className="calendarTitle">
+                    <span className="calendarMonth">{MONTH_LABELS[monthIndex]}</span>
+                    <select
+                        className="calendarYear"
+                        value={year}
+                        disabled={disabled}
+                        onChange={(event) => goToMonth(Number(event.target.value), monthIndex)}
+                        aria-label="Year"
+                    >
+                        {yearOptions.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
                 </span>
-                <button type="button" onClick={() => shiftMonth(1)} aria-label="Next month">
+                <button type="button" onClick={() => goToMonth(year, monthIndex + 1)} disabled={disabled} aria-label="Next month">
                     ›
                 </button>
             </div>
