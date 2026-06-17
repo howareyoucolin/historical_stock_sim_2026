@@ -3,6 +3,7 @@ import { configureStore, type ThunkAction, type Action } from '@reduxjs/toolkit'
 import accountReducer from './accountSlice'
 import uiReducer from './uiSlice'
 import formReducer from './formSlice'
+import analysisReducer from './analysisSlice'
 
 // Compose the app's slices into the single shared store that replaces local component state.
 export const store = configureStore({
@@ -10,6 +11,7 @@ export const store = configureStore({
         account: accountReducer,
         ui: uiReducer,
         form: formReducer,
+        analysis: analysisReducer,
     },
 })
 

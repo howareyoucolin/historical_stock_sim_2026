@@ -13,6 +13,7 @@ import { runBuildDataActionTests } from './actions/stock/build-data.test'
 import { runStockHistoryActionTests } from './actions/stock/history.test'
 import { runStockStatusActionTests } from './actions/stock/status.test'
 import { runStockListActionTests } from './actions/stock/list.test'
+import { runStockAnalysisActionTests } from './actions/stock/analysis.test'
 import { runScrapeEpsActionTests } from './actions/stock/scrape-eps.test'
 import { runSeedWatchlistActionTests } from './actions/stock/seed-watchlist.test'
 import { runCliCommandTests } from '../cli/commands.test'
@@ -35,6 +36,7 @@ const TEST_SUITES: TestSuite[] = [
     { label: 'Stock history action tests', run: runStockHistoryActionTests },
     { label: 'Stock status action tests', run: runStockStatusActionTests },
     { label: 'Stock list action tests', run: runStockListActionTests },
+    { label: 'Stock analysis action tests', run: runStockAnalysisActionTests },
     { label: 'Scrape stock EPS action tests', run: runScrapeEpsActionTests },
     { label: 'Seed watchlist action tests', run: runSeedWatchlistActionTests },
     { label: 'User session store tests', run: runUserSessionStoreTests },
