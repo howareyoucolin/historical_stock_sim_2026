@@ -106,6 +106,52 @@ async function testBuyAppendsHistoryEvent(): Promise<void> {
     assert.match(logContents, /BUY stock=AAPL qty=2 price=10.50 cash=-21.00 sim=2016-01-04/)
 }
 
+// Verify a note is appended last as a JSON-quoted token so multi-word text stays on one line
+// without disturbing the earlier space-separated fields.
+async function testAppendHistoryEventRecordsNote(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+    const logFilePath = path.join(tempRepoRoot, HISTORY_LOG_RELATIVE_PATH)
+
+    await appendHistoryEvent(
+        { type: 'BUY', simDate: '2016-01-04', stockCode: 'AAPL', quantity: 3, pricePerShare: 105.35, cashDelta: -316.05, note: 'buy the dip' },
+        { cwd: () => tempRepoRoot, now: fixedNow }
+    )
+
+    const line = (await fs.readFile(logFilePath, 'utf8')).trim()
+
+    assert.equal(line, '2026-06-16T14:23:01.123Z BUY stock=AAPL qty=3 price=105.35 cash=-316.05 sim=2016-01-04 note="buy the dip"')
+}
+
+// Verify a real buy forwards its note to the recorded BUY line.
+async function testBuyForwardsNoteToHistory(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+    const logFilePath = path.join(tempRepoRoot, HISTORY_LOG_RELATIVE_PATH)
+
+    await writeDefaultUserAccountSession(
+        { date: DEFAULT_ACCOUNT_DATE, cash: 1000, positions: {} },
+        { cwd: () => tempRepoRoot }
+    )
+
+    const stockDirectory = path.join(tempRepoRoot, DATA_DIRECTORY_NAME, 'AAPL')
+    await fs.mkdir(stockDirectory, { recursive: true })
+    await fs.writeFile(
+        path.join(stockDirectory, HISTORY_FILE_NAME),
+        `${JSON.stringify({
+            stockCode: 'AAPL',
+            source: 'Yahoo Finance',
+            range: { start: START_DATE, end: END_DATE },
+            historyByDate: { [DEFAULT_ACCOUNT_DATE]: { close: 10.5, isPayoutDate: false, dividendPerShare: 0 } },
+        })}\n`,
+        'utf8'
+    )
+
+    await buyStockInDefaultUserAccountSession('AAPL', 2, { cwd: () => tempRepoRoot }, 'dca tranche')
+
+    const logContents = await fs.readFile(logFilePath, 'utf8')
+
+    assert.match(logContents, /note="dca tranche"/)
+}
+
 // Verify clearing removes recorded entries and tolerates a log file that does not exist yet.
 async function testClearHistoryLog(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
@@ -149,6 +195,8 @@ export async function runHistoryLogActionTests(): Promise<void> {
     await testShowHistoryLogWhenMissing()
     await testShowHistoryLogReturnsEntries()
     await testBuyAppendsHistoryEvent()
+    await testAppendHistoryEventRecordsNote()
+    await testBuyForwardsNoteToHistory()
     await testClearHistoryLog()
     await testReadHistoryLogEntries()
 }

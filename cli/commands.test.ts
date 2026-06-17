@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 
 import { DEFAULT_ACCOUNT_DATE } from '../app/actions/account/model'
-import { createRunCommand, getHelpText } from './commands'
+import { createRunCommand, getHelpText, tokenizeCommand } from './commands'
 
 // Verify the CLI help text advertises the shared account init command.
 function testGetHelpText(): void {
@@ -17,6 +17,14 @@ function testGetHelpText(): void {
     assert.match(getHelpText(), /stock history <code>/)
     assert.match(getHelpText(), /stock status <code>/)
     assert.match(getHelpText(), /stock list/)
+}
+
+// Verify the tokenizer splits on whitespace but keeps quoted spans (quotes stripped) as one token.
+function testTokenizeCommand(): void {
+    assert.deepEqual(tokenizeCommand('account buy AAPL 3'), ['account', 'buy', 'AAPL', '3'])
+    assert.deepEqual(tokenizeCommand('account buy AAPL 3 --note="buy the dip"'), ['account', 'buy', 'AAPL', '3', '--note=buy the dip'])
+    assert.deepEqual(tokenizeCommand("account buy AAPL 3 --note='hold long'"), ['account', 'buy', 'AAPL', '3', '--note=hold long'])
+    assert.deepEqual(tokenizeCommand('   '), [])
 }
 
 // Verify account init calls the shared session initializer and returns a short success message.
@@ -157,6 +165,60 @@ async function testAccountSellCommand(): Promise<void> {
     assert.equal(result.output, '2 stocks of AAPL successfully sold.')
 }
 
+// Verify a quoted --note flag is parsed into one token and forwarded to the buy action, leaving the
+// positional stock code and quantity intact.
+async function testAccountBuyCommandWithNote(): Promise<void> {
+    let capturedStockCode = ''
+    let capturedQuantity = 0
+    let capturedNote: string | undefined = 'unset'
+    const runCommand = createRunCommand({
+        buyStockInDefaultUserAccount: async (stockCode, quantity, _dependencies, note) => {
+            capturedStockCode = stockCode
+            capturedQuantity = quantity
+            capturedNote = note
+
+            return {
+                stockCode: 'AAPL',
+                quantity: 3,
+                costPerShare: 10.5,
+                totalCost: 31.5,
+                account: { date: DEFAULT_ACCOUNT_DATE, cash: 968.5, positions: {} },
+            }
+        },
+    })
+
+    const result = await runCommand('account buy AAPL 3 --note="buy the dip"')
+
+    assert.equal(capturedStockCode, 'AAPL')
+    assert.equal(capturedQuantity, 3)
+    assert.equal(capturedNote, 'buy the dip')
+    assert.equal(result.exitCode, 0)
+    assert.equal(result.output, '3 stocks of AAPL successfully bought.')
+}
+
+// Verify selling without a note forwards an undefined note, so the flag stays optional.
+async function testAccountSellCommandWithoutNote(): Promise<void> {
+    let capturedNote: string | undefined = 'unset'
+    const runCommand = createRunCommand({
+        sellStockInDefaultUserAccount: async (stockCode, quantity, _dependencies, note) => {
+            capturedNote = note
+
+            return {
+                stockCode: 'AAPL',
+                quantity: 2,
+                pricePerShare: 12.5,
+                totalProceeds: 25,
+                account: { date: DEFAULT_ACCOUNT_DATE, cash: 1025, positions: {} },
+            }
+        },
+    })
+
+    const result = await runCommand('account sell AAPL 2')
+
+    assert.equal(capturedNote, undefined)
+    assert.equal(result.exitCode, 0)
+}
+
 // Verify invalid sell quantities are rejected before the shared sell action runs.
 async function testAccountSellInvalidQuantity(): Promise<void> {
     let sellWasCalled = false
@@ -293,9 +355,9 @@ async function testAccountCommandUsage(): Promise<void> {
     assert.equal(badDepositResult.exitCode, 1)
     assert.equal(badDepositResult.output, 'Usage: account deposit <value_cash>')
     assert.equal(badBuyResult.exitCode, 1)
-    assert.equal(badBuyResult.output, 'Usage: account buy <stock_code> <quantity>')
+    assert.equal(badBuyResult.output, 'Usage: account buy <stock_code> <quantity> [--note=<text>]')
     assert.equal(badSellResult.exitCode, 1)
-    assert.equal(badSellResult.output, 'Usage: account sell <stock_code> <quantity>')
+    assert.equal(badSellResult.output, 'Usage: account sell <stock_code> <quantity> [--note=<text>]')
 }
 
 // Verify bad date command arguments return the expected usage guidance.
@@ -526,10 +588,13 @@ async function testStockCommandsReportSkips(): Promise<void> {
 // Run the focused tests that protect CLI account command wiring.
 export async function runCliCommandTests(): Promise<void> {
     testGetHelpText()
+    testTokenizeCommand()
     await testAccountInitCommand()
     await testAccountShowCommand()
     await testAccountBuyCommand()
+    await testAccountBuyCommandWithNote()
     await testAccountSellCommand()
+    await testAccountSellCommandWithoutNote()
     await testAccountDepositCommand()
     await testDateNextCommand()
     await testDateSetCommand()

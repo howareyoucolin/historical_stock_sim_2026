@@ -68,10 +68,12 @@ function getPurchasePriceForDate(stockCode: string, accountDate: string, history
 }
 
 // Buy shares for the shared default account using the locally saved close price for the account date.
+// An optional `note` is recorded on the BUY history row so an automation agent can annotate the trade.
 export async function buyStockInDefaultUserAccountSession(
     stockCode: string,
     quantity: number,
-    dependencies: BuyStockDependencies = {}
+    dependencies: BuyStockDependencies = {},
+    note?: string
 ): Promise<BuyStockResult> {
     if (!Number.isInteger(quantity) || quantity <= 0) {
         throw new Error('Quantity must be a positive integer.')
@@ -114,6 +116,7 @@ export async function buyStockInDefaultUserAccountSession(
             quantity,
             pricePerShare: costPerShare,
             cashDelta: -totalCost,
+            note,
         },
         { cwd: dependencies.cwd }
     )

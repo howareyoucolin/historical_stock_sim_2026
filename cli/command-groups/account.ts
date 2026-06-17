@@ -2,8 +2,8 @@ import {
     DEFAULT_USER_SESSION_RELATIVE_PATH,
     type AccountState,
 } from '../../app/actions/account/model'
-import { buyStockInDefaultUserAccountSession, type BuyStockResult } from '../../app/actions/account/buy'
-import { sellStockInDefaultUserAccountSession, type SellStockResult } from '../../app/actions/account/sell'
+import { buyStockInDefaultUserAccountSession } from '../../app/actions/account/buy'
+import { sellStockInDefaultUserAccountSession } from '../../app/actions/account/sell'
 import { depositIntoDefaultUserAccountSession } from '../../app/actions/account/deposit'
 import { initializeDefaultUserAccountSession } from '../../app/actions/account/init'
 import { showDefaultUserAccountSession } from '../../app/actions/account/show'
@@ -13,13 +13,13 @@ export interface AccountCommandDependencies {
     initializeDefaultUserAccount?: () => Promise<AccountState>
     showDefaultUserAccount?: () => Promise<string>
     depositIntoDefaultUserAccount?: (valueCash: number) => Promise<AccountState>
-    buyStockInDefaultUserAccount?: (stockCode: string, quantity: number) => Promise<BuyStockResult>
-    sellStockInDefaultUserAccount?: (stockCode: string, quantity: number) => Promise<SellStockResult>
+    buyStockInDefaultUserAccount?: typeof buyStockInDefaultUserAccountSession
+    sellStockInDefaultUserAccount?: typeof sellStockInDefaultUserAccountSession
 }
 
 export const ACCOUNT_HELP_LINES = [
-    '  account buy <code> <qty> Buy shares using downloaded local history data',
-    '  account sell <code> <qty> Sell shares using downloaded local history data',
+    '  account buy <code> <qty> Buy shares; optional --note=<text> recorded in history',
+    '  account sell <code> <qty> Sell shares; optional --note=<text> recorded in history',
     '  account deposit <cash> Add cash to the shared account session file',
     '  account init           Reset the shared account session file',
     '  account show           Show the tracked stock table for the shared account',
@@ -28,6 +28,18 @@ export const ACCOUNT_HELP_LINES = [
 // Format a numeric dollar amount so CLI output stays consistent for account actions.
 function formatCurrency(value: number): string {
     return value.toFixed(2)
+}
+
+const NOTE_FLAG_PREFIX = '--note='
+
+// Pull an optional `--note=<text>` flag out of trade args, returning the note (when non-empty) and
+// the remaining positional args so the buy/sell handlers can validate the positional count cleanly.
+function extractNote(args: string[]): { note?: string; positional: string[] } {
+    const noteArg = args.find((arg) => arg.startsWith(NOTE_FLAG_PREFIX))
+    const positional = args.filter((arg) => !arg.startsWith(NOTE_FLAG_PREFIX))
+    const noteText = noteArg ? noteArg.slice(NOTE_FLAG_PREFIX.length) : ''
+
+    return { note: noteText.length > 0 ? noteText : undefined, positional }
 }
 
 // Build the account command handler so account-specific behavior stays out of the main router.
@@ -110,8 +122,18 @@ export function createAccountCommandHandler({
             }
         }
 
-        if (args[0] === 'buy' && args.length === 3) {
-            const quantity = Number(args[2])
+        if (args[0] === 'buy') {
+            const { note, positional } = extractNote(args)
+
+            if (positional.length !== 3) {
+                return {
+                    output: 'Usage: account buy <stock_code> <quantity> [--note=<text>]',
+                    shouldExit: false,
+                    exitCode: 1,
+                }
+            }
+
+            const quantity = Number(positional[2])
 
             if (!Number.isInteger(quantity) || quantity <= 0) {
                 return {
@@ -122,7 +144,7 @@ export function createAccountCommandHandler({
             }
 
             try {
-                const result = await buyStockInDefaultUserAccount(args[1], quantity)
+                const result = await buyStockInDefaultUserAccount(positional[1], quantity, undefined, note)
 
                 return {
                     output: `${result.quantity} stocks of ${result.stockCode} successfully bought.`,
@@ -140,8 +162,18 @@ export function createAccountCommandHandler({
             }
         }
 
-        if (args[0] === 'sell' && args.length === 3) {
-            const quantity = Number(args[2])
+        if (args[0] === 'sell') {
+            const { note, positional } = extractNote(args)
+
+            if (positional.length !== 3) {
+                return {
+                    output: 'Usage: account sell <stock_code> <quantity> [--note=<text>]',
+                    shouldExit: false,
+                    exitCode: 1,
+                }
+            }
+
+            const quantity = Number(positional[2])
 
             if (!Number.isInteger(quantity) || quantity <= 0) {
                 return {
@@ -152,7 +184,7 @@ export function createAccountCommandHandler({
             }
 
             try {
-                const result = await sellStockInDefaultUserAccount(args[1], quantity)
+                const result = await sellStockInDefaultUserAccount(positional[1], quantity, undefined, note)
 
                 return {
                     output: `${result.quantity} stocks of ${result.stockCode} successfully sold.`,
@@ -181,22 +213,6 @@ export function createAccountCommandHandler({
         if (args[0] === 'show') {
             return {
                 output: 'Usage: account show',
-                shouldExit: false,
-                exitCode: 1,
-            }
-        }
-
-        if (args[0] === 'buy') {
-            return {
-                output: 'Usage: account buy <stock_code> <quantity>',
-                shouldExit: false,
-                exitCode: 1,
-            }
-        }
-
-        if (args[0] === 'sell') {
-            return {
-                output: 'Usage: account sell <stock_code> <quantity>',
                 shouldExit: false,
                 exitCode: 1,
             }

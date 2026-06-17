@@ -44,9 +44,22 @@ function startInteractiveShell(): void {
     })
 }
 
+// Re-quote a shell argument that carries whitespace so re-joining the argv list survives the
+// command tokenizer. The shell already stripped the user's quotes, so an arg like
+// `--note=buy the dip` would otherwise be split back into separate tokens.
+function requoteArg(arg: string): string {
+    if (!/\s/.test(arg)) {
+        return arg
+    }
+
+    // Wrap in double quotes, collapsing any embedded double quotes to single quotes so the wrapping
+    // stays unambiguous for the tokenizer.
+    return `"${arg.replace(/"/g, "'")}"`
+}
+
 // Run a single command directly when arguments are passed after `npm run cli --`.
 async function runSingleCommand(args: string[]): Promise<void> {
-    const result = await runCommand(args.join(' '))
+    const result = await runCommand(args.map(requoteArg).join(' '))
     renderResult(result)
     process.exitCode = result.exitCode
 }

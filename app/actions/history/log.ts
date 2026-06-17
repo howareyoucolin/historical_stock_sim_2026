@@ -14,7 +14,8 @@ export type HoldingTerm = 'SHORT' | 'LONG'
 // A single recorded account activity. `quantity` and `pricePerShare` are optional so cash-only
 // events (deposits) can omit them; for dividends they carry the share count and per-share payout.
 // `acquiredDate` and `term` are set on sell rows so each sold purchase batch is recorded on its
-// own line with its holding term.
+// own line with its holding term. `note` is an optional free-text annotation passed on buy/sell from
+// the CLI so an automation agent can record why a trade was made.
 export interface HistoryEvent {
     type: HistoryEventType
     simDate: string
@@ -24,6 +25,7 @@ export interface HistoryEvent {
     pricePerShare?: number
     acquiredDate?: string
     term?: HoldingTerm
+    note?: string
 }
 
 export interface HistoryLogDependencies {
@@ -68,6 +70,12 @@ function formatHistoryLogLine(event: HistoryEvent, timestamp: Date): string {
     }
 
     tokens.push(`cash=${formatSignedCurrency(event.cashDelta)}`, `sim=${event.simDate}`)
+
+    // The note is kept last and JSON-quoted so multi-word text stays on one line and round-trips
+    // cleanly, without disturbing the space-separated tokens that precede it.
+    if (event.note) {
+        tokens.push(`note=${JSON.stringify(event.note)}`)
+    }
 
     return tokens.join(' ')
 }

@@ -27,9 +27,53 @@ export function getHelpText(): string {
     ].join('\n')
 }
 
+// Split raw input into tokens on whitespace while keeping single- or double-quoted spans together
+// (with the surrounding quotes stripped), so a flag like `--note="buy the dip"` stays one token.
+export function tokenizeCommand(input: string): string[] {
+    const tokens: string[] = []
+    let current = ''
+    let hasToken = false
+    let quote: string | null = null
+
+    for (const char of input) {
+        if (quote) {
+            if (char === quote) {
+                quote = null
+            } else {
+                current += char
+            }
+            continue
+        }
+
+        if (char === '"' || char === "'") {
+            quote = char
+            hasToken = true
+            continue
+        }
+
+        if (/\s/.test(char)) {
+            if (hasToken) {
+                tokens.push(current)
+                current = ''
+                hasToken = false
+            }
+            continue
+        }
+
+        current += char
+        hasToken = true
+    }
+
+    if (hasToken) {
+        tokens.push(current)
+    }
+
+    return tokens
+}
+
 // Normalize raw user input into a command token and its arguments.
 export function parseCommand(input: string): { command: string; args: string[] } {
-    const parts = input.trim().split(/\s+/).filter(Boolean)
+    const parts = tokenizeCommand(input)
 
     return {
         command: parts[0] ? parts[0].toLowerCase() : '',

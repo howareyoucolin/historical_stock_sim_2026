@@ -103,10 +103,12 @@ function consumeLotsFifo(lots: AccountPosition[], quantity: number): { consumed:
 }
 
 // Sell shares from the shared default account using the locally saved close price for the account date.
+// An optional `note` is recorded on every SELL history row so an automation agent can annotate the trade.
 export async function sellStockInDefaultUserAccountSession(
     stockCode: string,
     quantity: number,
-    dependencies: SellStockDependencies = {}
+    dependencies: SellStockDependencies = {},
+    note?: string
 ): Promise<SellStockResult> {
     if (!Number.isInteger(quantity) || quantity <= 0) {
         throw new Error('Quantity must be a positive integer.')
@@ -158,6 +160,7 @@ export async function sellStockInDefaultUserAccountSession(
                 acquiredDate: lot.purchaseDate,
                 term: classifyHoldingTerm(lot.purchaseDate, account.date),
                 cashDelta: pricePerShare * lot.quantity,
+                note,
             },
             { cwd: dependencies.cwd }
         )
