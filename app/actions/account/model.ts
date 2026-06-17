@@ -2,12 +2,18 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { createDefaultAccountState, DEFAULT_ACCOUNT_DATE, normalizeAccountState, type AccountState } from './state'
+import { accountSessionFileName, USER_SESSIONS_DIRECTORY_NAME } from '../session'
 
 export { createDefaultAccountState, DEFAULT_ACCOUNT_DATE, normalizeAccountState, type AccountPosition, type AccountState } from './state'
 
-export const USER_SESSIONS_DIRECTORY_NAME = 'user-sessions'
+export { USER_SESSIONS_DIRECTORY_NAME } from '../session'
 export const DEFAULT_USER_SESSION_FILE_NAME = 'default.json'
 export const DEFAULT_USER_SESSION_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${DEFAULT_USER_SESSION_FILE_NAME}`
+
+// Repo-relative path of the account file for the currently active session (session-aware).
+function sessionRelativePath(): string {
+    return `${USER_SESSIONS_DIRECTORY_NAME}/${accountSessionFileName()}`
+}
 
 export interface AccountSessionDependencies {
     cwd?: () => string
@@ -23,7 +29,7 @@ export async function readDefaultUserAccountSession({
     readFile = fs.readFile,
     writeFile = fs.writeFile,
 }: AccountSessionDependencies = {}): Promise<AccountState> {
-    const sessionFilePath = path.join(cwd(), DEFAULT_USER_SESSION_RELATIVE_PATH)
+    const sessionFilePath = path.join(cwd(), sessionRelativePath())
 
     try {
         const parsedAccount = JSON.parse(await readFile(sessionFilePath, 'utf8')) as Partial<AccountState>
@@ -58,7 +64,7 @@ export async function writeDefaultUserAccountSession(
         writeFile = fs.writeFile,
     }: AccountSessionDependencies = {}
 ): Promise<AccountState> {
-    const sessionFilePath = path.join(cwd(), DEFAULT_USER_SESSION_RELATIVE_PATH)
+    const sessionFilePath = path.join(cwd(), sessionRelativePath())
 
     await makeDirectory(path.dirname(sessionFilePath), { recursive: true })
     await writeFile(sessionFilePath, `${JSON.stringify(account, null, 2)}\n`, 'utf8')

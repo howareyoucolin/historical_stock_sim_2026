@@ -16,6 +16,7 @@ import { runStockListActionTests } from './actions/stock/list.test'
 import { runStockAnalysisActionTests } from './actions/stock/analysis.test'
 import { runScrapeEpsActionTests } from './actions/stock/scrape-eps.test'
 import { runSeedWatchlistActionTests } from './actions/stock/seed-watchlist.test'
+import { runSessionActionTests } from './actions/session.test'
 import { runCliCommandTests } from '../cli/commands.test'
 import { runCliOutputTests } from '../cli/output.test'
 
@@ -49,6 +50,7 @@ const TEST_SUITES: TestSuite[] = [
     { label: 'History log action tests', run: runHistoryLogActionTests },
     { label: 'Date next action tests', run: runSetDateToTomorrowActionTests },
     { label: 'Date set action tests', run: runSetDateToSpecificDateActionTests },
+    { label: 'Session action tests', run: runSessionActionTests },
     { label: 'CLI command tests', run: runCliCommandTests },
     { label: 'CLI output tests', run: runCliOutputTests },
 ]

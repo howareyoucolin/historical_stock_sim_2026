@@ -55,13 +55,17 @@ function formatStockListGrid(stockCodes: string[]): string {
     return rows.join('\n')
 }
 
-// Build the CLI-friendly listing of every available stock code.
-export async function showStockList(dependencies: StockListDependencies = {}): Promise<string> {
-    const stockCodes = await buildStockList(dependencies)
-
+// Format a resolved list of stock codes into the CLI grid, so callers holding the array (e.g. to
+// also emit it as JSON) can render the human output without rebuilding it.
+export function formatStockList(stockCodes: string[]): string {
     if (stockCodes.length === 0) {
         return 'No stocks available. Run `stock seed` to download the watchlist.'
     }
 
     return [`${stockCodes.length} stocks available:`, '', formatStockListGrid(stockCodes)].join('\n')
+}
+
+// Build the CLI-friendly listing of every available stock code.
+export async function showStockList(dependencies: StockListDependencies = {}): Promise<string> {
+    return formatStockList(await buildStockList(dependencies))
 }

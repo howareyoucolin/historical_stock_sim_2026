@@ -47,23 +47,27 @@ function formatDividend(row: StockHistoryRow): string {
     return row.isPayoutDate ? `${row.dividendPerShare.toFixed(2)} (payout)` : '- (no payout)'
 }
 
-// Build the CLI-friendly snapshot of a stock on the account's current simulation date.
-export async function showStockStatus(stockCode: string, dependencies: StockHistoryDependencies = {}): Promise<string> {
-    const { stockCode: normalizedStockCode, simDate, asOfDate, row, previousClose } = await buildStockStatus(stockCode, dependencies)
-
+// Format a resolved status snapshot into the CLI block, so callers holding the structured snapshot
+// (e.g. to also emit it as JSON) can render the human output without rebuilding it.
+export function formatStockStatus({ stockCode, simDate, asOfDate, row, previousClose }: StockStatus): string {
     if (row === null) {
-        return `No data for ${normalizedStockCode} on or before ${simDate}.`
+        return `No data for ${stockCode} on or before ${simDate}.`
     }
 
     // Flag when the sim date is not itself a trading day so the figures are not mistaken for that exact date.
     const asOfNote = asOfDate === simDate ? '' : ` (as of ${asOfDate})`
 
     return [
-        `${normalizedStockCode} status on ${simDate}${asOfNote}:`,
+        `${stockCode} status on ${simDate}${asOfNote}:`,
         `  close:    ${formatNumber(row.close)}`,
         `  change:   ${formatChange(row.close, previousClose)}`,
         `  pe_ratio: ${formatNumber(row.peRatio)}`,
         `  ttm_eps:  ${formatNumber(row.ttmEps)}`,
         `  dividend: ${formatDividend(row)}`,
     ].join('\n')
+}
+
+// Build the CLI-friendly snapshot of a stock on the account's current simulation date.
+export async function showStockStatus(stockCode: string, dependencies: StockHistoryDependencies = {}): Promise<string> {
+    return formatStockStatus(await buildStockStatus(stockCode, dependencies))
 }

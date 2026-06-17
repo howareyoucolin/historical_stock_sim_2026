@@ -2,10 +2,16 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { USER_SESSIONS_DIRECTORY_NAME } from './model'
+import { valuesLogFileName } from '../session'
 import type { DefaultUserAccountSessionView } from './view-model'
 
 export const VALUES_LOG_FILE_NAME = 'values.log'
 export const VALUES_LOG_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${VALUES_LOG_FILE_NAME}`
+
+// Repo-relative path of the values log for the currently active session (session-aware).
+function sessionValuesLogRelativePath(): string {
+    return `${USER_SESSIONS_DIRECTORY_NAME}/${valuesLogFileName()}`
+}
 
 // A single recorded portfolio total value (cash + market value of all holdings) on a simulation day.
 export interface DailyValueSnapshot {
@@ -35,7 +41,7 @@ export async function recordDailyValue(
         appendFile = fs.appendFile,
     }: ValuesLogDependencies = {}
 ): Promise<void> {
-    const logFilePath = path.join(cwd(), VALUES_LOG_RELATIVE_PATH)
+    const logFilePath = path.join(cwd(), sessionValuesLogRelativePath())
 
     await makeDirectory(path.dirname(logFilePath), { recursive: true })
     await appendFile(logFilePath, `${formatValueLogLine(snapshot)}\n`, 'utf8')
@@ -68,7 +74,7 @@ export async function readDailyValues({
     cwd = process.cwd,
     readFile = fs.readFile,
 }: ValuesLogDependencies = {}): Promise<DailyValueSnapshot[]> {
-    const logFilePath = path.join(cwd(), VALUES_LOG_RELATIVE_PATH)
+    const logFilePath = path.join(cwd(), sessionValuesLogRelativePath())
 
     let contents: string
     try {
@@ -104,7 +110,7 @@ export async function clearValueLog({
     cwd = process.cwd,
     removeFile = fs.rm,
 }: ValuesLogDependencies = {}): Promise<void> {
-    const logFilePath = path.join(cwd(), VALUES_LOG_RELATIVE_PATH)
+    const logFilePath = path.join(cwd(), sessionValuesLogRelativePath())
 
     try {
         await removeFile(logFilePath)

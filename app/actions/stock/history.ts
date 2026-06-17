@@ -114,15 +114,26 @@ function formatStockHistoryTable(rows: StockHistoryRow[]): string {
     return [formatTableRow(header, widths), formatTableSeparator(widths), ...dataRows.map((row) => formatTableRow(row, widths))].join('\n')
 }
 
-// Build the CLI-friendly stock history view from the first recorded day through the account's date.
-export async function showStockHistory(stockCode: string, dependencies: StockHistoryDependencies = {}): Promise<string> {
-    const { stockCode: normalizedStockCode, throughDate, rows } = await buildStockHistory(stockCode, dependencies)
+// The resolved stock history: the chronological rows plus the code and cutoff date they cover.
+export interface StockHistory {
+    stockCode: string
+    throughDate: string
+    rows: StockHistoryRow[]
+}
 
+// Format a resolved stock history into the CLI table, so callers holding the rows (e.g. to also
+// emit them as JSON) can render the human output without rebuilding it.
+export function formatStockHistory({ stockCode, throughDate, rows }: StockHistory): string {
     if (rows.length === 0) {
-        return `No history for ${normalizedStockCode} on or before ${throughDate}.`
+        return `No history for ${stockCode} on or before ${throughDate}.`
     }
 
-    const heading = `History for ${normalizedStockCode} from ${rows[0].date} to ${throughDate} (${rows.length} trading days):`
+    const heading = `History for ${stockCode} from ${rows[0].date} to ${throughDate} (${rows.length} trading days):`
 
     return [heading, '', formatStockHistoryTable(rows)].join('\n')
+}
+
+// Build the CLI-friendly stock history view from the first recorded day through the account's date.
+export async function showStockHistory(stockCode: string, dependencies: StockHistoryDependencies = {}): Promise<string> {
+    return formatStockHistory(await buildStockHistory(stockCode, dependencies))
 }

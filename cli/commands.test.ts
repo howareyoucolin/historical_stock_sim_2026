@@ -49,28 +49,29 @@ async function testAccountInitCommand(): Promise<void> {
     assert.equal(result.output, 'Reset account in user-sessions/default.json.')
 }
 
-// Verify account show calls the shared account presenter and prints the terminal table output.
+// Verify account show fetches the holdings view, renders the table, and carries the view as data.
 async function testAccountShowCommand(): Promise<void> {
-    let showWasCalled = false
-    const shownTable = [
-        'Date: 2018-03-10',
-        'Cash: 125.50',
-        '',
-        'stock_code | average_cost | current_price | quantity | total_value | total_gain_loss | percent_gain_loss',
-    ].join('\n')
+    let fetchWasCalled = false
+    const view = {
+        account: { date: '2018-03-10', cash: 125.5, positions: {} },
+        rows: [],
+        summary: { principal: 0, totalCurrentValue: 0, totalGainLoss: 0, percentGainLoss: 0, totalDayChange: 0, dayChangePercent: 0 },
+    }
     const runCommand = createRunCommand({
-        showDefaultUserAccount: async () => {
-            showWasCalled = true
+        fetchAccountView: async () => {
+            fetchWasCalled = true
 
-            return shownTable
+            return view
         },
     })
 
     const result = await runCommand('account show')
 
-    assert.equal(showWasCalled, true)
+    assert.equal(fetchWasCalled, true)
     assert.equal(result.exitCode, 0)
-    assert.equal(result.output, shownTable)
+    assert.match(result.output, /Date: 2018-03-10/)
+    assert.match(result.output, /Cash: 125.50/)
+    assert.equal(result.data, view)
 }
 
 // Verify account deposit calls the shared session updater with the provided cash delta and returns a short success message.
@@ -240,10 +241,10 @@ async function testHistoryShowCommand(): Promise<void> {
     let showWasCalled = false
     const loggedHistory = '2026-06-16T14:23:01.123Z BUY stock=AAPL qty=3 price=105.35 cash=-316.05 sim=2016-01-04'
     const runCommand = createRunCommand({
-        showHistoryLog: async () => {
+        readHistoryEntries: async () => {
             showWasCalled = true
 
-            return loggedHistory
+            return [loggedHistory]
         },
     })
 
@@ -259,46 +260,65 @@ async function testHistoryCommandUsage(): Promise<void> {
     const runCommand = createRunCommand()
     const historyResult = await runCommand('history')
     const badHistoryResult = await runCommand('history wrong')
-    const badShowResult = await runCommand('history show now')
+    const badFilterResult = await runCommand('history show now')
 
     assert.equal(historyResult.exitCode, 1)
-    assert.equal(historyResult.output, 'Usage: history show')
+    assert.match(historyResult.output, /Usage: history show/)
     assert.equal(badHistoryResult.exitCode, 1)
-    assert.equal(badHistoryResult.output, 'Usage: history show')
-    assert.equal(badShowResult.exitCode, 1)
-    assert.equal(badShowResult.output, 'Usage: history show')
+    assert.match(badHistoryResult.output, /Usage: history show/)
+    assert.equal(badFilterResult.exitCode, 1)
+    assert.equal(badFilterResult.output, 'Unknown history filter: now')
 }
 
-// Verify date next calls the shared simulation date advancer and returns the updated day.
+// Verify date next steps one trading day and reports the updated day.
 async function testDateNextCommand(): Promise<void> {
-    let nextWasCalled = false
+    let nextCallCount = 0
     const runCommand = createRunCommand({
-        setDefaultUserAccountDateToTomorrow: async () => {
-            nextWasCalled = true
+        advanceOneTradingDay: async () => {
+            nextCallCount += 1
 
-            return {
-                date: '2016-01-05',
-            }
+            return { account: { date: '2016-01-05', cash: 0, positions: {} }, dividends: [], totalDividends: 0 }
         },
     })
 
     const result = await runCommand('date next')
 
-    assert.equal(nextWasCalled, true)
+    assert.equal(nextCallCount, 1)
     assert.equal(result.exitCode, 0)
     assert.equal(result.output, 'Advanced simulation date to 2016-01-05.')
 }
 
-// Verify date set calls the shared simulation date setter and returns the updated day.
+// Verify date next <n> steps n trading days and surfaces dividends credited along the way.
+async function testDateNextMultipleCommand(): Promise<void> {
+    let nextCallCount = 0
+    const runCommand = createRunCommand({
+        advanceOneTradingDay: async () => {
+            nextCallCount += 1
+
+            return {
+                account: { date: `2016-01-0${4 + nextCallCount}`, cash: 0, positions: {} },
+                dividends: nextCallCount === 2 ? [{ stockCode: 'T', date: '2016-01-06', shares: 10, perShare: 0.5, amount: 5 }] : [],
+                totalDividends: nextCallCount === 2 ? 5 : 0,
+            }
+        },
+    })
+
+    const result = await runCommand('date next 3')
+
+    assert.equal(nextCallCount, 3)
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /Advanced 3 trading days to 2016-01-07\./)
+    assert.match(result.output, /Credited 5.00 in dividends across 1 payout\./)
+}
+
+// Verify date set advances to a target day and returns the updated day.
 async function testDateSetCommand(): Promise<void> {
     let capturedSpecificDate = ''
     const runCommand = createRunCommand({
-        setDefaultUserAccountDateToSpecificDate: async (specificDate) => {
+        advanceToSpecificDate: async (specificDate) => {
             capturedSpecificDate = specificDate
 
-            return {
-                date: specificDate,
-            }
+            return { account: { date: specificDate, cash: 0, positions: {} }, dividends: [], totalDividends: 0 }
         },
     })
 
@@ -307,6 +327,18 @@ async function testDateSetCommand(): Promise<void> {
     assert.equal(capturedSpecificDate, '2018-04-02')
     assert.equal(result.exitCode, 0)
     assert.equal(result.output, 'Set simulation date to 2018-04-02.')
+}
+
+// Verify date show reports the current simulation date without changing it.
+async function testDateShowCommand(): Promise<void> {
+    const runCommand = createRunCommand({
+        fetchAccountSession: async () => ({ date: '2020-02-14', cash: 0, positions: {} }),
+    })
+
+    const result = await runCommand('date show')
+
+    assert.equal(result.exitCode, 0)
+    assert.equal(result.output, 'Simulation date: 2020-02-14.')
 }
 
 // Verify invalid deposit values are rejected before the shared session updater runs.
@@ -355,9 +387,9 @@ async function testAccountCommandUsage(): Promise<void> {
     assert.equal(badDepositResult.exitCode, 1)
     assert.equal(badDepositResult.output, 'Usage: account deposit <value_cash>')
     assert.equal(badBuyResult.exitCode, 1)
-    assert.equal(badBuyResult.output, 'Usage: account buy <stock_code> <quantity> [--note=<text>]')
+    assert.match(badBuyResult.output, /^Usage: account buy <stock_code> <quantity\|--amount=<dollars>\|max>/)
     assert.equal(badSellResult.exitCode, 1)
-    assert.equal(badSellResult.output, 'Usage: account sell <stock_code> <quantity> [--note=<text>]')
+    assert.match(badSellResult.output, /^Usage: account sell <stock_code> <quantity\|all\|--percent=<pct>>/)
 }
 
 // Verify bad date command arguments return the expected usage guidance.
@@ -368,9 +400,9 @@ async function testDateCommandUsage(): Promise<void> {
     const badDateSetResult = await runCommand('date set')
 
     assert.equal(dateResult.exitCode, 1)
-    assert.equal(dateResult.output, 'Usage: date next')
+    assert.equal(dateResult.output, 'Usage: date <show|next [n]|set <yyyy-mm-dd>>')
     assert.equal(badDateResult.exitCode, 1)
-    assert.equal(badDateResult.output, 'Usage: date <next|set <yyyy-mm-dd>>')
+    assert.equal(badDateResult.output, 'Usage: date <show|next [n]|set <yyyy-mm-dd>>')
     assert.equal(badDateSetResult.exitCode, 1)
     assert.equal(badDateSetResult.output, 'Usage: date set <yyyy-mm-dd>')
 }
@@ -487,10 +519,14 @@ async function testStockSeedCommand(): Promise<void> {
 async function testStockHistoryCommand(): Promise<void> {
     let requestedStockCode = ''
     const runCommand = createRunCommand({
-        showStockHistory: async (stockCode) => {
+        fetchStockHistory: async (stockCode) => {
             requestedStockCode = stockCode
 
-            return 'History for AAPL from 2010-01-04 to 2020-02-14 (2543 trading days):'
+            return {
+                stockCode: 'AAPL',
+                throughDate: '2020-02-14',
+                rows: [{ date: '2010-01-04', close: 7.64, ttmEps: 0.37, peRatio: 20.66, dividendPerShare: 0, isPayoutDate: false }],
+            }
         },
     })
 
@@ -515,10 +551,16 @@ async function testStockHistoryCommandUsage(): Promise<void> {
 async function testStockStatusCommand(): Promise<void> {
     let requestedStockCode = ''
     const runCommand = createRunCommand({
-        showStockStatus: async (stockCode) => {
+        fetchStockStatus: async (stockCode) => {
             requestedStockCode = stockCode
 
-            return 'AAPL status on 2020-02-14:'
+            return {
+                stockCode: 'AAPL',
+                simDate: '2020-02-14',
+                asOfDate: '2020-02-14',
+                row: { date: '2020-02-14', close: 81.24, ttmEps: 3.18, peRatio: 25.55, dividendPerShare: 0, isPayoutDate: false },
+                previousClose: 81.22,
+            }
         },
     })
 
@@ -543,10 +585,10 @@ async function testStockStatusCommandUsage(): Promise<void> {
 async function testStockListCommand(): Promise<void> {
     let listWasCalled = false
     const runCommand = createRunCommand({
-        showStockList: async () => {
+        fetchStockList: async () => {
             listWasCalled = true
 
-            return '2 stocks available:\n\nAAPL  MSFT'
+            return ['AAPL', 'MSFT']
         },
     })
 
@@ -585,6 +627,210 @@ async function testStockCommandsReportSkips(): Promise<void> {
     assert.equal(buildResult.output, 'Skipped AAPL: market-data/AAPL/data.json already exists.')
 }
 
+// Verify --json renders the command's structured data instead of the human output.
+async function testJsonModeRendersData(): Promise<void> {
+    const runCommand = createRunCommand({
+        fetchAccountSession: async () => ({ date: '2020-02-14', cash: 0, positions: {} }),
+    })
+
+    const result = await runCommand('date show --json')
+
+    assert.equal(result.exitCode, 0)
+    assert.deepEqual(JSON.parse(result.output), { date: '2020-02-14' })
+}
+
+// Verify --json wraps a plain-message command (no structured data) as a message object.
+async function testJsonModeWrapsMessage(): Promise<void> {
+    const runCommand = createRunCommand()
+
+    const result = await runCommand('help --json')
+
+    assert.equal(result.exitCode, 0)
+    assert.ok(typeof JSON.parse(result.output).message === 'string')
+}
+
+// Verify a dollar --amount buy sizes the order from the quoted price (floor of amount / price).
+async function testAccountBuyByAmount(): Promise<void> {
+    let capturedQuantity = 0
+    const runCommand = createRunCommand({
+        quoteStockForAccountDate: async () => ({ stockCode: 'AAPL', date: '2020-02-14', close: 80 }),
+        buyStockInDefaultUserAccount: async (stockCode, quantity) => {
+            capturedQuantity = quantity
+
+            return { stockCode: 'AAPL', quantity, costPerShare: 80, totalCost: 80 * quantity, account: { date: '2020-02-14', cash: 0, positions: {} } }
+        },
+    })
+
+    const result = await runCommand('account buy AAPL --amount=500')
+
+    // 500 / 80 = 6.25 -> 6 shares.
+    assert.equal(capturedQuantity, 6)
+    assert.equal(result.exitCode, 0)
+}
+
+// Verify `max` buys as many shares as available cash allows at the quoted price.
+async function testAccountBuyMax(): Promise<void> {
+    let capturedQuantity = 0
+    const runCommand = createRunCommand({
+        fetchAccountView: async () => ({
+            account: { date: '2020-02-14', cash: 1000, positions: {} },
+            rows: [],
+            summary: { principal: 0, totalCurrentValue: 0, totalGainLoss: 0, percentGainLoss: 0, totalDayChange: 0, dayChangePercent: 0 },
+        }),
+        quoteStockForAccountDate: async () => ({ stockCode: 'AAPL', date: '2020-02-14', close: 80 }),
+        buyStockInDefaultUserAccount: async (stockCode, quantity) => {
+            capturedQuantity = quantity
+
+            return { stockCode: 'AAPL', quantity, costPerShare: 80, totalCost: 80 * quantity, account: { date: '2020-02-14', cash: 1000 - 80 * quantity, positions: {} } }
+        },
+    })
+
+    const result = await runCommand('account buy AAPL max')
+
+    // 1000 / 80 = 12.5 -> 12 shares.
+    assert.equal(capturedQuantity, 12)
+    assert.equal(result.exitCode, 0)
+}
+
+// Verify --dry-run previews a buy without invoking the purchase action.
+async function testAccountBuyDryRun(): Promise<void> {
+    let buyWasCalled = false
+    const runCommand = createRunCommand({
+        quoteStockForAccountDate: async () => ({ stockCode: 'AAPL', date: '2020-02-14', close: 80 }),
+        buyStockInDefaultUserAccount: async () => {
+            buyWasCalled = true
+            throw new Error('should not run in dry run')
+        },
+    })
+
+    const result = await runCommand('account buy AAPL 3 --dry-run')
+
+    assert.equal(buyWasCalled, false)
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /Dry run: would buy 3 AAPL at 80.00 = 240.00/)
+}
+
+// Verify `sell all` sells the full owned quantity for the stock.
+async function testAccountSellAll(): Promise<void> {
+    let capturedQuantity = 0
+    const runCommand = createRunCommand({
+        fetchAccountView: async () => ({
+            account: { date: '2020-02-14', cash: 0, positions: { AAPL: [{ quantity: 7, cost_per_share: 10, purchase_date: '2016-01-05' }] } },
+            rows: [],
+            summary: { principal: 0, totalCurrentValue: 0, totalGainLoss: 0, percentGainLoss: 0, totalDayChange: 0, dayChangePercent: 0 },
+        }),
+        sellStockInDefaultUserAccount: async (stockCode, quantity) => {
+            capturedQuantity = quantity
+
+            return { stockCode: 'AAPL', quantity, pricePerShare: 80, totalProceeds: 80 * quantity, account: { date: '2020-02-14', cash: 80 * quantity, positions: {} } }
+        },
+    })
+
+    const result = await runCommand('account sell AAPL all')
+
+    assert.equal(capturedQuantity, 7)
+    assert.equal(result.exitCode, 0)
+}
+
+// Verify --percent sells the floored fraction of owned shares.
+async function testAccountSellPercent(): Promise<void> {
+    let capturedQuantity = 0
+    const runCommand = createRunCommand({
+        fetchAccountView: async () => ({
+            account: { date: '2020-02-14', cash: 0, positions: { AAPL: [{ quantity: 10, cost_per_share: 10, purchase_date: '2016-01-05' }] } },
+            rows: [],
+            summary: { principal: 0, totalCurrentValue: 0, totalGainLoss: 0, percentGainLoss: 0, totalDayChange: 0, dayChangePercent: 0 },
+        }),
+        sellStockInDefaultUserAccount: async (stockCode, quantity) => {
+            capturedQuantity = quantity
+
+            return { stockCode: 'AAPL', quantity, pricePerShare: 80, totalProceeds: 80 * quantity, account: { date: '2020-02-14', cash: 80 * quantity, positions: {} } }
+        },
+    })
+
+    const result = await runCommand('account sell AAPL --percent=50')
+
+    assert.equal(capturedQuantity, 5)
+    assert.equal(result.exitCode, 0)
+}
+
+// Verify history filters keep only entries matching the requested type.
+async function testHistoryTypeFilter(): Promise<void> {
+    const runCommand = createRunCommand({
+        readHistoryEntries: async () => [
+            '2026-06-16T00:00:00.000Z BUY stock=AAPL qty=3 price=10.00 cash=-30.00 sim=2020-02-14',
+            '2026-06-16T00:00:01.000Z DEPOSIT cash=+1000.00 sim=2020-02-14',
+            '2026-06-16T00:00:02.000Z SELL stock=AAPL qty=1 price=12.00 cash=+12.00 sim=2020-02-15',
+        ],
+    })
+
+    const result = await runCommand('history show --type=sell')
+
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /SELL stock=AAPL/)
+    assert.doesNotMatch(result.output, /BUY|DEPOSIT/)
+}
+
+// Verify values show renders the return summary and carries the structured summary as data.
+async function testValuesShowCommand(): Promise<void> {
+    const summary = {
+        snapshots: [{ date: '2020-02-14', value: 1000 }, { date: '2020-02-18', value: 1100 }],
+        count: 2,
+        first: { date: '2020-02-14', value: 1000 },
+        last: { date: '2020-02-18', value: 1100 },
+        change: 100,
+        changePercent: 10,
+        high: { date: '2020-02-18', value: 1100 },
+        low: { date: '2020-02-14', value: 1000 },
+    }
+    const runCommand = createRunCommand({ fetchValuesSummary: async () => summary })
+
+    const result = await runCommand('values show')
+
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /Return: \+100.00 \(\+10.00%\)/)
+    assert.equal(result.data, summary)
+}
+
+// Verify stock price prints a one-line quote with the day change for the account date.
+async function testStockPriceCommand(): Promise<void> {
+    const runCommand = createRunCommand({
+        fetchStockStatus: async () => ({
+            stockCode: 'AAPL',
+            simDate: '2020-02-14',
+            asOfDate: '2020-02-14',
+            row: { date: '2020-02-14', close: 81.24, ttmEps: 3.18, peRatio: 25.55, dividendPerShare: 0, isPayoutDate: false },
+            previousClose: 80,
+        }),
+    })
+
+    const result = await runCommand('stock price AAPL')
+
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /AAPL 81.24 USD on 2020-02-14 \+1.24/)
+}
+
+// Verify stock compare tabulates each requested code using the status builder.
+async function testStockCompareCommand(): Promise<void> {
+    const byCode: Record<string, number> = { AAPL: 81.24, MSFT: 187.5 }
+    const runCommand = createRunCommand({
+        fetchStockStatus: async (stockCode) => ({
+            stockCode,
+            simDate: '2020-02-14',
+            asOfDate: '2020-02-14',
+            row: { date: '2020-02-14', close: byCode[stockCode], ttmEps: 3, peRatio: 27, dividendPerShare: 0, isPayoutDate: false },
+            previousClose: 80,
+        }),
+    })
+
+    const result = await runCommand('stock compare AAPL MSFT')
+
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /stock\s+\|\s+close/)
+    assert.match(result.output, /AAPL/)
+    assert.match(result.output, /MSFT/)
+}
+
 // Run the focused tests that protect CLI account command wiring.
 export async function runCliCommandTests(): Promise<void> {
     testGetHelpText()
@@ -597,7 +843,9 @@ export async function runCliCommandTests(): Promise<void> {
     await testAccountSellCommandWithoutNote()
     await testAccountDepositCommand()
     await testDateNextCommand()
+    await testDateNextMultipleCommand()
     await testDateSetCommand()
+    await testDateShowCommand()
     await testHistoryShowCommand()
     await testHistoryCommandUsage()
     await testAccountDepositInvalidValue()
@@ -616,4 +864,15 @@ export async function runCliCommandTests(): Promise<void> {
     await testStockListCommandUsage()
     await testStockSeedCommand()
     await testStockCommandsReportSkips()
+    await testJsonModeRendersData()
+    await testJsonModeWrapsMessage()
+    await testAccountBuyByAmount()
+    await testAccountBuyMax()
+    await testAccountBuyDryRun()
+    await testAccountSellAll()
+    await testAccountSellPercent()
+    await testHistoryTypeFilter()
+    await testValuesShowCommand()
+    await testStockPriceCommand()
+    await testStockCompareCommand()
 }

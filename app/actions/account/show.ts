@@ -300,12 +300,9 @@ function formatAccountStockTable(rows: AccountStockTableRow[]): string {
     return [formatTableRow(header, widths), formatTableSeparator(widths), ...dataRows.map((row) => formatTableRow(row, widths))].join('\n')
 }
 
-// Build the CLI-friendly holdings view for the shared default user account session.
-export async function showDefaultUserAccountSession(
-    dependencies: ShowAccountSessionDependencies = {}
-): Promise<string> {
-    const { account, rows, summary } = await fetchDefaultUserAccountSessionView(dependencies)
-
+// Format a resolved holdings view into the CLI table block, so callers that already hold the view
+// (e.g. to also emit it as JSON) can render the human output without reading the session twice.
+export function formatDefaultUserAccountSessionView({ account, rows, summary }: DefaultUserAccountSessionView): string {
     if (rows.length === 0) {
         return [
             `Date: ${account.date}`,
@@ -323,4 +320,11 @@ export async function showDefaultUserAccountSession(
         '',
         formatAccountStockTable(rows),
     ].join('\n')
+}
+
+// Build the CLI-friendly holdings view for the shared default user account session.
+export async function showDefaultUserAccountSession(
+    dependencies: ShowAccountSessionDependencies = {}
+): Promise<string> {
+    return formatDefaultUserAccountSessionView(await fetchDefaultUserAccountSessionView(dependencies))
 }

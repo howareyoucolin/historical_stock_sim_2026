@@ -2,6 +2,12 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { USER_SESSIONS_DIRECTORY_NAME } from '../account/model'
+import { historyLogFileName } from '../session'
+
+// Repo-relative path of the history log for the currently active session (session-aware).
+function sessionLogRelativePath(): string {
+    return `${USER_SESSIONS_DIRECTORY_NAME}/${historyLogFileName()}`
+}
 
 export const HISTORY_LOG_FILE_NAME = 'history.log'
 export const HISTORY_LOG_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${HISTORY_LOG_FILE_NAME}`
@@ -90,7 +96,7 @@ export async function appendHistoryEvent(
         appendFile = fs.appendFile,
     }: HistoryLogDependencies = {}
 ): Promise<void> {
-    const logFilePath = path.join(cwd(), HISTORY_LOG_RELATIVE_PATH)
+    const logFilePath = path.join(cwd(), sessionLogRelativePath())
 
     await makeDirectory(path.dirname(logFilePath), { recursive: true })
     await appendFile(logFilePath, `${formatHistoryLogLine(event, now())}\n`, 'utf8')
@@ -101,7 +107,7 @@ export async function clearHistoryLog({
     cwd = process.cwd,
     removeFile = fs.rm,
 }: HistoryLogDependencies = {}): Promise<void> {
-    const logFilePath = path.join(cwd(), HISTORY_LOG_RELATIVE_PATH)
+    const logFilePath = path.join(cwd(), sessionLogRelativePath())
 
     try {
         await removeFile(logFilePath)
@@ -120,7 +126,7 @@ export async function readHistoryLogEntries({
     cwd = process.cwd,
     readFile = fs.readFile,
 }: HistoryLogDependencies = {}): Promise<string[]> {
-    const logFilePath = path.join(cwd(), HISTORY_LOG_RELATIVE_PATH)
+    const logFilePath = path.join(cwd(), sessionLogRelativePath())
 
     try {
         const contents = (await readFile(logFilePath, 'utf8')).trim()
@@ -140,7 +146,7 @@ export async function showHistoryLog({
     cwd = process.cwd,
     readFile = fs.readFile,
 }: HistoryLogDependencies = {}): Promise<string> {
-    const logFilePath = path.join(cwd(), HISTORY_LOG_RELATIVE_PATH)
+    const logFilePath = path.join(cwd(), sessionLogRelativePath())
 
     try {
         const contents = (await readFile(logFilePath, 'utf8')).trim()

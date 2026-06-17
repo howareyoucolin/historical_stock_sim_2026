@@ -1,5 +1,6 @@
 #!/usr/bin/env tsx
 
+import fs from 'node:fs/promises'
 import readline from 'node:readline'
 
 import { getBanner, runCommand } from './commands'
@@ -64,8 +65,53 @@ async function runSingleCommand(args: string[]): Promise<void> {
     process.exitCode = result.exitCode
 }
 
-if (process.argv.length > 2) {
-    void runSingleCommand(process.argv.slice(2))
+// Run every command in a batch file in order, echoing each line. Blank lines and `#` comments are
+// skipped. Each line is a raw command (quotes preserved), so notes and --json work as in the shell.
+async function runBatchFile(filePath: string): Promise<void> {
+    let contents: string
+
+    try {
+        contents = await fs.readFile(filePath, 'utf8')
+    } catch (error) {
+        console.error(formatCliResultOutput(`Batch failed: cannot read ${filePath}: ${(error as Error).message}`))
+        process.exitCode = 1
+        return
+    }
+
+    const lines = contents
+        .split('\n')
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0 && !line.startsWith('#'))
+
+    let failures = 0
+
+    for (const line of lines) {
+        console.log(formatCliResultOutput(`> ${line}`))
+        const result = await runCommand(line)
+        renderResult(result)
+
+        if (result.exitCode !== 0) {
+            failures += 1
+        }
+        if (result.shouldExit) {
+            break
+        }
+    }
+
+    process.exitCode = failures > 0 ? 1 : 0
+}
+
+const cliArgs = process.argv.slice(2)
+
+if (cliArgs[0] === 'batch') {
+    if (!cliArgs[1]) {
+        console.error(formatCliResultOutput('Usage: batch <file>'))
+        process.exitCode = 1
+    } else {
+        void runBatchFile(cliArgs[1])
+    }
+} else if (cliArgs.length > 0) {
+    void runSingleCommand(cliArgs)
 } else {
     startInteractiveShell()
 }
