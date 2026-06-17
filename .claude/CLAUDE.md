@@ -17,3 +17,5 @@ Read only the files relevant to the current task:
 
 - `skills/git-commit-helper/SKILL.md`: workflow for drafting and finalizing a
   git commit.
+- `skills/stock-trade-simulation/SKILL.md`: workflow for running an automated
+  stock trade simulation through the CLI (see also `commands.md`).
