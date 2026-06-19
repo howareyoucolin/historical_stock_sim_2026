@@ -5,7 +5,7 @@ import path from 'node:path'
 
 import { DATA_DIRECTORY_NAME, END_DATE, HISTORY_FILE_NAME, START_DATE } from '../stock/download-data'
 import { buyStockInDefaultUserAccountSession } from './buy'
-import { DEFAULT_ACCOUNT_DATE, DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
+import { DEFAULT_ACCOUNT_DATE, readDefaultUserAccountSession, writeDefaultUserAccountSession } from './model'
 
 // Build a temporary repo root so buy action tests can mutate isolated account and market data files.
 async function createTempRepoRoot(): Promise<string> {
@@ -53,7 +53,6 @@ async function testBuyStockInDefaultUserAccountSessionInvalidQuantity(): Promise
 // Verify buy uses the account date to price the purchase and appends the new lot to the account.
 async function testBuyStockInDefaultUserAccountSession(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
-    const sessionFilePath = path.join(tempRepoRoot, DEFAULT_USER_SESSION_RELATIVE_PATH)
 
     await writeDefaultUserAccountSession(
         {
@@ -89,11 +88,7 @@ async function testBuyStockInDefaultUserAccountSession(): Promise<void> {
     const result = await buyStockInDefaultUserAccountSession('aapl', 3, {
         cwd: () => tempRepoRoot,
     })
-    const savedAccount = JSON.parse(await fs.readFile(sessionFilePath, 'utf8')) as {
-        date: string
-        cash: number
-        positions: Record<string, unknown>
-    }
+    const savedAccount = await readDefaultUserAccountSession({ cwd: () => tempRepoRoot })
 
     assert.equal(result.stockCode, 'AAPL')
     assert.equal(result.quantity, 3)

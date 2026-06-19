@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 
 import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
-import { DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from '../account/model'
+import { readDefaultUserAccountSession, writeDefaultUserAccountSession } from '../account/model'
 import { setDefaultUserAccountDateToTomorrow, TRADING_CALENDAR_STOCK_CODE } from './set-to-tomorrow'
 import { findNextTradingDate } from './utils'
 
@@ -44,7 +44,6 @@ function testFindNextTradingDate(): void {
 // Verify advancing skips weekends and holidays, landing on the next real trading day.
 async function testSetDefaultUserAccountDateToTomorrowSkipsClosedDays(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
-    const sessionFilePath = path.join(tempRepoRoot, DEFAULT_USER_SESSION_RELATIVE_PATH)
 
     // Friday 2018-03-09, then a gap over the weekend and the 2018-03-30 Good Friday holiday.
     await writeTradingCalendar(tempRepoRoot, ['2018-03-09', '2018-03-12', '2018-03-29', '2018-04-02'])
@@ -58,7 +57,7 @@ async function testSetDefaultUserAccountDateToTomorrowSkipsClosedDays(): Promise
     )
 
     const afterWeekend = await setDefaultUserAccountDateToTomorrow({ cwd: () => tempRepoRoot })
-    const savedAccount = JSON.parse(await fs.readFile(sessionFilePath, 'utf8')) as { date: string; cash: number; positions: Record<string, unknown> }
+    const savedAccount = await readDefaultUserAccountSession({ cwd: () => tempRepoRoot })
 
     // Saturday/Sunday are skipped: Friday advances to Monday.
     assert.equal(afterWeekend.date, '2018-03-12')

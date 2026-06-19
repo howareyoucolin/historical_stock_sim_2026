@@ -46,7 +46,7 @@ async function testAccountInitCommand(): Promise<void> {
 
     assert.equal(initializerWasCalled, true)
     assert.equal(result.exitCode, 0)
-    assert.equal(result.output, 'Reset account in user-sessions/default.json.')
+    assert.equal(result.output, 'Reset account in user-sessions/account.json.')
 }
 
 // Verify account show fetches the holdings view, renders the table, and carries the view as data.
@@ -93,7 +93,7 @@ async function testAccountDepositCommand(): Promise<void> {
 
     assert.equal(capturedCashDelta, -25.5)
     assert.equal(result.exitCode, 0)
-    assert.equal(result.output, 'Updated account cash by -25.50 in user-sessions/default.json.')
+    assert.equal(result.output, 'Updated account cash by -25.50 in user-sessions/account.json.')
 }
 
 // Verify account buy calls the shared purchase action with the provided stock code and quantity and returns a short success message.

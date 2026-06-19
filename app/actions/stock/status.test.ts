@@ -4,7 +4,7 @@ import path from 'node:path'
 import { DATA_FILE_NAME } from './build-data'
 import { DATA_DIRECTORY_NAME } from './download-data'
 import { buildStockStatus, showStockStatus } from './status'
-import { DEFAULT_USER_SESSION_RELATIVE_PATH } from '../account/model'
+import { DEFAULT_USER_SESSION_META_RELATIVE_PATH, DEFAULT_USER_SESSION_RELATIVE_PATH } from '../account/model'
 
 const HISTORY_BY_DATE = {
     '2010-01-04': { close: 7.64, isPayoutDate: false, dividendPerShare: 0, ttmEps: 0.37, peRatio: 20.66 },
@@ -17,9 +17,14 @@ function createDependencies(accountDate: string, dataFile: unknown) {
     return {
         cwd: () => '/repo',
         readFile: async (filePath: string) => {
+            // The account state is read from two files; the sim date the tests pin lives in the meta file.
+            if (filePath === path.join('/repo', DEFAULT_USER_SESSION_META_RELATIVE_PATH)) {
+                return JSON.stringify({ date: accountDate, updated_at: '2020-01-01T00:00:00.000Z' })
+            }
+
             assert.equal(filePath, path.join('/repo', DEFAULT_USER_SESSION_RELATIVE_PATH))
 
-            return JSON.stringify({ date: accountDate, cash: 0, positions: {} })
+            return JSON.stringify({ cash: 0, positions: {} })
         },
         readMarketDataFile: async (filePath: string) => {
             assert.equal(filePath, path.join('/repo', DATA_DIRECTORY_NAME, 'AAPL', DATA_FILE_NAME))

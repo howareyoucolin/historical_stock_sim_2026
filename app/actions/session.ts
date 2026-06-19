@@ -16,8 +16,18 @@ export function getActiveSession(): string | null {
     return activeSession
 }
 
-// Account session file name for the active session (default: default.json).
-export function accountSessionFileName(): string {
+// Account data file name (cash + positions) for the active session (default: account.json).
+export function accountDataFileName(): string {
+    return activeSession ? `${activeSession}.account.json` : 'account.json'
+}
+
+// Session metadata file name (sim date + updated_at) for the active session (default: meta.json).
+export function accountMetaFileName(): string {
+    return activeSession ? `${activeSession}.meta.json` : 'meta.json'
+}
+
+// Legacy pre-split single-file account name, kept only so older sessions migrate on first read.
+export function legacyAccountSessionFileName(): string {
     return activeSession ? `${activeSession}.json` : 'default.json'
 }
 
@@ -31,7 +41,7 @@ export function valuesLogFileName(): string {
     return activeSession ? `${activeSession}.values.log` : 'values.log'
 }
 
-// Repo-relative path of the active session's account file, for user-facing messages.
+// Repo-relative path of the active session's account data file, for user-facing messages.
 export function activeAccountSessionRelativePath(): string {
-    return `${USER_SESSIONS_DIRECTORY_NAME}/${accountSessionFileName()}`
+    return `${USER_SESSIONS_DIRECTORY_NAME}/${accountDataFileName()}`
 }

@@ -5,7 +5,7 @@ import path from 'node:path'
 
 import { DATA_DIRECTORY_NAME, END_DATE, HISTORY_FILE_NAME, START_DATE } from '../stock/download-data'
 import { DATA_FILE_NAME } from '../stock/build-data'
-import { createDefaultAccountState, DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
+import { createDefaultAccountState, DEFAULT_USER_SESSION_RELATIVE_PATH, readDefaultUserAccountSession, writeDefaultUserAccountSession } from './model'
 import { buildDefaultUserAccountSessionView, fetchDefaultUserAccountSession, showDefaultUserAccountSession } from './show'
 
 const DEFAULT_ACCOUNT_STATE = createDefaultAccountState()
@@ -75,16 +75,11 @@ async function testFetchDefaultUserAccountSession(): Promise<void> {
 // Verify the fetch action creates and returns the default shared session when the file is missing.
 async function testFetchDefaultUserAccountSessionCreatesDefaultFile(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
-    const sessionFilePath = path.join(tempRepoRoot, DEFAULT_USER_SESSION_RELATIVE_PATH)
 
     const account = await fetchDefaultUserAccountSession({
         cwd: () => tempRepoRoot,
     })
-    const savedAccount = JSON.parse(await fs.readFile(sessionFilePath, 'utf8')) as {
-        date: string
-        cash: number
-        positions: Record<string, unknown>
-    }
+    const savedAccount = await readDefaultUserAccountSession({ cwd: () => tempRepoRoot })
 
     assert.deepEqual(account, DEFAULT_ACCOUNT_STATE)
     assert.deepEqual(savedAccount, DEFAULT_ACCOUNT_STATE)

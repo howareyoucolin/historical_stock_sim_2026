@@ -5,7 +5,7 @@ import path from 'node:path'
 
 import { initializeDefaultUserAccountSession } from './init'
 import { appendHistoryEvent, HISTORY_LOG_RELATIVE_PATH } from '../history/log'
-import { createDefaultAccountState, DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
+import { createDefaultAccountState, readDefaultUserAccountSession, writeDefaultUserAccountSession } from './model'
 
 const DEFAULT_ACCOUNT_STATE = createDefaultAccountState()
 
@@ -17,7 +17,6 @@ async function createTempRepoRoot(): Promise<string> {
 // Verify account init replaces any previous account data with the default account object.
 async function testInitializeDefaultUserAccountSession(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
-    const sessionFilePath = path.join(tempRepoRoot, DEFAULT_USER_SESSION_RELATIVE_PATH)
 
     await writeDefaultUserAccountSession(
         {
@@ -41,11 +40,7 @@ async function testInitializeDefaultUserAccountSession(): Promise<void> {
     const account = await initializeDefaultUserAccountSession({
         cwd: () => tempRepoRoot,
     })
-    const savedAccount = JSON.parse(await fs.readFile(sessionFilePath, 'utf8')) as {
-        date: string
-        cash: number
-        positions: Record<string, unknown>
-    }
+    const savedAccount = await readDefaultUserAccountSession({ cwd: () => tempRepoRoot })
 
     assert.deepEqual(account, DEFAULT_ACCOUNT_STATE)
     assert.deepEqual(savedAccount, DEFAULT_ACCOUNT_STATE)

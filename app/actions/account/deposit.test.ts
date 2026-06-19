@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 
 import { depositIntoDefaultUserAccountSession } from './deposit'
-import { DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from './model'
+import { readDefaultUserAccountSession, writeDefaultUserAccountSession } from './model'
 
 // Build a temporary repo root so deposit action tests can mutate an isolated session file.
 async function createTempRepoRoot(): Promise<string> {
@@ -35,7 +35,6 @@ async function testDepositIntoDefaultUserAccountSessionInvalidCash(): Promise<vo
 // Verify deposits update cash while preserving the rest of the shared account object.
 async function testDepositIntoDefaultUserAccountSession(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
-    const sessionFilePath = path.join(tempRepoRoot, DEFAULT_USER_SESSION_RELATIVE_PATH)
 
     await writeDefaultUserAccountSession(
         {
@@ -59,11 +58,7 @@ async function testDepositIntoDefaultUserAccountSession(): Promise<void> {
     const account = await depositIntoDefaultUserAccountSession(-250, {
         cwd: () => tempRepoRoot,
     })
-    const savedAccount = JSON.parse(await fs.readFile(sessionFilePath, 'utf8')) as {
-        date: string
-        cash: number
-        positions: Record<string, unknown>
-    }
+    const savedAccount = await readDefaultUserAccountSession({ cwd: () => tempRepoRoot })
 
     assert.equal(account.date, '2018-03-10')
     assert.equal(account.cash, 950)

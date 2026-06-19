@@ -4,7 +4,7 @@ import os from 'node:os'
 import path from 'node:path'
 
 import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
-import { DEFAULT_USER_SESSION_RELATIVE_PATH, writeDefaultUserAccountSession } from '../account/model'
+import { readDefaultUserAccountSession, writeDefaultUserAccountSession } from '../account/model'
 import { setDefaultUserAccountDateToSpecificDate } from './set-to-specific-date'
 import { TRADING_CALENDAR_STOCK_CODE } from './advance'
 
@@ -35,7 +35,6 @@ async function writeTradingCalendar(tempRepoRoot: string, tradingDates: string[]
 // Verify setting a forward date steps to the target trading day and preserves the rest of the session.
 async function testSetDefaultUserAccountDateToSpecificDate(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
-    const sessionFilePath = path.join(tempRepoRoot, DEFAULT_USER_SESSION_RELATIVE_PATH)
 
     await writeTradingCalendar(tempRepoRoot, ['2018-03-12', '2018-03-29', '2018-04-02'])
     await writeDefaultUserAccountSession(
@@ -48,7 +47,7 @@ async function testSetDefaultUserAccountDateToSpecificDate(): Promise<void> {
     )
 
     const account = await setDefaultUserAccountDateToSpecificDate('2018-04-02', { cwd: () => tempRepoRoot })
-    const savedAccount = JSON.parse(await fs.readFile(sessionFilePath, 'utf8')) as { date: string; cash: number; positions: Record<string, unknown> }
+    const savedAccount = await readDefaultUserAccountSession({ cwd: () => tempRepoRoot })
 
     assert.equal(account.date, '2018-04-02')
     assert.equal(account.cash, 1200)

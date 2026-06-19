@@ -10,6 +10,19 @@ export interface AccountState {
     positions: Record<string, AccountPosition[]>
 }
 
+// The persisted account data file (account.json): balances and holdings only.
+export interface AccountData {
+    cash: number
+    positions: Record<string, AccountPosition[]>
+}
+
+// The persisted session metadata file (meta.json): the simulated date plus a write timestamp that
+// pollers compare to cheaply detect whether anything changed before doing a full fetch.
+export interface AccountMeta {
+    date: string
+    updated_at: string
+}
+
 export const DEFAULT_ACCOUNT_DATE = '2016-01-04'
 
 // Build a fresh default account object so callers never share mutable nested state.
