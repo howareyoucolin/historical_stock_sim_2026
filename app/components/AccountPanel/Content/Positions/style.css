@@ -1,4 +1,18 @@
 .positionsTab {
     display: flex;
     flex-direction: column;
+    gap: 16px;
+}
+
+/* Row that places the holdings table beside the fixed-width notes rail. */
+.positionsBody {
+    display: flex;
+    align-items: stretch;
+    gap: 16px;
+}
+
+/* Let the holdings table take the remaining width; min-width:0 keeps its inner scroll contained. */
+.positionsBody .holdings {
+    flex: 1;
+    min-width: 0;
 }
