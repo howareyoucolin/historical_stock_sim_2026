@@ -53,6 +53,42 @@
     background: var(--surface-strong);
 }
 
+/* A freshly recorded note slides and fades in, then its accent highlight fades back to the resting
+   style, so the user notices it arriving at the top of the stack. */
+.noteItem.isNew {
+    animation: noteIn 1200ms ease-out;
+}
+
+@keyframes noteIn {
+    0% {
+        opacity: 0;
+        transform: translateY(-10px);
+        background: var(--accent-soft);
+        border-color: var(--accent);
+    }
+
+    30% {
+        opacity: 1;
+        transform: translateY(0);
+        background: var(--accent-soft);
+        border-color: var(--accent);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+        background: var(--surface-strong);
+        border-color: var(--border);
+    }
+}
+
+/* Respect users who prefer reduced motion: show the note without the entrance animation. */
+@media (prefers-reduced-motion: reduce) {
+    .noteItem.isNew {
+        animation: none;
+    }
+}
+
 .noteMeta {
     display: flex;
     align-items: center;
