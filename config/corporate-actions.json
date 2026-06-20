@@ -74,6 +74,56 @@
       "date": "2023-05-15",
       "type": "equity_wipeout",
       "note": "Restructuring left legacy common equity with near-zero value."
+    },
+    {
+      "stockCode": "PARA",
+      "date": "2025-08-07",
+      "type": "cash_buyout",
+      "cashPerShare": 13,
+      "note": "Synthetic terminal merger value used for simulator continuity."
+    },
+    {
+      "stockCode": "WBA",
+      "date": "2025-08-28",
+      "type": "cash_buyout",
+      "cashPerShare": 11.45,
+      "note": "Taken private by Sycamore; modeled at headline cash price."
+    },
+    {
+      "stockCode": "JWN",
+      "date": "2025-05-21",
+      "type": "cash_buyout",
+      "cashPerShare": 24.5,
+      "note": "Nordstrom privatization modeled as 24.25 cash plus 0.25 special dividend equivalent."
+    },
+    {
+      "stockCode": "FL",
+      "date": "2025-09-08",
+      "type": "cash_buyout",
+      "cashPerShare": 24,
+      "note": "Foot Locker acquisition by Dick's Sporting Goods modeled at 24.00 cash."
+    },
+    {
+      "stockCode": "K",
+      "date": "2025-12-11",
+      "type": "cash_buyout",
+      "cashPerShare": 83.5,
+      "note": "Kellanova acquisition by Mars modeled at 83.50 cash."
+    },
+    {
+      "stockCode": "DISH",
+      "date": "2024-01-02",
+      "type": "cash_buyout",
+      "cashPerShare": 5.5,
+      "note": "Synthetic terminal value used to stand in for the EchoStar recombination."
+    },
+    {
+      "stockCode": "MRO",
+      "date": "2024-11-22",
+      "type": "stock_swap",
+      "acquirerStockCode": "COP",
+      "shareRatio": 0.255,
+      "note": "Marathon Oil acquisition by ConocoPhillips modeled at the published exchange ratio."
     }
   ]
 }
