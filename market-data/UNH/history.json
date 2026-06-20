@@ -3,7 +3,7 @@
   "source": "Yahoo Finance",
   "range": {
     "start": "2010-01-01",
-    "end": "2026-01-01"
+    "end": "2026-06-15"
   },
   "historyByDate": {
     "2010-01-04": {
@@ -20123,6 +20123,566 @@
     },
     "2025-12-31": {
       "close": 330.1099853515625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-02": {
+      "close": 336.3999938964844,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-05": {
+      "close": 342.0199890136719,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-06": {
+      "close": 348.9700012207031,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-07": {
+      "close": 341.70001220703125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-08": {
+      "close": 346.8500061035156,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-09": {
+      "close": 343.9800109863281,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-12": {
+      "close": 340.510009765625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-13": {
+      "close": 333.92999267578125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-14": {
+      "close": 334.9599914550781,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-15": {
+      "close": 338.9599914550781,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-16": {
+      "close": 331.0199890136719,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-20": {
+      "close": 338.42999267578125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-21": {
+      "close": 347.75,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-22": {
+      "close": 354.4700012207031,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-23": {
+      "close": 356.260009765625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-26": {
+      "close": 351.6400146484375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-27": {
+      "close": 282.70001220703125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-28": {
+      "close": 294.0199890136719,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-29": {
+      "close": 292.2900085449219,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-01-30": {
+      "close": 286.92999267578125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-02": {
+      "close": 285.5899963378906,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-03": {
+      "close": 284.17999267578125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-04": {
+      "close": 275.9200134277344,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-05": {
+      "close": 268.54998779296875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-06": {
+      "close": 276.6499938964844,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-09": {
+      "close": 275.70001220703125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-10": {
+      "close": 273.2200012207031,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-11": {
+      "close": 278.9100036621094,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-12": {
+      "close": 284.3699951171875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-13": {
+      "close": 293.19000244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-17": {
+      "close": 289.0899963378906,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-18": {
+      "close": 288.20001220703125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-19": {
+      "close": 289.92999267578125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-20": {
+      "close": 290,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-23": {
+      "close": 282.3399963378906,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-24": {
+      "close": 273.95001220703125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-25": {
+      "close": 284.20001220703125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-26": {
+      "close": 286.6600036621094,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-02-27": {
+      "close": 293.2699890136719,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-02": {
+      "close": 294.92999267578125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-03": {
+      "close": 289.2099914550781,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-04": {
+      "close": 291.9599914550781,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-05": {
+      "close": 288.7699890136719,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-06": {
+      "close": 286.4800109863281,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-09": {
+      "close": 285.1700134277344,
+      "isPayoutDate": true,
+      "dividendPerShare": 2.21
+    },
+    "2026-03-10": {
+      "close": 282.3399963378906,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-11": {
+      "close": 285.25,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-12": {
+      "close": 277.04998779296875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-13": {
+      "close": 282.0899963378906,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-16": {
+      "close": 285.489990234375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-17": {
+      "close": 287.57000732421875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-18": {
+      "close": 284.3299865722656,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-19": {
+      "close": 280.44000244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-20": {
+      "close": 275.5899963378906,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-23": {
+      "close": 269.5400085449219,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-24": {
+      "close": 272.2799987792969,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-25": {
+      "close": 270.54998779296875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-26": {
+      "close": 268.04998779296875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-27": {
+      "close": 259.0199890136719,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-30": {
+      "close": 261.7900085449219,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-03-31": {
+      "close": 270.5899963378906,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-01": {
+      "close": 273.9800109863281,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-02": {
+      "close": 277.260009765625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-06": {
+      "close": 281.3599853515625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-07": {
+      "close": 307.7300109863281,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-08": {
+      "close": 305.9800109863281,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-09": {
+      "close": 306.9100036621094,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-10": {
+      "close": 304.3299865722656,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-13": {
+      "close": 313,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-14": {
+      "close": 314.19000244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-15": {
+      "close": 314.04998779296875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-16": {
+      "close": 316.3999938964844,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-17": {
+      "close": 324.6300048828125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-20": {
+      "close": 323.4800109863281,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-21": {
+      "close": 346.010009765625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-22": {
+      "close": 353.5199890136719,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-23": {
+      "close": 354.55999755859375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-24": {
+      "close": 354.9200134277344,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-27": {
+      "close": 354.69000244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-28": {
+      "close": 366.7699890136719,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-29": {
+      "close": 370.739990234375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-04-30": {
+      "close": 370.4800109863281,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-01": {
+      "close": 368.7799987792969,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-04": {
+      "close": 370.75,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-05": {
+      "close": 363.8699951171875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-06": {
+      "close": 367.2799987792969,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-07": {
+      "close": 369.739990234375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-08": {
+      "close": 379.9800109863281,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-11": {
+      "close": 384.44000244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-12": {
+      "close": 396.3900146484375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-13": {
+      "close": 401.1600036621094,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-14": {
+      "close": 399.0899963378906,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-15": {
+      "close": 393.8500061035156,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-18": {
+      "close": 391.1300048828125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-19": {
+      "close": 389.239990234375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-20": {
+      "close": 383.29998779296875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-21": {
+      "close": 382.4800109863281,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-22": {
+      "close": 388.4700012207031,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-26": {
+      "close": 376.8599853515625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-27": {
+      "close": 384.010009765625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-28": {
+      "close": 382.5299987792969,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-05-29": {
+      "close": 380.30999755859375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-06-01": {
+      "close": 379.8599853515625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-06-02": {
+      "close": 377.9200134277344,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-06-03": {
+      "close": 377,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-06-04": {
+      "close": 396.4700012207031,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-06-05": {
+      "close": 399.4700012207031,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-06-08": {
+      "close": 406.57000732421875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-06-09": {
+      "close": 413,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-06-10": {
+      "close": 407.4599914550781,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-06-11": {
+      "close": 405.54998779296875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0
+    },
+    "2026-06-12": {
+      "close": 408.5199890136719,
       "isPayoutDate": false,
       "dividendPerShare": 0
     }

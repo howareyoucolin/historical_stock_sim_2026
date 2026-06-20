@@ -1,11 +1,46 @@
 import fs from 'node:fs/promises'
+import { readFileSync } from 'node:fs'
 import https from 'node:https'
 import path from 'node:path'
 
 export const DATA_DIRECTORY_NAME = 'market-data'
 export const HISTORY_FILE_NAME = 'history.json'
-export const START_DATE = '2010-01-01'
-export const END_DATE = '2026-01-01'
+
+// The download window is configurable so it can be refreshed over time (e.g. bump the end date to
+// today) without code changes. It lives in config/download-date-range.json; these are the fallbacks.
+export const DATA_RANGE_CONFIG_RELATIVE_PATH = 'config/download-date-range.json'
+const DEFAULT_START_DATE = '2010-01-01'
+const DEFAULT_END_DATE = '2026-01-01'
+
+interface DataRange {
+    start: string
+    end: string
+}
+
+// Resolve the effective download window from parsed config, filling either side from defaults so a
+// partial or missing config never breaks downloads.
+export function resolveDataRange(parsed: { start?: string; end?: string } | null): DataRange {
+    return {
+        start: parsed?.start ?? DEFAULT_START_DATE,
+        end: parsed?.end ?? DEFAULT_END_DATE,
+    }
+}
+
+// Load the download window from config/download-date-range.json once at startup, falling back to
+// defaults if the file is missing or unreadable.
+function loadDataRange(): DataRange {
+    try {
+        const raw = readFileSync(path.join(process.cwd(), DATA_RANGE_CONFIG_RELATIVE_PATH), 'utf8')
+
+        return resolveDataRange(JSON.parse(raw) as { start?: string; end?: string })
+    } catch {
+        return resolveDataRange(null)
+    }
+}
+
+const { start: START_DATE, end: END_DATE } = loadDataRange()
+
+export { START_DATE, END_DATE }
 
 type NullableNumber = number | null
 

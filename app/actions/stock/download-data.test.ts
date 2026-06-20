@@ -9,6 +9,7 @@ import {
     buildHistoryPayload,
     createDownloadStockDataAction,
     getHistoryUrl,
+    resolveDataRange,
     validateStockCode,
 } from './download-data'
 
@@ -199,8 +200,19 @@ async function testDownloadStockDataActionSkipsExistingFile(): Promise<void> {
 }
 
 // Run the focused action tests that protect the reusable stock download logic.
+// Verify the download window resolves from config, falling back to defaults for missing/partial input.
+function testResolveDataRange(): void {
+    assert.deepEqual(resolveDataRange({ start: '2015-06-01', end: '2024-01-01' }), { start: '2015-06-01', end: '2024-01-01' })
+    // A missing file (null) or partial config falls back per field to the built-in defaults.
+    const defaults = resolveDataRange(null)
+    assert.equal(defaults.start, '2010-01-01')
+    assert.equal(defaults.end, '2026-01-01')
+    assert.deepEqual(resolveDataRange({ end: '2030-01-01' }), { start: '2010-01-01', end: '2030-01-01' })
+}
+
 export async function runDownloadDataActionTests(): Promise<void> {
     testValidateStockCode()
+    testResolveDataRange()
     testGetHistoryUrl()
     testBuildHistoryByDate()
     testBuildDividendMap()

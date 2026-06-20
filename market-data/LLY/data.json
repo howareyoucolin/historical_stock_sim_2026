@@ -14,7 +14,7 @@
   },
   "range": {
     "start": "2010-01-04",
-    "end": "2025-12-31"
+    "end": "2026-06-12"
   },
   "fields": {
     "close": "Daily closing price",
@@ -36241,6 +36241,1014 @@
       "peRatio": 46.83,
       "sharesOutstanding": 900,
       "marketCap": 967212
+    },
+    "2026-01-02": {
+      "close": 1080.3599853515625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 47.07,
+      "sharesOutstanding": 900,
+      "marketCap": 972324
+    },
+    "2026-01-05": {
+      "close": 1041.510009765625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.38,
+      "sharesOutstanding": 900,
+      "marketCap": 937359
+    },
+    "2026-01-06": {
+      "close": 1064.0400390625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 46.36,
+      "sharesOutstanding": 900,
+      "marketCap": 957636
+    },
+    "2026-01-07": {
+      "close": 1108.0899658203125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 48.28,
+      "sharesOutstanding": 900,
+      "marketCap": 997281
+    },
+    "2026-01-08": {
+      "close": 1085.18994140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 47.28,
+      "sharesOutstanding": 900,
+      "marketCap": 976671
+    },
+    "2026-01-09": {
+      "close": 1063.56005859375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 46.34,
+      "sharesOutstanding": 900,
+      "marketCap": 957204
+    },
+    "2026-01-12": {
+      "close": 1081,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 47.1,
+      "sharesOutstanding": 900,
+      "marketCap": 972900
+    },
+    "2026-01-13": {
+      "close": 1077.18994140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 46.94,
+      "sharesOutstanding": 900,
+      "marketCap": 969471
+    },
+    "2026-01-14": {
+      "close": 1073.2900390625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 46.77,
+      "sharesOutstanding": 900,
+      "marketCap": 965961
+    },
+    "2026-01-15": {
+      "close": 1032.969970703125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.01,
+      "sharesOutstanding": 900,
+      "marketCap": 929673
+    },
+    "2026-01-16": {
+      "close": 1038.4000244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.25,
+      "sharesOutstanding": 900,
+      "marketCap": 934560
+    },
+    "2026-01-20": {
+      "close": 1041.2900390625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.37,
+      "sharesOutstanding": 900,
+      "marketCap": 937161
+    },
+    "2026-01-21": {
+      "close": 1078.52001953125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 46.99,
+      "sharesOutstanding": 900,
+      "marketCap": 970668
+    },
+    "2026-01-22": {
+      "close": 1087.3800048828125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 47.38,
+      "sharesOutstanding": 900,
+      "marketCap": 978642
+    },
+    "2026-01-23": {
+      "close": 1064.2900390625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 46.37,
+      "sharesOutstanding": 900,
+      "marketCap": 957861
+    },
+    "2026-01-26": {
+      "close": 1062.75,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 46.31,
+      "sharesOutstanding": 900,
+      "marketCap": 956475
+    },
+    "2026-01-27": {
+      "close": 1039.510009765625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.29,
+      "sharesOutstanding": 900,
+      "marketCap": 935559
+    },
+    "2026-01-28": {
+      "close": 1023.7999877929688,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 44.61,
+      "sharesOutstanding": 900,
+      "marketCap": 921420
+    },
+    "2026-01-29": {
+      "close": 1024.1400146484375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 44.62,
+      "sharesOutstanding": 900,
+      "marketCap": 921726
+    },
+    "2026-01-30": {
+      "close": 1037.1500244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.19,
+      "sharesOutstanding": 900,
+      "marketCap": 933435
+    },
+    "2026-02-02": {
+      "close": 1044.1300048828125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.5,
+      "sharesOutstanding": 900,
+      "marketCap": 939717
+    },
+    "2026-02-03": {
+      "close": 1003.4600219726562,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 43.72,
+      "sharesOutstanding": 900,
+      "marketCap": 903114
+    },
+    "2026-02-04": {
+      "close": 1107.1199951171875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 48.24,
+      "sharesOutstanding": 900,
+      "marketCap": 996408
+    },
+    "2026-02-05": {
+      "close": 1020.8400268554688,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 44.48,
+      "sharesOutstanding": 900,
+      "marketCap": 918756
+    },
+    "2026-02-06": {
+      "close": 1058.1800537109375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 46.11,
+      "sharesOutstanding": 900,
+      "marketCap": 952362
+    },
+    "2026-02-09": {
+      "close": 1044.6700439453125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.52,
+      "sharesOutstanding": 900,
+      "marketCap": 940203
+    },
+    "2026-02-10": {
+      "close": 1025,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 44.66,
+      "sharesOutstanding": 900,
+      "marketCap": 922500
+    },
+    "2026-02-11": {
+      "close": 1015.2100219726562,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 44.24,
+      "sharesOutstanding": 900,
+      "marketCap": 913689
+    },
+    "2026-02-12": {
+      "close": 1038.27001953125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.24,
+      "sharesOutstanding": 900,
+      "marketCap": 934443
+    },
+    "2026-02-13": {
+      "close": 1040,
+      "isPayoutDate": true,
+      "dividendPerShare": 1.73,
+      "ttmEps": 22.95,
+      "peRatio": 45.32,
+      "sharesOutstanding": 900,
+      "marketCap": 936000
+    },
+    "2026-02-17": {
+      "close": 1036.050048828125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.14,
+      "sharesOutstanding": 900,
+      "marketCap": 932445
+    },
+    "2026-02-18": {
+      "close": 1020.5599975585938,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 44.47,
+      "sharesOutstanding": 900,
+      "marketCap": 918504
+    },
+    "2026-02-19": {
+      "close": 1023.219970703125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 44.58,
+      "sharesOutstanding": 900,
+      "marketCap": 920898
+    },
+    "2026-02-20": {
+      "close": 1009.52001953125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 43.99,
+      "sharesOutstanding": 900,
+      "marketCap": 908568
+    },
+    "2026-02-23": {
+      "close": 1058.56005859375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 46.12,
+      "sharesOutstanding": 900,
+      "marketCap": 952704
+    },
+    "2026-02-24": {
+      "close": 1042.1500244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.41,
+      "sharesOutstanding": 900,
+      "marketCap": 937935
+    },
+    "2026-02-25": {
+      "close": 1028.8299560546875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 44.83,
+      "sharesOutstanding": 900,
+      "marketCap": 925947
+    },
+    "2026-02-26": {
+      "close": 1022.02001953125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 44.53,
+      "sharesOutstanding": 900,
+      "marketCap": 919818
+    },
+    "2026-02-27": {
+      "close": 1051.989990234375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 45.84,
+      "sharesOutstanding": 900,
+      "marketCap": 946791
+    },
+    "2026-03-02": {
+      "close": 1017.969970703125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 44.36,
+      "sharesOutstanding": 900,
+      "marketCap": 916173
+    },
+    "2026-03-03": {
+      "close": 1007.72998046875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 43.91,
+      "sharesOutstanding": 900,
+      "marketCap": 906957
+    },
+    "2026-03-04": {
+      "close": 1003.5700073242188,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 43.73,
+      "sharesOutstanding": 900,
+      "marketCap": 903213
+    },
+    "2026-03-05": {
+      "close": 983.260009765625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 42.84,
+      "sharesOutstanding": 900,
+      "marketCap": 884934
+    },
+    "2026-03-06": {
+      "close": 990.3300170898438,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 43.15,
+      "sharesOutstanding": 900,
+      "marketCap": 891297
+    },
+    "2026-03-09": {
+      "close": 1008.3900146484375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 43.94,
+      "sharesOutstanding": 900,
+      "marketCap": 907551
+    },
+    "2026-03-10": {
+      "close": 1001.3499755859375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 43.63,
+      "sharesOutstanding": 900,
+      "marketCap": 901215
+    },
+    "2026-03-11": {
+      "close": 999.8400268554688,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 43.57,
+      "sharesOutstanding": 900,
+      "marketCap": 899856
+    },
+    "2026-03-12": {
+      "close": 977.25,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 42.58,
+      "sharesOutstanding": 900,
+      "marketCap": 879525
+    },
+    "2026-03-13": {
+      "close": 985.0800170898438,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 42.92,
+      "sharesOutstanding": 900,
+      "marketCap": 886572
+    },
+    "2026-03-16": {
+      "close": 989.1199951171875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 43.1,
+      "sharesOutstanding": 900,
+      "marketCap": 890208
+    },
+    "2026-03-17": {
+      "close": 930.3499755859375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 40.54,
+      "sharesOutstanding": 900,
+      "marketCap": 837315
+    },
+    "2026-03-18": {
+      "close": 918.0499877929688,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 40,
+      "sharesOutstanding": 900,
+      "marketCap": 826245
+    },
+    "2026-03-19": {
+      "close": 917.5,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 39.98,
+      "sharesOutstanding": 900,
+      "marketCap": 825750
+    },
+    "2026-03-20": {
+      "close": 906.7000122070312,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 39.51,
+      "sharesOutstanding": 900,
+      "marketCap": 816030
+    },
+    "2026-03-23": {
+      "close": 910.5499877929688,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 39.68,
+      "sharesOutstanding": 900,
+      "marketCap": 819495
+    },
+    "2026-03-24": {
+      "close": 903.02001953125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 39.35,
+      "sharesOutstanding": 900,
+      "marketCap": 812718
+    },
+    "2026-03-25": {
+      "close": 916.3099975585938,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 39.93,
+      "sharesOutstanding": 900,
+      "marketCap": 824679
+    },
+    "2026-03-26": {
+      "close": 897,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 39.08,
+      "sharesOutstanding": 900,
+      "marketCap": 807300
+    },
+    "2026-03-27": {
+      "close": 878.239990234375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 38.27,
+      "sharesOutstanding": 900,
+      "marketCap": 790416
+    },
+    "2026-03-30": {
+      "close": 886.6300048828125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 22.95,
+      "peRatio": 38.63,
+      "sharesOutstanding": 900,
+      "marketCap": 797967
+    },
+    "2026-03-31": {
+      "close": 919.77001953125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 32.67,
+      "sharesOutstanding": 900,
+      "marketCap": 827793
+    },
+    "2026-04-01": {
+      "close": 954.52001953125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 33.91,
+      "sharesOutstanding": 900,
+      "marketCap": 859068
+    },
+    "2026-04-02": {
+      "close": 935.5800170898438,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 33.24,
+      "sharesOutstanding": 900,
+      "marketCap": 842022
+    },
+    "2026-04-06": {
+      "close": 927.0599975585938,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 32.93,
+      "sharesOutstanding": 900,
+      "marketCap": 834354
+    },
+    "2026-04-07": {
+      "close": 931.0900268554688,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 33.08,
+      "sharesOutstanding": 900,
+      "marketCap": 837981
+    },
+    "2026-04-08": {
+      "close": 953.2999877929688,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 33.87,
+      "sharesOutstanding": 900,
+      "marketCap": 857970
+    },
+    "2026-04-09": {
+      "close": 955.1900024414062,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 33.93,
+      "sharesOutstanding": 900,
+      "marketCap": 859671
+    },
+    "2026-04-10": {
+      "close": 939.469970703125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 33.37,
+      "sharesOutstanding": 900,
+      "marketCap": 845523
+    },
+    "2026-04-13": {
+      "close": 929.5499877929688,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 33.02,
+      "sharesOutstanding": 900,
+      "marketCap": 836595
+    },
+    "2026-04-14": {
+      "close": 922.5,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 32.77,
+      "sharesOutstanding": 900,
+      "marketCap": 830250
+    },
+    "2026-04-15": {
+      "close": 905.030029296875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 32.15,
+      "sharesOutstanding": 900,
+      "marketCap": 814527
+    },
+    "2026-04-16": {
+      "close": 903.989990234375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 32.11,
+      "sharesOutstanding": 900,
+      "marketCap": 813591
+    },
+    "2026-04-17": {
+      "close": 927.030029296875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 32.93,
+      "sharesOutstanding": 900,
+      "marketCap": 834327
+    },
+    "2026-04-20": {
+      "close": 919.9000244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 32.68,
+      "sharesOutstanding": 900,
+      "marketCap": 827910
+    },
+    "2026-04-21": {
+      "close": 903.02001953125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 32.08,
+      "sharesOutstanding": 900,
+      "marketCap": 812718
+    },
+    "2026-04-22": {
+      "close": 921.47998046875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 32.73,
+      "sharesOutstanding": 900,
+      "marketCap": 829332
+    },
+    "2026-04-23": {
+      "close": 917.6500244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 32.6,
+      "sharesOutstanding": 900,
+      "marketCap": 825885
+    },
+    "2026-04-24": {
+      "close": 883.9600219726562,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 31.4,
+      "sharesOutstanding": 900,
+      "marketCap": 795564
+    },
+    "2026-04-27": {
+      "close": 868.27001953125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 30.84,
+      "sharesOutstanding": 900,
+      "marketCap": 781443
+    },
+    "2026-04-28": {
+      "close": 874,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 31.05,
+      "sharesOutstanding": 900,
+      "marketCap": 786600
+    },
+    "2026-04-29": {
+      "close": 851.2100219726562,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 30.24,
+      "sharesOutstanding": 900,
+      "marketCap": 766089
+    },
+    "2026-04-30": {
+      "close": 934.5999755859375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 33.2,
+      "sharesOutstanding": 900,
+      "marketCap": 841140
+    },
+    "2026-05-01": {
+      "close": 963.3300170898438,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 34.22,
+      "sharesOutstanding": 900,
+      "marketCap": 866997
+    },
+    "2026-05-04": {
+      "close": 967.9299926757812,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 34.38,
+      "sharesOutstanding": 900,
+      "marketCap": 871137
+    },
+    "2026-05-05": {
+      "close": 988.8699951171875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 35.13,
+      "sharesOutstanding": 900,
+      "marketCap": 889983
+    },
+    "2026-05-06": {
+      "close": 987.0499877929688,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 35.06,
+      "sharesOutstanding": 900,
+      "marketCap": 888345
+    },
+    "2026-05-07": {
+      "close": 974.9600219726562,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 34.63,
+      "sharesOutstanding": 900,
+      "marketCap": 877464
+    },
+    "2026-05-08": {
+      "close": 948.4500122070312,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 33.69,
+      "sharesOutstanding": 900,
+      "marketCap": 853605
+    },
+    "2026-05-11": {
+      "close": 966.989990234375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 34.35,
+      "sharesOutstanding": 900,
+      "marketCap": 870291
+    },
+    "2026-05-12": {
+      "close": 989.8699951171875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 35.16,
+      "sharesOutstanding": 900,
+      "marketCap": 890883
+    },
+    "2026-05-13": {
+      "close": 1015.75,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 36.08,
+      "sharesOutstanding": 900,
+      "marketCap": 914175
+    },
+    "2026-05-14": {
+      "close": 1006.7000122070312,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 35.76,
+      "sharesOutstanding": 900,
+      "marketCap": 906030
+    },
+    "2026-05-15": {
+      "close": 1004.9199829101562,
+      "isPayoutDate": true,
+      "dividendPerShare": 1.73,
+      "ttmEps": 28.15,
+      "peRatio": 35.7,
+      "sharesOutstanding": 900,
+      "marketCap": 904428
+    },
+    "2026-05-18": {
+      "close": 988.0900268554688,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 35.1,
+      "sharesOutstanding": 900,
+      "marketCap": 889281
+    },
+    "2026-05-19": {
+      "close": 1021.4099731445312,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 36.28,
+      "sharesOutstanding": 900,
+      "marketCap": 919269
+    },
+    "2026-05-20": {
+      "close": 1018.8699951171875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 36.19,
+      "sharesOutstanding": 900,
+      "marketCap": 916983
+    },
+    "2026-05-21": {
+      "close": 1041.6500244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 37,
+      "sharesOutstanding": 900,
+      "marketCap": 937485
+    },
+    "2026-05-22": {
+      "close": 1065,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 37.83,
+      "sharesOutstanding": 900,
+      "marketCap": 958500
+    },
+    "2026-05-26": {
+      "close": 1064.739990234375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 37.82,
+      "sharesOutstanding": 900,
+      "marketCap": 958266
+    },
+    "2026-05-27": {
+      "close": 1082.9200439453125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 38.47,
+      "sharesOutstanding": 900,
+      "marketCap": 974628
+    },
+    "2026-05-28": {
+      "close": 1126.800048828125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 40.03,
+      "sharesOutstanding": 900,
+      "marketCap": 1014120
+    },
+    "2026-05-29": {
+      "close": 1105,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 39.25,
+      "sharesOutstanding": 900,
+      "marketCap": 994500
+    },
+    "2026-06-01": {
+      "close": 1082.199951171875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 38.44,
+      "sharesOutstanding": 900,
+      "marketCap": 973980
+    },
+    "2026-06-02": {
+      "close": 1064.1500244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 37.8,
+      "sharesOutstanding": 900,
+      "marketCap": 957735
+    },
+    "2026-06-03": {
+      "close": 1078.780029296875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 38.32,
+      "sharesOutstanding": 900,
+      "marketCap": 970902
+    },
+    "2026-06-04": {
+      "close": 1125.27001953125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 39.97,
+      "sharesOutstanding": 900,
+      "marketCap": 1012743
+    },
+    "2026-06-05": {
+      "close": 1131.4200439453125,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 40.19,
+      "sharesOutstanding": 900,
+      "marketCap": 1018278
+    },
+    "2026-06-08": {
+      "close": 1149.1500244140625,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 40.82,
+      "sharesOutstanding": 900,
+      "marketCap": 1034235
+    },
+    "2026-06-09": {
+      "close": 1144.6800537109375,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 40.66,
+      "sharesOutstanding": 900,
+      "marketCap": 1030212
+    },
+    "2026-06-10": {
+      "close": 1136.3699951171875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 40.37,
+      "sharesOutstanding": 900,
+      "marketCap": 1022733
+    },
+    "2026-06-11": {
+      "close": 1160.949951171875,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 41.24,
+      "sharesOutstanding": 900,
+      "marketCap": 1044855
+    },
+    "2026-06-12": {
+      "close": 1133,
+      "isPayoutDate": false,
+      "dividendPerShare": 0,
+      "ttmEps": 28.15,
+      "peRatio": 40.25,
+      "sharesOutstanding": 900,
+      "marketCap": 1019700
     }
   }
 }
