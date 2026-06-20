@@ -7,6 +7,7 @@ import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
 import { readDefaultUserAccountSession, writeDefaultUserAccountSession } from '../account/model'
 import { setDefaultUserAccountDateToSpecificDate } from './set-to-specific-date'
 import { TRADING_CALENDAR_STOCK_CODE } from './advance'
+import { accrueInterestOverGap } from '../account/cash-interest'
 
 // Build a temporary repo root so date-set action tests can mutate an isolated session file.
 async function createTempRepoRoot(): Promise<string> {
@@ -50,7 +51,12 @@ async function testSetDefaultUserAccountDateToSpecificDate(): Promise<void> {
     const savedAccount = await readDefaultUserAccountSession({ cwd: () => tempRepoRoot })
 
     assert.equal(account.date, '2018-04-02')
-    assert.equal(account.cash, 1200)
+    // Crossing into April pays out interest accrued on the parked $1200 across the whole span, so the
+    // expected cash is the starting balance plus that month's accrued interest (no dividends here).
+    // A tiny tolerance absorbs float-summation grouping differences between per-step and single-call accrual.
+    const expectedInterest = accrueInterestOverGap(1200, '2018-03-10', '2018-04-02')
+    assert.ok(Math.abs(account.cash - (1200 + expectedInterest)) < 1e-6, `cash ${account.cash} should be ~${1200 + expectedInterest}`)
+    assert.ok(expectedInterest > 0)
     assert.deepEqual(account.positions, { AAPL: [{ quantity: 3, cost_per_share: 200, purchase_date: '2018-03-01' }] })
     assert.deepEqual(savedAccount, account)
 }

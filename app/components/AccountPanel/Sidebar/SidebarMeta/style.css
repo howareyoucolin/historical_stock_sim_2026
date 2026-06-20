@@ -18,3 +18,12 @@
 .metaRow strong {
     color: #2b2320;
 }
+
+/* Let the gain/loss tone classes win over the default meta-row text color. */
+.metaRow strong.pos {
+    color: var(--pos);
+}
+
+.metaRow strong.neg {
+    color: var(--neg);
+}

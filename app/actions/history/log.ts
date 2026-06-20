@@ -12,7 +12,7 @@ function sessionLogRelativePath(): string {
 export const HISTORY_LOG_FILE_NAME = 'history.log'
 export const HISTORY_LOG_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${HISTORY_LOG_FILE_NAME}`
 
-export type HistoryEventType = 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT'
+export type HistoryEventType = 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'INTEREST'
 
 // Capital-gains holding classification applied to sold lots: held more than one year is long-term.
 export type HoldingTerm = 'SHORT' | 'LONG'

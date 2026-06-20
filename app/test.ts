@@ -5,6 +5,7 @@ import { runInitializeAccountActionTests } from './actions/account/init.test'
 import { runDepositAccountActionTests } from './actions/account/deposit.test'
 import { runShowAccountActionTests } from './actions/account/show.test'
 import { runValuesLogActionTests } from './actions/account/values-log.test'
+import { runCashInterestTests } from './actions/account/cash-interest.test'
 import { runHistoryLogActionTests } from './actions/history/log.test'
 import { runSetDateToSpecificDateActionTests } from './actions/date/set-to-specific-date.test'
 import { runSetDateToTomorrowActionTests } from './actions/date/set-to-tomorrow.test'
@@ -17,6 +18,7 @@ import { runStockAnalysisActionTests } from './actions/stock/analysis.test'
 import { runScrapeEpsActionTests } from './actions/stock/scrape-eps.test'
 import { runSeedWatchlistActionTests } from './actions/stock/seed-watchlist.test'
 import { runSessionActionTests } from './actions/session.test'
+import { runTaxReportTests } from './components/AccountPanel/Content/Summary/TaxReport/taxReport.test'
 import { runCliCommandTests } from '../cli/commands.test'
 import { runCliOutputTests } from '../cli/output.test'
 
@@ -47,10 +49,12 @@ const TEST_SUITES: TestSuite[] = [
     { label: 'Account deposit action tests', run: runDepositAccountActionTests },
     { label: 'Account show action tests', run: runShowAccountActionTests },
     { label: 'Values log action tests', run: runValuesLogActionTests },
+    { label: 'Parked-cash interest tests', run: runCashInterestTests },
     { label: 'History log action tests', run: runHistoryLogActionTests },
     { label: 'Date next action tests', run: runSetDateToTomorrowActionTests },
     { label: 'Date set action tests', run: runSetDateToSpecificDateActionTests },
     { label: 'Session action tests', run: runSessionActionTests },
+    { label: 'Tax report tests', run: runTaxReportTests },
     { label: 'CLI command tests', run: runCliCommandTests },
     { label: 'CLI output tests', run: runCliOutputTests },
 ]

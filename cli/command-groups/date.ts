@@ -1,4 +1,4 @@
-import { advanceSimulationDate, type AdvanceSimulationResult } from '../../app/actions/date/advance'
+import { advanceSimulationDate, type AdvanceSimulationResult, type InterestPayout } from '../../app/actions/date/advance'
 import { fetchDefaultUserAccountSession } from '../../app/actions/account/show'
 import type { CommandResult } from '../command-types'
 
@@ -21,6 +21,15 @@ function dividendSuffix(dividends: AdvanceSimulationResult['dividends'], totalDi
     }
 
     return ` Credited ${totalDividends.toFixed(2)} in dividends across ${dividends.length} payout${dividends.length === 1 ? '' : 's'}.`
+}
+
+// Summarize interest paid on parked cash so an agent sees passive cash yield inline.
+function interestSuffix(interest: InterestPayout[], totalInterest: number): string {
+    if (interest.length === 0) {
+        return ''
+    }
+
+    return ` Paid ${totalInterest.toFixed(2)} in interest on cash across ${interest.length} payout${interest.length === 1 ? '' : 's'}.`
 }
 
 // Build the date command handler so simulation date updates live outside the main router.
@@ -52,21 +61,25 @@ export function createDateCommandHandler({
 
         try {
             const dividends: AdvanceSimulationResult['dividends'] = []
+            const interest: InterestPayout[] = []
             let date = ''
 
-            // Each step advances exactly one trading day; looping accumulates multi-day dividend credits.
+            // Each step advances exactly one trading day; looping accumulates multi-day dividend and
+            // interest credits across the span.
             for (let step = 0; step < steps; step += 1) {
                 const result = await advanceOneTradingDay()
                 dividends.push(...result.dividends)
+                interest.push(...(result.interest ?? []))
                 date = result.account.date
             }
 
             const totalDividends = dividends.reduce((total, dividend) => total + dividend.amount, 0)
+            const totalInterest = interest.reduce((total, payout) => total + payout.amount, 0)
             const lead = steps === 1 ? `Advanced simulation date to ${date}.` : `Advanced ${steps} trading days to ${date}.`
 
             return {
-                output: `${lead}${dividendSuffix(dividends, totalDividends)}`,
-                data: { date, steps, dividends, totalDividends },
+                output: `${lead}${dividendSuffix(dividends, totalDividends)}${interestSuffix(interest, totalInterest)}`,
+                data: { date, steps, dividends, totalDividends, interest, totalInterest },
                 shouldExit: false,
                 exitCode: 0,
             }
@@ -86,10 +99,12 @@ export function createDateCommandHandler({
         try {
             const result = await advanceToSpecificDate(args[0])
             const date = result.account.date
+            const interest = result.interest ?? []
+            const totalInterest = result.totalInterest ?? 0
 
             return {
-                output: `Set simulation date to ${date}.${dividendSuffix(result.dividends, result.totalDividends)}`,
-                data: { date, dividends: result.dividends, totalDividends: result.totalDividends },
+                output: `Set simulation date to ${date}.${dividendSuffix(result.dividends, result.totalDividends)}${interestSuffix(interest, totalInterest)}`,
+                data: { date, dividends: result.dividends, totalDividends: result.totalDividends, interest, totalInterest },
                 shouldExit: false,
                 exitCode: 0,
             }

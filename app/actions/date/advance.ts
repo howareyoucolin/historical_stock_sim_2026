@@ -10,6 +10,7 @@ import {
     writeDefaultUserAccountSession,
 } from '../account/model'
 import { recordDailyValue, type DailyValueSnapshot } from '../account/values-log'
+import { accrueInterestOverGap } from '../account/cash-interest'
 import { findNextTradingDate, normalizeSimulationDate } from './utils'
 
 // SPY trades every NYSE session, so its saved history doubles as the market trading calendar.
@@ -35,10 +36,18 @@ export interface DividendPayout {
     amount: number
 }
 
+export interface InterestPayout {
+    date: string
+    amount: number
+}
+
 export interface AdvanceSimulationResult {
     account: AccountState
     dividends: DividendPayout[]
     totalDividends: number
+    // Interest paid on parked cash during the advance; optional so callers/mocks can omit it.
+    interest?: InterestPayout[]
+    totalInterest?: number
 }
 
 export interface AdvanceSimulationDependencies extends AccountSessionDependencies {
@@ -128,7 +137,7 @@ export async function advanceSimulationDate(
 
         // Already at or past the target: nothing to advance and no market data is needed.
         if (normalizedTarget === account.date) {
-            return { account, dividends: [], totalDividends: 0 }
+            return { account, dividends: [], totalDividends: 0, interest: [], totalInterest: 0 }
         }
     }
 
@@ -151,7 +160,10 @@ export async function advanceSimulationDate(
 
     let date = account.date
     let cash = account.cash
+    // Interest accrued on parked cash since the last payout; seeded from any carried-over balance.
+    let accruedInterest = account.accruedInterest ?? 0
     const dividends: DividendPayout[] = []
+    const interestPayouts: InterestPayout[] = []
 
     // Track each holding's most recent close so a day missing local data carries the prior price
     // forward instead of dropping the position from the portfolio value for that day.
@@ -186,7 +198,18 @@ export async function advanceSimulationDate(
             throw new Error(`No trading day available after ${date}. Download more recent market data to continue.`)
         }
 
+        // Accrue interest on parked cash across the calendar days bridging to the next trading day,
+        // then pay it out (so it compounds) on the first trading day of each new month.
+        accruedInterest += accrueInterestOverGap(cash, date, nextDate)
+        const crossedIntoNewMonth = nextDate.slice(0, 7) !== date.slice(0, 7)
+
         date = nextDate
+
+        if (crossedIntoNewMonth && accruedInterest > 0) {
+            cash += accruedInterest
+            interestPayouts.push({ date, amount: accruedInterest })
+            accruedInterest = 0
+        }
 
         for (const [stockCode, shares] of Object.entries(sharesByStock)) {
             const entry = historyByStock[stockCode]?.[date]
@@ -215,6 +238,15 @@ export async function advanceSimulationDate(
     }
 
     const updatedAccount: AccountState = { ...account, date, cash }
+
+    // Carry the running accrued interest forward, or clear it once it has been paid out, so the
+    // persisted account only keeps a non-zero in-progress balance.
+    if (accruedInterest > 0) {
+        updatedAccount.accruedInterest = accruedInterest
+    } else {
+        delete updatedAccount.accruedInterest
+    }
+
     const savedAccount = await writeDefaultUserAccountSession(updatedAccount, sessionDependencies)
 
     // Persist the daily value series so the summary graph can plot how the portfolio moved over time.
@@ -237,9 +269,16 @@ export async function advanceSimulationDate(
         )
     }
 
+    // Record each monthly interest payout so it appears in the audit trail and the tax report.
+    for (const payout of interestPayouts) {
+        await appendHistoryEvent({ type: 'INTEREST', simDate: payout.date, cashDelta: payout.amount }, { cwd })
+    }
+
     return {
         account: savedAccount,
         dividends,
         totalDividends: dividends.reduce((total, dividend) => total + dividend.amount, 0),
+        interest: interestPayouts,
+        totalInterest: interestPayouts.reduce((total, payout) => total + payout.amount, 0),
     }
 }

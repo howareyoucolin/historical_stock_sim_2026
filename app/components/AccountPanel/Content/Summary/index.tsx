@@ -7,6 +7,7 @@ import { useAppDispatch, useAppSelector } from '../../../../store/hooks'
 import { money, signedMoney, signedPercent, tone } from '../../../shared/format'
 import type { DailyValueSnapshot } from '../../../../actions/account/values-log'
 import { loadValues } from './actions'
+import { TaxReport } from './TaxReport'
 
 // The chart is drawn in real pixels (measured container width) so axis fonts and the left gutter stay
 // a fixed size instead of scaling up with the SVG. padLeft fits up to a seven-digit money label.
@@ -230,6 +231,8 @@ export function Summary() {
                     </div>
                 )}
             </div>
+
+            <TaxReport />
         </section>
     )
 }

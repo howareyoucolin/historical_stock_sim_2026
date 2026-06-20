@@ -67,7 +67,7 @@ export async function readDefaultUserAccountSession({
     const meta = await readJsonSessionFile<Partial<AccountMeta>>(path.join(cwd(), accountMetaRelativePath()), readFile)
 
     if (data !== null || meta !== null) {
-        return normalizeAccountState({ date: meta?.date, cash: data?.cash, positions: data?.positions })
+        return normalizeAccountState({ date: meta?.date, cash: data?.cash, positions: data?.positions, accruedInterest: data?.accruedInterest })
     }
 
     const legacyAccount = await readJsonSessionFile<Partial<AccountState>>(path.join(cwd(), legacyAccountRelativePath()), readFile)
@@ -101,6 +101,13 @@ export async function writeDefaultUserAccountSession(
     await makeDirectory(sessionDirectory, { recursive: true })
 
     const data: AccountData = { cash: account.cash, positions: account.positions }
+
+    // Persist accrued interest only when it is non-zero so a fresh or fully-deployed account keeps
+    // the minimal { cash, positions } file shape.
+    if (account.accruedInterest) {
+        data.accruedInterest = account.accruedInterest
+    }
+
     const meta: AccountMeta = { date: account.date, updated_at: now().toISOString() }
 
     await writeFile(path.join(sessionDirectory, accountDataFileName()), `${JSON.stringify(data, null, 2)}\n`, 'utf8')

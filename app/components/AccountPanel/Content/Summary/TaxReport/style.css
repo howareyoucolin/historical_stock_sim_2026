@@ -1,0 +1,99 @@
+.taxReport {
+    margin-top: 24px;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--surface);
+    overflow: hidden;
+}
+
+.taxReportHead {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.taxReportHead h2 {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.taxReportSub {
+    font-size: 0.82rem;
+    color: var(--muted);
+}
+
+.taxReportEmpty {
+    padding: 36px 18px;
+    text-align: center;
+    color: var(--muted);
+}
+
+.taxTableWrap {
+    overflow-x: auto;
+}
+
+/* Compact, dense numeric table mirroring the holdings table. */
+.taxTable {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+}
+
+.taxTable th,
+.taxTable td {
+    padding: 8px 14px;
+    text-align: right;
+    border-bottom: 1px solid rgba(120, 72, 50, 0.1);
+}
+
+.taxTable thead th {
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--muted);
+    background: rgba(243, 230, 218, 0.6);
+}
+
+.taxTable .taxYear {
+    text-align: left;
+    font-weight: 600;
+}
+
+.taxNum {
+    color: #2b2320;
+}
+
+/* Tax owed reads as a cost; keep it neutral but distinct from the gain columns. */
+.taxNum.taxOwed {
+    font-weight: 600;
+    color: var(--accent-strong);
+}
+
+/* Tone classes win over the default numeric color for gain/loss columns. */
+.taxTable td.taxNum.pos {
+    color: var(--pos);
+}
+
+.taxTable td.taxNum.neg {
+    color: var(--neg);
+}
+
+.taxTotalRow td {
+    border-top: 2px solid var(--border-strong);
+    border-bottom: none;
+    font-weight: 700;
+    background: rgba(243, 230, 218, 0.4);
+}
+
+.taxReportNote {
+    margin: 0;
+    padding: 10px 18px 14px;
+    font-size: 0.72rem;
+    line-height: 1.45;
+    color: var(--muted);
+}
