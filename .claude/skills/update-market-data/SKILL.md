@@ -100,6 +100,26 @@ Per-ticker failures are normal and must be resolved, not left behind:
   produce `data.json` (EPS/P/E come out null, which is correct when there are no
   earnings).
 
+### Known bad symbols from the 2026-06-20 bulk add
+
+Do **not** blindly retry these eight symbols in future batch runs unless the
+user explicitly asks for a correction pass with replacement tickers or updated
+symbols first:
+
+- `PARA`
+- `WBA`
+- `GPS`
+- `JWN`
+- `FL`
+- `K`
+- `DISH`
+- `MRO`
+
+All eight failed repeated Yahoo/Macrotrends fetches with 404s in the June 20,
+2026 bulk seed. Treat them as **needs-symbol-review**, not transient network
+failures. If any partial files exist for them, delete those leftovers before the
+next run so the skip-on-existing-output behavior does not preserve bad state.
+
 ## Verify before finishing
 
 - **All three files exist for every ticker** — no ticker left with a missing
