@@ -1,10 +1,10 @@
 import type { AppThunk } from '../../../../../store'
-import { prefillTrade } from '../../../../../store/formSlice'
+import { openStockInfoModal } from '../../../../../store/uiSlice'
 import type { AccountStockTableRow } from '../../../../../actions/account/view-model'
 
-// Prefill the trade form from a held position so it can be quickly sold from the holdings table.
-export function prefillTradeFromRow(row: AccountStockTableRow): AppThunk {
+// Open the company-info modal for a held stock without disturbing the trade form inputs.
+export function showStockInfoFromRow(row: AccountStockTableRow): AppThunk {
     return (dispatch) => {
-        dispatch(prefillTrade({ symbol: row.stockCode, quantity: String(row.quantity) }))
+        dispatch(openStockInfoModal(row.stockCode))
     }
 }

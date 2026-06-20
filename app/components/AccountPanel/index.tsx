@@ -12,6 +12,7 @@ import { Content } from './Content'
 import { CalendarPopover } from './overlays/CalendarPopover'
 import { DepositModal } from './overlays/DepositModal'
 import { ResetModal } from './overlays/ResetModal'
+import { StockInfoModal } from './overlays/StockInfoModal'
 
 // How often to re-pull the live account data so holdings and notes track an in-progress
 // simulation without a manual refresh.
@@ -102,6 +103,7 @@ export function AccountPanel() {
             <CalendarPopover />
             <DepositModal />
             <ResetModal />
+            <StockInfoModal />
         </>
     )
 }

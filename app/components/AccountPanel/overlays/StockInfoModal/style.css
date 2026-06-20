@@ -1,0 +1,135 @@
+.stockInfoModalCard {
+    width: min(100%, 760px);
+    max-height: min(88vh, 760px);
+    overflow-y: auto;
+}
+
+.stockInfoModalHeader {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.stockInfoModalLead {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 0.9rem;
+}
+
+.stockInfoModalState {
+    margin: 20px 0 0;
+    color: var(--muted);
+}
+
+.stockInfoModalBody {
+    margin-top: 18px;
+}
+
+.stockInfoModalHero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border);
+}
+
+.stockInfoModalCode {
+    margin: 0 0 4px;
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+}
+
+.stockInfoModalName {
+    margin: 0 0 6px;
+    font-size: 1.3rem;
+}
+
+.stockInfoModalMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    font-size: 0.76rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
+.stockInfoModalPriceBlock {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.stockInfoModalPrice {
+    display: block;
+    font-size: 1.8rem;
+    font-weight: 700;
+}
+
+.stockInfoModalAsOf,
+.stockInfoModalChange {
+    display: block;
+    margin-top: 2px;
+    font-size: 0.8rem;
+}
+
+.stockInfoModalProfile {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface) 88%, var(--accent-soft) 12%);
+}
+
+.stockInfoModalSummary,
+.stockInfoModalNote {
+    margin: 0;
+    line-height: 1.45;
+    font-size: 0.88rem;
+}
+
+.stockInfoModalNote {
+    margin-top: 8px;
+    color: var(--muted);
+}
+
+.stockInfoModalStats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px 16px;
+    margin: 16px 0 0;
+}
+
+.stockInfoModalStats div {
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+}
+
+.stockInfoModalStats dt {
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+
+.stockInfoModalStats dd {
+    margin: 4px 0 0;
+    font-size: 0.94rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+@media (max-width: 640px) {
+    .stockInfoModalHeader,
+    .stockInfoModalHero {
+        flex-direction: column;
+    }
+
+    .stockInfoModalPriceBlock {
+        text-align: left;
+    }
+
+    .stockInfoModalStats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}

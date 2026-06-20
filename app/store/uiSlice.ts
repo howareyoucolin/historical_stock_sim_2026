@@ -17,6 +17,8 @@ interface UiSliceState {
     isSidebarCollapsed: boolean
     isResetModalOpen: boolean
     isDepositModalOpen: boolean
+    isStockInfoModalOpen: boolean
+    stockInfoModalCode: string | null
     isCalendarOpen: boolean
     calendarPosition: CalendarPosition | null
     activeTab: ContentTab
@@ -29,6 +31,8 @@ const initialState: UiSliceState = {
     isSidebarCollapsed: false,
     isResetModalOpen: false,
     isDepositModalOpen: false,
+    isStockInfoModalOpen: false,
+    stockInfoModalCode: null,
     isCalendarOpen: false,
     calendarPosition: null,
     // Default to Positions so real holdings show on load rather than a placeholder tab.
@@ -59,6 +63,14 @@ const uiSlice = createSlice({
         closeDepositModal(state) {
             state.isDepositModalOpen = false
         },
+        openStockInfoModal(state, action: PayloadAction<string>) {
+            state.stockInfoModalCode = action.payload
+            state.isStockInfoModalOpen = true
+        },
+        closeStockInfoModal(state) {
+            state.isStockInfoModalOpen = false
+            state.stockInfoModalCode = null
+        },
         openCalendar(state, action: PayloadAction<CalendarPosition | null>) {
             state.calendarPosition = action.payload
             state.isCalendarOpen = true
@@ -84,6 +96,8 @@ export const {
     closeResetModal,
     openDepositModal,
     closeDepositModal,
+    openStockInfoModal,
+    closeStockInfoModal,
     openCalendar,
     closeCalendar,
     setActiveTab,

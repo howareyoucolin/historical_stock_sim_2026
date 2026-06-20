@@ -6,7 +6,7 @@ import { useAppDispatch, useAppSelector } from '../../../../../store/hooks'
 import { money, signedMoney, signedPercent, tone } from '../../../../shared/format'
 import type { AccountStockTableRow } from '../../../../../actions/account/view-model'
 import { getVisibleHoldingsColumns } from './columns'
-import { prefillTradeFromRow } from './actions'
+import { showStockInfoFromRow } from './actions'
 
 // Render the per-lot breakdown shown when a holding is expanded, as an inset table that mirrors
 // the parent columns but only carries the figures that differ between purchase batches. The
@@ -110,7 +110,7 @@ export function Holdings() {
                                                 </button>
                                             </td>
                                             <th className="alignLeft symbol" scope="row">
-                                                <button type="button" className="symbolButton" onClick={() => dispatch(prefillTradeFromRow(row))}>
+                                                <button type="button" className="symbolButton" onClick={() => dispatch(showStockInfoFromRow(row))}>
                                                     {row.stockCode}
                                                 </button>
                                             </th>
