@@ -15,12 +15,31 @@ interface HistoryRow {
     acquired: string
     term: string
     cash: string
+    note: string
 }
 
 // Parse one raw log line ("<iso> <ACTION> <key=value>...") into table columns. The real timestamp
-// is dropped in favor of the simulated date carried in the `sim` token.
+// is dropped in favor of the simulated date carried in the `sim` token. The optional note is JSON-
+// quoted and always last, so it is split off and parsed as a unit before the rest is tokenized — that
+// keeps a multi-word note (which contains spaces) from being mangled by the space split.
 function parseHistoryLine(line: string): HistoryRow {
-    const [, action = '', ...rest] = line.split(' ')
+    const noteMarker = ' note='
+    const markerIndex = line.indexOf(noteMarker)
+    const head = markerIndex === -1 ? line : line.slice(0, markerIndex)
+
+    let note = ''
+
+    if (markerIndex !== -1) {
+        const rawNote = line.slice(markerIndex + noteMarker.length)
+
+        try {
+            note = JSON.parse(rawNote)
+        } catch {
+            note = rawNote
+        }
+    }
+
+    const [, action = '', ...rest] = head.split(' ')
     const fields: Record<string, string> = {}
 
     for (const token of rest) {
@@ -40,6 +59,7 @@ function parseHistoryLine(line: string): HistoryRow {
         acquired: fields.acquired ?? '',
         term: fields.term ?? '',
         cash: fields.cash ?? '',
+        note,
     }
 }
 
@@ -86,6 +106,7 @@ export function Histories() {
                             <th className="alignLeft" scope="col">Acquired</th>
                             <th className="alignLeft" scope="col">Term</th>
                             <th scope="col">Cash</th>
+                            <th className="alignLeft" scope="col">Note</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -99,6 +120,7 @@ export function Histories() {
                                 <td className="alignLeft">{row.acquired || '—'}</td>
                                 <td className="alignLeft">{row.term ? <span className={`termBadge ${row.term.toLowerCase()}`}>{row.term}</span> : '—'}</td>
                                 <td className={cashTone(row.cash)}>{row.cash || '—'}</td>
+                                <td className="alignLeft note">{row.note || '—'}</td>
                             </tr>
                         ))}
                     </tbody>

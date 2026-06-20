@@ -23,7 +23,7 @@ const POLL_RESULT_DISPLAY_MS = 1500
 
 // Auto-pause polling after this long with no changes, so an idle tab stops hammering the API until
 // the user resumes. Resuming starts a fresh idle window.
-const POLL_IDLE_PAUSE_MS = 2 * 60 * 1000
+const POLL_IDLE_PAUSE_MS = 10 * 60 * 1000
 
 // Render the full-width portfolio dashboard: a collapsible sidebar, the holdings content column,
 // and the floating overlays. State lives in the Redux store, so children read what they need

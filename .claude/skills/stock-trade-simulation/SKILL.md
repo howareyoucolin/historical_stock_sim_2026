@@ -111,10 +111,15 @@ fine). Also stop cleanly if the CLI reports no further trading day is available
 
 ## 3. Notes on trades
 
-When you buy or sell, attach `--note="..."` **only when** the decision carries a
-useful insight worth recording (the thesis, the signal you acted on, a risk you
-were managing). Skip routine/mechanical trades — quality over quantity. These
-notes are also how the user audits that your decisions came from observed data.
+Attach a `--note="..."` to **every** buy and sell that explains *why* you made the
+trade: the signal or figures you acted on (price, P/E, trend), how it follows the
+strategy's rules, and any risk you were managing. Aim for a normal-sized note — a
+sentence or two. Not a terse tag, not a paragraph: just enough to make the action
+understandable on its own. Keep it concrete and tied to what you actually
+observed, e.g. `--note="Top momentum name, +24% trailing 3mo and still leading the
+screen, so entering at an equal-weight slot"` rather than `--note="buy"`. These
+notes are how the user follows your reasoning and audits that each decision came
+from data you observed.
 
 ## 4. End of simulation
 

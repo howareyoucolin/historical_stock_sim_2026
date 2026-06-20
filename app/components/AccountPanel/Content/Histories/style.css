@@ -56,6 +56,16 @@
     font-weight: 600;
 }
 
+/* Notes are free text, so let this column wrap instead of forcing the table wider. */
+.historiesTable .note {
+    white-space: normal;
+    min-width: 200px;
+    max-width: 380px;
+    color: var(--muted);
+    font-size: 0.78rem;
+    line-height: 1.4;
+}
+
 /* Short/long holding badge on sell rows. */
 .termBadge {
     display: inline-block;
