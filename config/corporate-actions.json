@@ -1,0 +1,79 @@
+{
+  "_note": "Starter corporate-action rules used to reduce survivorship bias for historical names. cashPerShare values are rough where noted; extend this file as more delisted/acquired symbols are added to the universe.",
+  "actions": [
+    {
+      "stockCode": "TWTR",
+      "date": "2022-10-28",
+      "type": "cash_buyout",
+      "cashPerShare": 54.2,
+      "note": "Taken private for cash."
+    },
+    {
+      "stockCode": "ATVI",
+      "date": "2023-10-13",
+      "type": "cash_buyout",
+      "cashPerShare": 95,
+      "note": "Acquired by Microsoft for cash."
+    },
+    {
+      "stockCode": "CERN",
+      "date": "2022-06-08",
+      "type": "cash_buyout",
+      "cashPerShare": 95,
+      "note": "Acquired by Oracle for cash."
+    },
+    {
+      "stockCode": "CTXS",
+      "date": "2022-09-30",
+      "type": "cash_buyout",
+      "cashPerShare": 104,
+      "note": "Acquired by Vista and Evergreen for cash."
+    },
+    {
+      "stockCode": "NLSN",
+      "date": "2022-10-11",
+      "type": "cash_buyout",
+      "cashPerShare": 28,
+      "note": "Acquired by Elliott and Brookfield for cash."
+    },
+    {
+      "stockCode": "XLNX",
+      "date": "2022-02-14",
+      "type": "stock_swap",
+      "acquirerStockCode": "AMD",
+      "shareRatio": 1.7234,
+      "cashPerShare": 114,
+      "note": "Converted into AMD shares; fractional shares paid in cash approximately."
+    },
+    {
+      "stockCode": "BBBY",
+      "date": "2023-05-03",
+      "type": "otc_continuation",
+      "note": "Moved off Nasdaq and continued trading OTC; local OTC repricing is not modeled."
+    },
+    {
+      "stockCode": "BBBY",
+      "date": "2023-09-29",
+      "type": "equity_wipeout",
+      "note": "Chapter 11 restructuring left common equity worthless."
+    },
+    {
+      "stockCode": "SIVB",
+      "date": "2023-03-10",
+      "type": "equity_wipeout",
+      "note": "Bank failure; common equity effectively wiped out."
+    },
+    {
+      "stockCode": "FRC",
+      "date": "2023-05-01",
+      "type": "equity_wipeout",
+      "note": "First Republic resolution wiped out common equity."
+    },
+    {
+      "stockCode": "REV",
+      "date": "2023-05-15",
+      "type": "equity_wipeout",
+      "note": "Restructuring left legacy common equity with near-zero value."
+    }
+  ]
+}

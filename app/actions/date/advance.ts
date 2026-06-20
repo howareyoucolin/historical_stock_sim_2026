@@ -6,11 +6,18 @@ import { appendHistoryEvent } from '../history/log'
 import {
     readDefaultUserAccountSession,
     type AccountSessionDependencies,
+    type AccountPosition,
     type AccountState,
     writeDefaultUserAccountSession,
 } from '../account/model'
 import { recordDailyValue, type DailyValueSnapshot } from '../account/values-log'
 import { accrueInterestOverGap } from '../account/cash-interest'
+import {
+    readCorporateActions,
+    selectCorporateActionsForDate,
+    type CorporateAction,
+    type StockSwapCorporateAction,
+} from '../account/corporate-actions'
 import { findNextTradingDate, normalizeSimulationDate } from './utils'
 
 // SPY trades every NYSE session, so its saved history doubles as the market trading calendar.
@@ -41,6 +48,15 @@ export interface InterestPayout {
     amount: number
 }
 
+export interface CorporateActionPayout {
+    stockCode: string
+    date: string
+    quantity: number
+    pricePerShare: number
+    cashDelta: number
+    note: string
+}
+
 export interface AdvanceSimulationResult {
     account: AccountState
     dividends: DividendPayout[]
@@ -48,6 +64,7 @@ export interface AdvanceSimulationResult {
     // Interest paid on parked cash during the advance; optional so callers/mocks can omit it.
     interest?: InterestPayout[]
     totalInterest?: number
+    corporateActions?: CorporateActionPayout[]
 }
 
 export interface AdvanceSimulationDependencies extends AccountSessionDependencies {
@@ -111,6 +128,100 @@ async function readStockHistoryMap(
     }
 }
 
+// Clone the held lots so date advancement can mutate positions without touching the loaded account object.
+function clonePositionsByStock(positions: Record<string, AccountPosition[]>): Record<string, AccountPosition[]> {
+    return Object.fromEntries(
+        Object.entries(positions).map(([stockCode, lots]) => [stockCode, lots.map((lot) => ({ ...lot }))])
+    )
+}
+
+// Sum the share count for one holding across all of its lots.
+function countHeldShares(lots: AccountPosition[]): number {
+    return lots.reduce((total, lot) => total + lot.quantity, 0)
+}
+
+// Build a stock -> shares map for the lots currently held in the mutable working account.
+function countSharesByStock(positions: Record<string, AccountPosition[]>): Record<string, number> {
+    const sharesByStock: Record<string, number> = {}
+
+    for (const [stockCode, lots] of Object.entries(positions)) {
+        const shares = countHeldShares(lots)
+
+        if (shares > 0) {
+            sharesByStock[stockCode] = shares
+        }
+    }
+
+    return sharesByStock
+}
+
+// Add converted lots into the destination holding, preserving purchase dates so holding periods survive mergers.
+function appendConvertedLots(
+    positions: Record<string, AccountPosition[]>,
+    stockCode: string,
+    lots: AccountPosition[]
+): void {
+    if (lots.length === 0) {
+        return
+    }
+
+    positions[stockCode] = [...(positions[stockCode] ?? []), ...lots]
+}
+
+// Read a stock's history lazily when a corporate action introduces a new holding mid-simulation.
+async function ensureHistoryByStock(
+    stockCode: string,
+    historyByStock: Record<string, HistoryByDate>,
+    cwd: () => string,
+    readMarketDataFile: (path: string, encoding: BufferEncoding) => Promise<string>
+): Promise<HistoryByDate> {
+    if (!historyByStock[stockCode]) {
+        historyByStock[stockCode] = await readStockHistoryMap(stockCode, cwd, readMarketDataFile)
+    }
+
+    return historyByStock[stockCode]
+}
+
+// Describe one corporate action in the history log so the account trail explains why holdings changed.
+function formatCorporateActionNote(action: CorporateAction): string {
+    switch (action.type) {
+        case 'cash_buyout':
+            return action.note ?? `Cash buyout at ${action.cashPerShare.toFixed(2)} per share`
+        case 'stock_swap':
+            return action.note ?? `Converted into ${action.acquirerStockCode} at ${action.shareRatio} shares per share`
+        case 'equity_wipeout':
+            return action.note ?? 'Common equity wiped out'
+        case 'otc_continuation':
+            return action.note ?? 'Moved off-exchange / OTC continuation'
+    }
+}
+
+// Convert a held stock into the acquirer using the configured share ratio, paying any fractional remainder in cash.
+function applyStockSwapToLots(lots: AccountPosition[], action: StockSwapCorporateAction): { convertedLots: AccountPosition[]; cashDelta: number } {
+    const convertedLots: AccountPosition[] = []
+    let cashDelta = 0
+
+    for (const lot of lots) {
+        const rawAcquirerShares = lot.quantity * action.shareRatio
+        const wholeAcquirerShares = Math.floor(rawAcquirerShares + 1e-9)
+        const fractionalAcquirerShares = rawAcquirerShares - wholeAcquirerShares
+
+        if (wholeAcquirerShares > 0) {
+            convertedLots.push({
+                quantity: wholeAcquirerShares,
+                cost_per_share: lot.cost_per_share / action.shareRatio,
+                purchase_date: lot.purchase_date,
+            })
+        }
+
+        if (fractionalAcquirerShares > 0 && action.cashPerShare) {
+            cashDelta += fractionalAcquirerShares * action.cashPerShare
+        }
+    }
+
+    return { convertedLots, cashDelta }
+}
+
 // Advance the simulation one trading day at a time, crediting cash dividends on each payout
 // date, until either a single step is taken (targetDate null) or the date reaches the target.
 export async function advanceSimulationDate(
@@ -142,19 +253,11 @@ export async function advanceSimulationDate(
     }
 
     const calendar = await readTradingCalendar(cwd, readMarketDataFile)
+    const corporateActions = await readCorporateActions({ cwd, readConfigFile: readMarketDataFile })
 
-    // Total shares held per stock stay constant while advancing, so resolve them once up front.
-    const sharesByStock: Record<string, number> = {}
-    for (const [stockCode, lots] of Object.entries(account.positions)) {
-        const shares = lots.reduce((total, lot) => total + lot.quantity, 0)
-
-        if (shares > 0) {
-            sharesByStock[stockCode] = shares
-        }
-    }
-
+    const positionsByStock = clonePositionsByStock(account.positions)
     const historyByStock: Record<string, HistoryByDate> = {}
-    for (const stockCode of Object.keys(sharesByStock)) {
+    for (const stockCode of Object.keys(positionsByStock)) {
         historyByStock[stockCode] = await readStockHistoryMap(stockCode, cwd, readMarketDataFile)
     }
 
@@ -164,11 +267,12 @@ export async function advanceSimulationDate(
     let accruedInterest = account.accruedInterest ?? 0
     const dividends: DividendPayout[] = []
     const interestPayouts: InterestPayout[] = []
+    const corporateActionPayouts: CorporateActionPayout[] = []
 
     // Track each holding's most recent close so a day missing local data carries the prior price
     // forward instead of dropping the position from the portfolio value for that day.
     const lastCloseByStock: Record<string, number> = {}
-    for (const stockCode of Object.keys(sharesByStock)) {
+    for (const stockCode of Object.keys(positionsByStock)) {
         const startingClose = historyByStock[stockCode]?.[date]?.close
 
         if (typeof startingClose === 'number') {
@@ -178,6 +282,7 @@ export async function advanceSimulationDate(
 
     // Total portfolio value on the current day: cash plus the market value of every held position.
     const portfolioValueSnapshot = (): DailyValueSnapshot => {
+        const sharesByStock = countSharesByStock(positionsByStock)
         const holdingsValue = Object.entries(sharesByStock).reduce(
             (total, [stockCode, shares]) => total + shares * (lastCloseByStock[stockCode] ?? 0),
             0
@@ -191,7 +296,7 @@ export async function advanceSimulationDate(
 
     // Move to the next trading day, credit any dividends paid by held stocks, refresh their closing
     // prices, and capture the resulting total portfolio value for that day.
-    const stepToNextTradingDay = (): void => {
+    const stepToNextTradingDay = async (): Promise<void> => {
         const nextDate = findNextTradingDate(date, calendar)
 
         if (nextDate === null) {
@@ -211,6 +316,7 @@ export async function advanceSimulationDate(
             accruedInterest = 0
         }
 
+        const sharesByStock = countSharesByStock(positionsByStock)
         for (const [stockCode, shares] of Object.entries(sharesByStock)) {
             const entry = historyByStock[stockCode]?.[date]
 
@@ -226,18 +332,93 @@ export async function advanceSimulationDate(
             }
         }
 
+        for (const action of selectCorporateActionsForDate(corporateActions, date)) {
+            const heldLots = positionsByStock[action.stockCode] ?? []
+
+            if (heldLots.length === 0) {
+                continue
+            }
+
+            const heldShares = countHeldShares(heldLots)
+
+            switch (action.type) {
+                case 'cash_buyout': {
+                    const cashDelta = heldShares * action.cashPerShare
+
+                    cash += cashDelta
+                    delete positionsByStock[action.stockCode]
+                    delete lastCloseByStock[action.stockCode]
+                    corporateActionPayouts.push({
+                        stockCode: action.stockCode,
+                        date,
+                        quantity: heldShares,
+                        pricePerShare: action.cashPerShare,
+                        cashDelta,
+                        note: formatCorporateActionNote(action),
+                    })
+                    break
+                }
+                case 'stock_swap': {
+                    const { convertedLots, cashDelta } = applyStockSwapToLots(heldLots, action)
+
+                    delete positionsByStock[action.stockCode]
+                    delete lastCloseByStock[action.stockCode]
+                    appendConvertedLots(positionsByStock, action.acquirerStockCode, convertedLots)
+                    await ensureHistoryByStock(action.acquirerStockCode, historyByStock, cwd, readMarketDataFile)
+
+                    const acquirerClose = historyByStock[action.acquirerStockCode]?.[date]?.close
+                    if (typeof acquirerClose === 'number') {
+                        lastCloseByStock[action.acquirerStockCode] = acquirerClose
+                    }
+
+                    cash += cashDelta
+                    corporateActionPayouts.push({
+                        stockCode: action.stockCode,
+                        date,
+                        quantity: heldShares,
+                        pricePerShare: action.cashPerShare ?? 0,
+                        cashDelta,
+                        note: formatCorporateActionNote(action),
+                    })
+                    break
+                }
+                case 'equity_wipeout':
+                    delete positionsByStock[action.stockCode]
+                    delete lastCloseByStock[action.stockCode]
+                    corporateActionPayouts.push({
+                        stockCode: action.stockCode,
+                        date,
+                        quantity: heldShares,
+                        pricePerShare: 0,
+                        cashDelta: 0,
+                        note: formatCorporateActionNote(action),
+                    })
+                    break
+                case 'otc_continuation':
+                    corporateActionPayouts.push({
+                        stockCode: action.stockCode,
+                        date,
+                        quantity: heldShares,
+                        pricePerShare: 0,
+                        cashDelta: 0,
+                        note: formatCorporateActionNote(action),
+                    })
+                    break
+            }
+        }
+
         valueSnapshots.push(portfolioValueSnapshot())
     }
 
     if (normalizedTarget === null) {
-        stepToNextTradingDay()
+        await stepToNextTradingDay()
     } else {
         while (date < normalizedTarget) {
-            stepToNextTradingDay()
+            await stepToNextTradingDay()
         }
     }
 
-    const updatedAccount: AccountState = { ...account, date, cash }
+    const updatedAccount: AccountState = { ...account, date, cash, positions: positionsByStock }
 
     // Carry the running accrued interest forward, or clear it once it has been paid out, so the
     // persisted account only keeps a non-zero in-progress balance.
@@ -274,11 +455,28 @@ export async function advanceSimulationDate(
         await appendHistoryEvent({ type: 'INTEREST', simDate: payout.date, cashDelta: payout.amount }, { cwd })
     }
 
+    // Record corporate-action outcomes so delistings and mergers are visible in the audit log.
+    for (const action of corporateActionPayouts) {
+        await appendHistoryEvent(
+            {
+                type: 'CORPORATE_ACTION',
+                simDate: action.date,
+                stockCode: action.stockCode,
+                quantity: action.quantity,
+                pricePerShare: action.pricePerShare,
+                cashDelta: action.cashDelta,
+                note: action.note,
+            },
+            { cwd }
+        )
+    }
+
     return {
         account: savedAccount,
         dividends,
         totalDividends: dividends.reduce((total, dividend) => total + dividend.amount, 0),
         interest: interestPayouts,
         totalInterest: interestPayouts.reduce((total, payout) => total + payout.amount, 0),
+        corporateActions: corporateActionPayouts,
     }
 }

@@ -87,7 +87,7 @@ export function Histories() {
     }, [dispatch])
 
     if (entries.length === 0) {
-        return <div className="historiesEmpty">No activity recorded yet. Buys, sells, dividends, and deposits will show up here.</div>
+        return <div className="historiesEmpty">No activity recorded yet. Buys, sells, dividends, deposits, and corporate actions will show up here.</div>
     }
 
     const rows = entries.map(parseHistoryLine).reverse()
