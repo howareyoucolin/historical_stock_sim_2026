@@ -19,6 +19,35 @@
     gap: 10px;
 }
 
+/* Live price/affordability preview shown once a symbol is entered. */
+.tradePreview {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+}
+
+.tradePreviewRow {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.tradePreviewMuted {
+    color: var(--muted);
+}
+
+.tradePreviewWarn {
+    margin-top: 2px;
+    color: var(--neg);
+    font-weight: 600;
+}
+
 .tradeButtons {
     display: grid;
     grid-template-columns: 1fr 1fr;

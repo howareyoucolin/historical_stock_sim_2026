@@ -1,6 +1,25 @@
 import type { AppThunk } from '../../../../store'
 import { setBusy, setStatus, setView, type AccountResponse } from '../../../../store/accountSlice'
-import { clearQuantity } from '../../../../store/formSlice'
+import { clearTrade } from '../../../../store/formSlice'
+
+// Fetch a stock's unit price as of the current simulation date for the trade preview. Returns null
+// when the symbol is unknown or has no price yet, so the caller can show a "no price" hint. This is a
+// read-only lookup feeding transient view state, so it returns the value instead of dispatching.
+export async function fetchUnitPrice(symbol: string): Promise<number | null> {
+    try {
+        const response = await fetch(`/api/stock/analysis?code=${encodeURIComponent(symbol)}`, { cache: 'no-store' })
+
+        if (!response.ok) {
+            return null
+        }
+
+        const payload = (await response.json()) as { analysis?: { close?: number } }
+
+        return payload.analysis?.close ?? null
+    } catch {
+        return null
+    }
+}
 
 // Submit a buy or sell order for the symbol and quantity currently held in the form slice, then
 // refresh the account view and status from the API response.
@@ -37,7 +56,7 @@ export function submitTrade(action: 'buy' | 'sell'): AppThunk<Promise<void>> {
 
             dispatch(setView(payload.view))
             dispatch(setStatus(payload.message ?? 'Trade complete.'))
-            dispatch(clearQuantity())
+            dispatch(clearTrade())
         } finally {
             dispatch(setBusy(false))
         }

@@ -34,11 +34,15 @@ const formSlice = createSlice({
         clearQuantity(state) {
             state.quantity = ''
         },
+        clearTrade(state) {
+            state.symbol = ''
+            state.quantity = ''
+        },
         clearDepositAmount(state) {
             state.depositAmount = ''
         },
     },
 })
 
-export const { setSymbol, setQuantity, setDepositAmount, prefillTrade, clearQuantity, clearDepositAmount } = formSlice.actions
+export const { setSymbol, setQuantity, setDepositAmount, prefillTrade, clearQuantity, clearTrade, clearDepositAmount } = formSlice.actions
 export default formSlice.reducer
