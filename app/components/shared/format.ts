@@ -20,6 +20,23 @@ export function percent(value: number): string {
     return `${value.toFixed(2)}%`
 }
 
+// Format a market cap given in USD millions with a magnitude suffix, e.g. 2311050 -> "$2.31T".
+export function marketCap(millions: number | null | undefined): string {
+    if (millions === null || millions === undefined) {
+        return '—'
+    }
+
+    if (millions >= 1_000_000) {
+        return `$${(millions / 1_000_000).toFixed(2)}T`
+    }
+
+    if (millions >= 1_000) {
+        return `$${(millions / 1_000).toFixed(1)}B`
+    }
+
+    return `$${millions.toFixed(0)}M`
+}
+
 // Map a numeric change to a CSS tone class so positive and negative values are colored.
 export function tone(value: number): string {
     if (value > 0) {

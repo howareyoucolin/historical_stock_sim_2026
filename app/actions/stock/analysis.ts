@@ -19,6 +19,7 @@ export interface StockAnalysis {
     changePercent: number | null
     peRatio: number | null
     ttmEps: number | null
+    marketCap: number | null
     lastDividendPerShare: number | null
     lastDividendDate: string | null
     high52: number
@@ -64,6 +65,7 @@ export async function buildStockAnalysis(stockCode: string, dependencies: StockH
         changePercent,
         peRatio: asOf.peRatio,
         ttmEps: asOf.ttmEps,
+        marketCap: asOf.marketCap ?? null,
         lastDividendPerShare: lastDividend ? lastDividend.dividendPerShare : null,
         lastDividendDate: lastDividend ? lastDividend.date : null,
         high52: Math.max(...windowCloses),

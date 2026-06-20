@@ -21,7 +21,9 @@
     "isPayoutDate": "Whether a dividend was paid on this date",
     "dividendPerShare": "Dividend per share paid on this date",
     "ttmEps": "Most recent reported trailing-twelve-month Net EPS as of this date (forward-filled from quarterly reports)",
-    "peRatio": "Derived price-to-earnings ratio: close / ttmEps (null when either input is unavailable)"
+    "peRatio": "Derived price-to-earnings ratio: close / ttmEps (null when either input is unavailable)",
+    "sharesOutstanding": "Approximate current shares outstanding in millions (constant per ticker, from config/shares-outstanding.json)",
+    "marketCap": "Derived market capitalization in USD millions: close * sharesOutstanding (null when either is unavailable)"
   },
   "historyByDate": {
     "2024-03-21": {
@@ -29,3129 +31,4023 @@
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9079
     },
     "2024-03-22": {
       "close": 46,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8280
     },
     "2024-03-25": {
       "close": 59.79999923706055,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10764
     },
     "2024-03-26": {
       "close": 65.11000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11720
     },
     "2024-03-27": {
       "close": 57.75,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10395
     },
     "2024-03-28": {
       "close": 49.31999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8878
     },
     "2024-04-01": {
       "close": 45.970001220703125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8275
     },
     "2024-04-02": {
       "close": 50.45000076293945,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9081
     },
     "2024-04-03": {
       "close": 46.9900016784668,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8458
     },
     "2024-04-04": {
       "close": 45.779998779296875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8240
     },
     "2024-04-05": {
       "close": 47.560001373291016,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8561
     },
     "2024-04-08": {
       "close": 46.150001525878906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8307
     },
     "2024-04-09": {
       "close": 45,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8100
     },
     "2024-04-10": {
       "close": 42.09000015258789,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7576
     },
     "2024-04-11": {
       "close": 44.529998779296875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8015
     },
     "2024-04-12": {
       "close": 42.27000045776367,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7609
     },
     "2024-04-15": {
       "close": 40,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7200
     },
     "2024-04-16": {
       "close": 41.13999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7405
     },
     "2024-04-17": {
       "close": 39.16999816894531,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7051
     },
     "2024-04-18": {
       "close": 41.720001220703125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7510
     },
     "2024-04-19": {
       "close": 40.880001068115234,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7358
     },
     "2024-04-22": {
       "close": 42.040000915527344,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7567
     },
     "2024-04-23": {
       "close": 42.81999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7708
     },
     "2024-04-24": {
       "close": 43.150001525878906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7767
     },
     "2024-04-25": {
       "close": 42.45000076293945,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7641
     },
     "2024-04-26": {
       "close": 45.43000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8177
     },
     "2024-04-29": {
       "close": 46.279998779296875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8330
     },
     "2024-04-30": {
       "close": 44.439998626708984,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 7999
     },
     "2024-05-01": {
       "close": 45.880001068115234,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8258
     },
     "2024-05-02": {
       "close": 47.70000076293945,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8586
     },
     "2024-05-03": {
       "close": 46.63999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8395
     },
     "2024-05-06": {
       "close": 48.27000045776367,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8689
     },
     "2024-05-07": {
       "close": 49.400001525878906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 8892
     },
     "2024-05-08": {
       "close": 51.400001525878906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9252
     },
     "2024-05-09": {
       "close": 50.11000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9020
     },
     "2024-05-10": {
       "close": 53.529998779296875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9635
     },
     "2024-05-13": {
       "close": 58.189998626708984,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10474
     },
     "2024-05-14": {
       "close": 62.34000015258789,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11221
     },
     "2024-05-15": {
       "close": 59.630001068115234,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10733
     },
     "2024-05-16": {
       "close": 56.380001068115234,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10148
     },
     "2024-05-17": {
       "close": 62.040000915527344,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11167
     },
     "2024-05-20": {
       "close": 61.220001220703125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11020
     },
     "2024-05-21": {
       "close": 59.310001373291016,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10676
     },
     "2024-05-22": {
       "close": 56.689998626708984,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10204
     },
     "2024-05-23": {
       "close": 54.15999984741211,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9749
     },
     "2024-05-24": {
       "close": 54.720001220703125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9850
     },
     "2024-05-28": {
       "close": 58.4900016784668,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10528
     },
     "2024-05-29": {
       "close": 57.63999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10375
     },
     "2024-05-30": {
       "close": 56.29999923706055,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10134
     },
     "2024-05-31": {
       "close": 54.2400016784668,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9763
     },
     "2024-06-03": {
       "close": 55.79999923706055,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10044
     },
     "2024-06-04": {
       "close": 54.5,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9810
     },
     "2024-06-05": {
       "close": 60.06999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10813
     },
     "2024-06-06": {
       "close": 63.459999084472656,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11423
     },
     "2024-06-07": {
       "close": 59.79999923706055,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10764
     },
     "2024-06-10": {
       "close": 59.630001068115234,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10733
     },
     "2024-06-11": {
       "close": 61.54999923706055,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11079
     },
     "2024-06-12": {
       "close": 65.93000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11867
     },
     "2024-06-13": {
       "close": 63.959999084472656,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11513
     },
     "2024-06-14": {
       "close": 60.939998626708984,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10969
     },
     "2024-06-17": {
       "close": 60.349998474121094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10863
     },
     "2024-06-18": {
       "close": 60.209999084472656,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10838
     },
     "2024-06-20": {
       "close": 57.41999816894531,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10336
     },
     "2024-06-21": {
       "close": 57.29999923706055,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10314
     },
     "2024-06-24": {
       "close": 56.47999954223633,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10166
     },
     "2024-06-25": {
       "close": 61.380001068115234,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11048
     },
     "2024-06-26": {
       "close": 63.61000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11450
     },
     "2024-06-27": {
       "close": 63.58000183105469,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11444
     },
     "2024-06-28": {
       "close": 63.88999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11500
     },
     "2024-07-01": {
       "close": 66.58999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11986
     },
     "2024-07-02": {
       "close": 73.51000213623047,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13232
     },
     "2024-07-03": {
       "close": 73.62000274658203,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13252
     },
     "2024-07-05": {
       "close": 72.97000122070312,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13135
     },
     "2024-07-08": {
       "close": 72.80999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13106
     },
     "2024-07-09": {
       "close": 70.58999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12706
     },
     "2024-07-10": {
       "close": 69.4000015258789,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12492
     },
     "2024-07-11": {
       "close": 70.29000091552734,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12652
     },
     "2024-07-12": {
       "close": 73.8499984741211,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13293
     },
     "2024-07-15": {
       "close": 72.9800033569336,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13136
     },
     "2024-07-16": {
       "close": 70.44000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12679
     },
     "2024-07-17": {
       "close": 65.20999908447266,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11738
     },
     "2024-07-18": {
       "close": 65.91999816894531,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11866
     },
     "2024-07-19": {
       "close": 64.69999694824219,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11646
     },
     "2024-07-22": {
       "close": 68.12999725341797,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12263
     },
     "2024-07-23": {
       "close": 67.83999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12211
     },
     "2024-07-24": {
       "close": 62.95000076293945,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11331
     },
     "2024-07-25": {
       "close": 62.060001373291016,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11171
     },
     "2024-07-26": {
       "close": 62.36000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11225
     },
     "2024-07-29": {
       "close": 59.97999954223633,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10796
     },
     "2024-07-30": {
       "close": 58.439998626708984,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10519
     },
     "2024-07-31": {
       "close": 60.849998474121094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10953
     },
     "2024-08-01": {
       "close": 59.380001068115234,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10688
     },
     "2024-08-02": {
       "close": 57.58000183105469,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10364
     },
     "2024-08-05": {
       "close": 56.810001373291016,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10226
     },
     "2024-08-06": {
       "close": 54.36000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9785
     },
     "2024-08-07": {
       "close": 50.689998626708984,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9124
     },
     "2024-08-08": {
       "close": 54.939998626708984,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9889
     },
     "2024-08-09": {
       "close": 52.90999984741211,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9524
     },
     "2024-08-12": {
       "close": 52.5099983215332,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9452
     },
     "2024-08-13": {
       "close": 54.52000045776367,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9814
     },
     "2024-08-14": {
       "close": 54.95000076293945,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9891
     },
     "2024-08-15": {
       "close": 55.54999923706055,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9999
     },
     "2024-08-16": {
       "close": 54.91999816894531,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9886
     },
     "2024-08-19": {
       "close": 54.36000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9785
     },
     "2024-08-20": {
       "close": 55.02000045776367,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 9904
     },
     "2024-08-21": {
       "close": 56.88999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10240
     },
     "2024-08-22": {
       "close": 56.43000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10157
     },
     "2024-08-23": {
       "close": 59.209999084472656,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10658
     },
     "2024-08-26": {
       "close": 58.2599983215332,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10487
     },
     "2024-08-27": {
       "close": 59,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10620
     },
     "2024-08-28": {
       "close": 56.13999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10105
     },
     "2024-08-29": {
       "close": 58.75,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10575
     },
     "2024-08-30": {
       "close": 60.029998779296875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10805
     },
     "2024-09-03": {
       "close": 57.529998779296875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10355
     },
     "2024-09-04": {
       "close": 57,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10260
     },
     "2024-09-05": {
       "close": 58.709999084472656,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10568
     },
     "2024-09-06": {
       "close": 56.849998474121094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10233
     },
     "2024-09-09": {
       "close": 57.459999084472656,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10343
     },
     "2024-09-10": {
       "close": 56.869998931884766,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10237
     },
     "2024-09-11": {
       "close": 59.869998931884766,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10777
     },
     "2024-09-12": {
       "close": 59.630001068115234,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10733
     },
     "2024-09-13": {
       "close": 59.09000015258789,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10636
     },
     "2024-09-16": {
       "close": 59.150001525878906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 10647
     },
     "2024-09-17": {
       "close": 61.88999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11140
     },
     "2024-09-18": {
       "close": 63.65999984741211,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11459
     },
     "2024-09-19": {
       "close": 64.55999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11621
     },
     "2024-09-20": {
       "close": 66.16999816894531,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11911
     },
     "2024-09-23": {
       "close": 65,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11700
     },
     "2024-09-24": {
       "close": 66.95999908447266,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12053
     },
     "2024-09-25": {
       "close": 67.87999725341797,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12218
     },
     "2024-09-26": {
       "close": 66.5199966430664,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11974
     },
     "2024-09-27": {
       "close": 67.08000183105469,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12074
     },
     "2024-09-30": {
       "close": 65.91999816894531,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11866
     },
     "2024-10-01": {
       "close": 65.97000122070312,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 11875
     },
     "2024-10-02": {
       "close": 67.77999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12200
     },
     "2024-10-03": {
       "close": 67.47000122070312,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12145
     },
     "2024-10-04": {
       "close": 72.37999725341797,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13028
     },
     "2024-10-07": {
       "close": 70.44000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12679
     },
     "2024-10-08": {
       "close": 70.7699966430664,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12739
     },
     "2024-10-09": {
       "close": 71,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12780
     },
     "2024-10-10": {
       "close": 69.9000015258789,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 12582
     },
     "2024-10-11": {
       "close": 73.25,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13185
     },
     "2024-10-14": {
       "close": 74.87000274658203,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13477
     },
     "2024-10-15": {
       "close": 75.16999816894531,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13531
     },
     "2024-10-16": {
       "close": 77.26000213623047,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13907
     },
     "2024-10-17": {
       "close": 76.29000091552734,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13732
     },
     "2024-10-18": {
       "close": 80.9000015258789,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 14562
     },
     "2024-10-21": {
       "close": 78.55000305175781,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 14139
     },
     "2024-10-22": {
       "close": 77.29000091552734,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13912
     },
     "2024-10-23": {
       "close": 77.68000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 13982
     },
     "2024-10-24": {
       "close": 78.5999984741211,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 14148
     },
     "2024-10-25": {
       "close": 81.36000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 14645
     },
     "2024-10-28": {
       "close": 79.68000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 14342
     },
     "2024-10-29": {
       "close": 81.73999786376953,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 14713
     },
     "2024-10-30": {
       "close": 116.05000305175781,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 20889
     },
     "2024-10-31": {
       "close": 119.30000305175781,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 21474
     },
     "2024-11-01": {
       "close": 112.9800033569336,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 20336
     },
     "2024-11-04": {
       "close": 109.02999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 19625
     },
     "2024-11-05": {
       "close": 122.56999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 22063
     },
     "2024-11-06": {
       "close": 121.08000183105469,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 21794
     },
     "2024-11-07": {
       "close": 131.44000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 23659
     },
     "2024-11-08": {
       "close": 134.8000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 24264
     },
     "2024-11-11": {
       "close": 129.22999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 23261
     },
     "2024-11-12": {
       "close": 127.75,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 22995
     },
     "2024-11-13": {
       "close": 132.05999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 23771
     },
     "2024-11-14": {
       "close": 131.8800048828125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 23738
     },
     "2024-11-15": {
       "close": 124.77999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 22460
     },
     "2024-11-18": {
       "close": 129.4199981689453,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 23296
     },
     "2024-11-19": {
       "close": 137.16000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 24689
     },
     "2024-11-20": {
       "close": 136.27000427246094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 24529
     },
     "2024-11-21": {
       "close": 158.02000427246094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 28444
     },
     "2024-11-22": {
       "close": 146.6699981689453,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 26401
     },
     "2024-11-25": {
       "close": 141.89999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 25542
     },
     "2024-11-26": {
       "close": 135.61000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 24410
     },
     "2024-11-27": {
       "close": 140.0399932861328,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 25207
     },
     "2024-11-29": {
       "close": 140.69000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 25324
     },
     "2024-12-02": {
       "close": 141.63999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 25495
     },
     "2024-12-03": {
       "close": 149.8300018310547,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 26969
     },
     "2024-12-04": {
       "close": 154.22999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 27761
     },
     "2024-12-05": {
       "close": 153.08999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 27556
     },
     "2024-12-06": {
       "close": 162.75999450683594,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 29297
     },
     "2024-12-09": {
       "close": 167.1699981689453,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 30091
     },
     "2024-12-10": {
       "close": 155.92999267578125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 28067
     },
     "2024-12-11": {
       "close": 165.9199981689453,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 29866
     },
     "2024-12-12": {
       "close": 163.50999450683594,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 29432
     },
     "2024-12-13": {
       "close": 172.64999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 31077
     },
     "2024-12-16": {
       "close": 178.10000610351562,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 32058
     },
     "2024-12-17": {
       "close": 168.7899932861328,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 30382
     },
     "2024-12-18": {
       "close": 160.64999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 28917
     },
     "2024-12-19": {
       "close": 163.72000122070312,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 29470
     },
     "2024-12-20": {
       "close": 170.7100067138672,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 30728
     },
     "2024-12-23": {
       "close": 168.61000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 30350
     },
     "2024-12-24": {
       "close": 177.41000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 31934
     },
     "2024-12-26": {
       "close": 176.74000549316406,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 31813
     },
     "2024-12-27": {
       "close": 173.5399932861328,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 31237
     },
     "2024-12-30": {
       "close": 165.52999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": null,
-      "peRatio": null
+      "peRatio": null,
+      "sharesOutstanding": 180,
+      "marketCap": 29795
     },
     "2024-12-31": {
       "close": 163.44000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -49.08
+      "peRatio": -49.08,
+      "sharesOutstanding": 180,
+      "marketCap": 29419
     },
     "2025-01-02": {
       "close": 165.91000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -49.82
+      "peRatio": -49.82,
+      "sharesOutstanding": 180,
+      "marketCap": 29864
     },
     "2025-01-03": {
       "close": 177.74000549316406,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -53.38
+      "peRatio": -53.38,
+      "sharesOutstanding": 180,
+      "marketCap": 31993
     },
     "2025-01-06": {
       "close": 179.49000549316406,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -53.9
+      "peRatio": -53.9,
+      "sharesOutstanding": 180,
+      "marketCap": 32308
     },
     "2025-01-07": {
       "close": 172.32000732421875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -51.75
+      "peRatio": -51.75,
+      "sharesOutstanding": 180,
+      "marketCap": 31018
     },
     "2025-01-08": {
       "close": 172.00999450683594,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -51.65
+      "peRatio": -51.65,
+      "sharesOutstanding": 180,
+      "marketCap": 30962
     },
     "2025-01-10": {
       "close": 167.0800018310547,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -50.17
+      "peRatio": -50.17,
+      "sharesOutstanding": 180,
+      "marketCap": 30074
     },
     "2025-01-13": {
       "close": 164.64999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -49.44
+      "peRatio": -49.44,
+      "sharesOutstanding": 180,
+      "marketCap": 29637
     },
     "2025-01-14": {
       "close": 164.82000732421875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -49.5
+      "peRatio": -49.5,
+      "sharesOutstanding": 180,
+      "marketCap": 29668
     },
     "2025-01-15": {
       "close": 170.69000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -51.26
+      "peRatio": -51.26,
+      "sharesOutstanding": 180,
+      "marketCap": 30724
     },
     "2025-01-16": {
       "close": 174.8699951171875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -52.51
+      "peRatio": -52.51,
+      "sharesOutstanding": 180,
+      "marketCap": 31477
     },
     "2025-01-17": {
       "close": 175.3300018310547,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -52.65
+      "peRatio": -52.65,
+      "sharesOutstanding": 180,
+      "marketCap": 31559
     },
     "2025-01-21": {
       "close": 188.32000732421875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -56.55
+      "peRatio": -56.55,
+      "sharesOutstanding": 180,
+      "marketCap": 33898
     },
     "2025-01-22": {
       "close": 183.74000549316406,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -55.18
+      "peRatio": -55.18,
+      "sharesOutstanding": 180,
+      "marketCap": 33073
     },
     "2025-01-23": {
       "close": 181.99000549316406,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -54.65
+      "peRatio": -54.65,
+      "sharesOutstanding": 180,
+      "marketCap": 32758
     },
     "2025-01-24": {
       "close": 182.39999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -54.77
+      "peRatio": -54.77,
+      "sharesOutstanding": 180,
+      "marketCap": 32832
     },
     "2025-01-27": {
       "close": 180.8300018310547,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -54.3
+      "peRatio": -54.3,
+      "sharesOutstanding": 180,
+      "marketCap": 32549
     },
     "2025-01-28": {
       "close": 194.75,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -58.48
+      "peRatio": -58.48,
+      "sharesOutstanding": 180,
+      "marketCap": 35055
     },
     "2025-01-29": {
       "close": 202,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -60.66
+      "peRatio": -60.66,
+      "sharesOutstanding": 180,
+      "marketCap": 36360
     },
     "2025-01-30": {
       "close": 198.92999267578125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -59.74
+      "peRatio": -59.74,
+      "sharesOutstanding": 180,
+      "marketCap": 35807
     },
     "2025-01-31": {
       "close": 199.5500030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -59.92
+      "peRatio": -59.92,
+      "sharesOutstanding": 180,
+      "marketCap": 35919
     },
     "2025-02-03": {
       "close": 202.30999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -60.75
+      "peRatio": -60.75,
+      "sharesOutstanding": 180,
+      "marketCap": 36416
     },
     "2025-02-04": {
       "close": 215.30999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -64.66
+      "peRatio": -64.66,
+      "sharesOutstanding": 180,
+      "marketCap": 38756
     },
     "2025-02-05": {
       "close": 221.16000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -66.41
+      "peRatio": -66.41,
+      "sharesOutstanding": 180,
+      "marketCap": 39809
     },
     "2025-02-06": {
       "close": 216.50999450683594,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -65.02
+      "peRatio": -65.02,
+      "sharesOutstanding": 180,
+      "marketCap": 38972
     },
     "2025-02-07": {
       "close": 225.22999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -67.64
+      "peRatio": -67.64,
+      "sharesOutstanding": 180,
+      "marketCap": 40541
     },
     "2025-02-10": {
       "close": 224.92999267578125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -67.55
+      "peRatio": -67.55,
+      "sharesOutstanding": 180,
+      "marketCap": 40487
     },
     "2025-02-11": {
       "close": 213.75999450683594,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -64.19
+      "peRatio": -64.19,
+      "sharesOutstanding": 180,
+      "marketCap": 38477
     },
     "2025-02-12": {
       "close": 216.47000122070312,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -65.01
+      "peRatio": -65.01,
+      "sharesOutstanding": 180,
+      "marketCap": 38965
     },
     "2025-02-13": {
       "close": 204.9499969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -61.55
+      "peRatio": -61.55,
+      "sharesOutstanding": 180,
+      "marketCap": 36891
     },
     "2025-02-14": {
       "close": 196.3800048828125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -58.97
+      "peRatio": -58.97,
+      "sharesOutstanding": 180,
+      "marketCap": 35348
     },
     "2025-02-18": {
       "close": 187.1300048828125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -56.2
+      "peRatio": -56.2,
+      "sharesOutstanding": 180,
+      "marketCap": 33683
     },
     "2025-02-19": {
       "close": 189.66000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -56.95
+      "peRatio": -56.95,
+      "sharesOutstanding": 180,
+      "marketCap": 34139
     },
     "2025-02-20": {
       "close": 175.44000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -52.68
+      "peRatio": -52.68,
+      "sharesOutstanding": 180,
+      "marketCap": 31579
     },
     "2025-02-21": {
       "close": 166.39999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -49.97
+      "peRatio": -49.97,
+      "sharesOutstanding": 180,
+      "marketCap": 29952
     },
     "2025-02-24": {
       "close": 165.57000732421875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -49.72
+      "peRatio": -49.72,
+      "sharesOutstanding": 180,
+      "marketCap": 29803
     },
     "2025-02-25": {
       "close": 159.99000549316406,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -48.05
+      "peRatio": -48.05,
+      "sharesOutstanding": 180,
+      "marketCap": 28798
     },
     "2025-02-26": {
       "close": 168.10000610351562,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -50.48
+      "peRatio": -50.48,
+      "sharesOutstanding": 180,
+      "marketCap": 30258
     },
     "2025-02-27": {
       "close": 159.77999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -47.98
+      "peRatio": -47.98,
+      "sharesOutstanding": 180,
+      "marketCap": 28760
     },
     "2025-02-28": {
       "close": 161.77999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -48.58
+      "peRatio": -48.58,
+      "sharesOutstanding": 180,
+      "marketCap": 29120
     },
     "2025-03-03": {
       "close": 162.4499969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -48.78
+      "peRatio": -48.78,
+      "sharesOutstanding": 180,
+      "marketCap": 29241
     },
     "2025-03-04": {
       "close": 159.1699981689453,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -47.8
+      "peRatio": -47.8,
+      "sharesOutstanding": 180,
+      "marketCap": 28651
     },
     "2025-03-05": {
       "close": 168.52000427246094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -50.61
+      "peRatio": -50.61,
+      "sharesOutstanding": 180,
+      "marketCap": 30334
     },
     "2025-03-06": {
       "close": 150.72000122070312,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -45.26
+      "peRatio": -45.26,
+      "sharesOutstanding": 180,
+      "marketCap": 27130
     },
     "2025-03-07": {
       "close": 133.97999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -40.23
+      "peRatio": -40.23,
+      "sharesOutstanding": 180,
+      "marketCap": 24116
     },
     "2025-03-10": {
       "close": 107.29000091552734,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -32.22
+      "peRatio": -32.22,
+      "sharesOutstanding": 180,
+      "marketCap": 19312
     },
     "2025-03-11": {
       "close": 122.7300033569336,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -36.86
+      "peRatio": -36.86,
+      "sharesOutstanding": 180,
+      "marketCap": 22091
     },
     "2025-03-12": {
       "close": 130.67999267578125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -39.24
+      "peRatio": -39.24,
+      "sharesOutstanding": 180,
+      "marketCap": 23522
     },
     "2025-03-13": {
       "close": 121.52999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -36.5
+      "peRatio": -36.5,
+      "sharesOutstanding": 180,
+      "marketCap": 21875
     },
     "2025-03-14": {
       "close": 128.2100067138672,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -38.5
+      "peRatio": -38.5,
+      "sharesOutstanding": 180,
+      "marketCap": 23078
     },
     "2025-03-17": {
       "close": 125.55999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -37.71
+      "peRatio": -37.71,
+      "sharesOutstanding": 180,
+      "marketCap": 22601
     },
     "2025-03-18": {
       "close": 110.0999984741211,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -33.06
+      "peRatio": -33.06,
+      "sharesOutstanding": 180,
+      "marketCap": 19818
     },
     "2025-03-19": {
       "close": 109.91000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -33.01
+      "peRatio": -33.01,
+      "sharesOutstanding": 180,
+      "marketCap": 19784
     },
     "2025-03-20": {
       "close": 108.75,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -32.66
+      "peRatio": -32.66,
+      "sharesOutstanding": 180,
+      "marketCap": 19575
     },
     "2025-03-21": {
       "close": 115.69999694824219,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -34.74
+      "peRatio": -34.74,
+      "sharesOutstanding": 180,
+      "marketCap": 20826
     },
     "2025-03-24": {
       "close": 124.94000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -37.52
+      "peRatio": -37.52,
+      "sharesOutstanding": 180,
+      "marketCap": 22489
     },
     "2025-03-25": {
       "close": 125.43000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -37.67
+      "peRatio": -37.67,
+      "sharesOutstanding": 180,
+      "marketCap": 22577
     },
     "2025-03-26": {
       "close": 120.19999694824219,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -36.1
+      "peRatio": -36.1,
+      "sharesOutstanding": 180,
+      "marketCap": 21636
     },
     "2025-03-27": {
       "close": 110.2300033569336,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -33.1
+      "peRatio": -33.1,
+      "sharesOutstanding": 180,
+      "marketCap": 19841
     },
     "2025-03-28": {
       "close": 107.70999908447266,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": -3.33,
-      "peRatio": -32.35
+      "peRatio": -32.35,
+      "sharesOutstanding": 180,
+      "marketCap": 19388
     },
     "2025-03-31": {
       "close": 104.9000015258789,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 21.02
+      "peRatio": 21.02,
+      "sharesOutstanding": 180,
+      "marketCap": 18882
     },
     "2025-04-01": {
       "close": 110.05000305175781,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.05
+      "peRatio": 22.05,
+      "sharesOutstanding": 180,
+      "marketCap": 19809
     },
     "2025-04-02": {
       "close": 109.5,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 21.94
+      "peRatio": 21.94,
+      "sharesOutstanding": 180,
+      "marketCap": 19710
     },
     "2025-04-03": {
       "close": 96.9000015258789,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 19.42
+      "peRatio": 19.42,
+      "sharesOutstanding": 180,
+      "marketCap": 17442
     },
     "2025-04-04": {
       "close": 86.91000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 17.42
+      "peRatio": 17.42,
+      "sharesOutstanding": 180,
+      "marketCap": 15644
     },
     "2025-04-07": {
       "close": 93,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 18.64
+      "peRatio": 18.64,
+      "sharesOutstanding": 180,
+      "marketCap": 16740
     },
     "2025-04-08": {
       "close": 88.88999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 17.81
+      "peRatio": 17.81,
+      "sharesOutstanding": 180,
+      "marketCap": 16000
     },
     "2025-04-09": {
       "close": 110.86000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.22
+      "peRatio": 22.22,
+      "sharesOutstanding": 180,
+      "marketCap": 19955
     },
     "2025-04-10": {
       "close": 102.01000213623047,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 20.44
+      "peRatio": 20.44,
+      "sharesOutstanding": 180,
+      "marketCap": 18362
     },
     "2025-04-11": {
       "close": 101.1500015258789,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 20.27
+      "peRatio": 20.27,
+      "sharesOutstanding": 180,
+      "marketCap": 18207
     },
     "2025-04-14": {
       "close": 98.26000213623047,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 19.69
+      "peRatio": 19.69,
+      "sharesOutstanding": 180,
+      "marketCap": 17687
     },
     "2025-04-15": {
       "close": 96.45999908447266,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 19.33
+      "peRatio": 19.33,
+      "sharesOutstanding": 180,
+      "marketCap": 17363
     },
     "2025-04-16": {
       "close": 95.37999725341797,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 19.11
+      "peRatio": 19.11,
+      "sharesOutstanding": 180,
+      "marketCap": 17168
     },
     "2025-04-17": {
       "close": 96.16000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 19.27
+      "peRatio": 19.27,
+      "sharesOutstanding": 180,
+      "marketCap": 17309
     },
     "2025-04-21": {
       "close": 94.1500015258789,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 18.87
+      "peRatio": 18.87,
+      "sharesOutstanding": 180,
+      "marketCap": 16947
     },
     "2025-04-22": {
       "close": 101.66000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 20.37
+      "peRatio": 20.37,
+      "sharesOutstanding": 180,
+      "marketCap": 18299
     },
     "2025-04-23": {
       "close": 107.16999816894531,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 21.48
+      "peRatio": 21.48,
+      "sharesOutstanding": 180,
+      "marketCap": 19291
     },
     "2025-04-24": {
       "close": 112.25,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.49
+      "peRatio": 22.49,
+      "sharesOutstanding": 180,
+      "marketCap": 20205
     },
     "2025-04-25": {
       "close": 118.0999984741211,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 23.67
+      "peRatio": 23.67,
+      "sharesOutstanding": 180,
+      "marketCap": 21258
     },
     "2025-04-28": {
       "close": 121.20999908447266,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 24.29
+      "peRatio": 24.29,
+      "sharesOutstanding": 180,
+      "marketCap": 21818
     },
     "2025-04-29": {
       "close": 122.13999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 24.48
+      "peRatio": 24.48,
+      "sharesOutstanding": 180,
+      "marketCap": 21985
     },
     "2025-04-30": {
       "close": 116.56999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 23.36
+      "peRatio": 23.36,
+      "sharesOutstanding": 180,
+      "marketCap": 20983
     },
     "2025-05-01": {
       "close": 118.79000091552734,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 23.81
+      "peRatio": 23.81,
+      "sharesOutstanding": 180,
+      "marketCap": 21382
     },
     "2025-05-02": {
       "close": 113.83000183105469,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.81
+      "peRatio": 22.81,
+      "sharesOutstanding": 180,
+      "marketCap": 20489
     },
     "2025-05-05": {
       "close": 116.33000183105469,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 23.31
+      "peRatio": 23.31,
+      "sharesOutstanding": 180,
+      "marketCap": 20939
     },
     "2025-05-06": {
       "close": 109.98999786376953,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.04
+      "peRatio": 22.04,
+      "sharesOutstanding": 180,
+      "marketCap": 19798
     },
     "2025-05-07": {
       "close": 105.52999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 21.15
+      "peRatio": 21.15,
+      "sharesOutstanding": 180,
+      "marketCap": 18995
     },
     "2025-05-08": {
       "close": 107.83000183105469,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 21.61
+      "peRatio": 21.61,
+      "sharesOutstanding": 180,
+      "marketCap": 19409
     },
     "2025-05-09": {
       "close": 108.45999908447266,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 21.74
+      "peRatio": 21.74,
+      "sharesOutstanding": 180,
+      "marketCap": 19523
     },
     "2025-05-12": {
       "close": 111.20999908447266,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.29
+      "peRatio": 22.29,
+      "sharesOutstanding": 180,
+      "marketCap": 20018
     },
     "2025-05-13": {
       "close": 112.83999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.61
+      "peRatio": 22.61,
+      "sharesOutstanding": 180,
+      "marketCap": 20311
     },
     "2025-05-14": {
       "close": 125.31999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 25.11
+      "peRatio": 25.11,
+      "sharesOutstanding": 180,
+      "marketCap": 22558
     },
     "2025-05-15": {
       "close": 113.58999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.76
+      "peRatio": 22.76,
+      "sharesOutstanding": 180,
+      "marketCap": 20446
     },
     "2025-05-16": {
       "close": 113.2300033569336,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.69
+      "peRatio": 22.69,
+      "sharesOutstanding": 180,
+      "marketCap": 20381
     },
     "2025-05-19": {
       "close": 107.98999786376953,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 21.64
+      "peRatio": 21.64,
+      "sharesOutstanding": 180,
+      "marketCap": 19438
     },
     "2025-05-20": {
       "close": 105.63999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 21.17
+      "peRatio": 21.17,
+      "sharesOutstanding": 180,
+      "marketCap": 19015
     },
     "2025-05-21": {
       "close": 95.8499984741211,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 19.21
+      "peRatio": 19.21,
+      "sharesOutstanding": 180,
+      "marketCap": 17253
     },
     "2025-05-22": {
       "close": 98.31999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 19.7
+      "peRatio": 19.7,
+      "sharesOutstanding": 180,
+      "marketCap": 17698
     },
     "2025-05-23": {
       "close": 100.76000213623047,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 20.19
+      "peRatio": 20.19,
+      "sharesOutstanding": 180,
+      "marketCap": 18137
     },
     "2025-05-27": {
       "close": 104.62000274658203,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 20.97
+      "peRatio": 20.97,
+      "sharesOutstanding": 180,
+      "marketCap": 18832
     },
     "2025-05-28": {
       "close": 105.43000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 21.13
+      "peRatio": 21.13,
+      "sharesOutstanding": 180,
+      "marketCap": 18977
     },
     "2025-05-29": {
       "close": 109.02999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 21.85
+      "peRatio": 21.85,
+      "sharesOutstanding": 180,
+      "marketCap": 19625
     },
     "2025-05-30": {
       "close": 112.3499984741211,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.52
+      "peRatio": 22.52,
+      "sharesOutstanding": 180,
+      "marketCap": 20223
     },
     "2025-06-02": {
       "close": 112.11000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.47
+      "peRatio": 22.47,
+      "sharesOutstanding": 180,
+      "marketCap": 20180
     },
     "2025-06-03": {
       "close": 110.86000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.22
+      "peRatio": 22.22,
+      "sharesOutstanding": 180,
+      "marketCap": 19955
     },
     "2025-06-04": {
       "close": 118.20999908447266,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 23.69
+      "peRatio": 23.69,
+      "sharesOutstanding": 180,
+      "marketCap": 21278
     },
     "2025-06-05": {
       "close": 112.23999786376953,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 22.49
+      "peRatio": 22.49,
+      "sharesOutstanding": 180,
+      "marketCap": 20203
     },
     "2025-06-06": {
       "close": 121.29000091552734,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 24.31
+      "peRatio": 24.31,
+      "sharesOutstanding": 180,
+      "marketCap": 21832
     },
     "2025-06-09": {
       "close": 117.52999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 23.55
+      "peRatio": 23.55,
+      "sharesOutstanding": 180,
+      "marketCap": 21155
     },
     "2025-06-10": {
       "close": 117.08999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 23.46
+      "peRatio": 23.46,
+      "sharesOutstanding": 180,
+      "marketCap": 21076
     },
     "2025-06-11": {
       "close": 115.02999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 23.05
+      "peRatio": 23.05,
+      "sharesOutstanding": 180,
+      "marketCap": 20705
     },
     "2025-06-12": {
       "close": 116.19999694824219,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 23.29
+      "peRatio": 23.29,
+      "sharesOutstanding": 180,
+      "marketCap": 20916
     },
     "2025-06-13": {
       "close": 118.18000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 23.68
+      "peRatio": 23.68,
+      "sharesOutstanding": 180,
+      "marketCap": 21272
     },
     "2025-06-16": {
       "close": 126.19999694824219,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 25.29
+      "peRatio": 25.29,
+      "sharesOutstanding": 180,
+      "marketCap": 22716
     },
     "2025-06-17": {
       "close": 133.83999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 26.82
+      "peRatio": 26.82,
+      "sharesOutstanding": 180,
+      "marketCap": 24091
     },
     "2025-06-18": {
       "close": 141.16000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 28.29
+      "peRatio": 28.29,
+      "sharesOutstanding": 180,
+      "marketCap": 25409
     },
     "2025-06-20": {
       "close": 139.14999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 27.89
+      "peRatio": 27.89,
+      "sharesOutstanding": 180,
+      "marketCap": 25047
     },
     "2025-06-23": {
       "close": 134.13999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 26.88
+      "peRatio": 26.88,
+      "sharesOutstanding": 180,
+      "marketCap": 24145
     },
     "2025-06-24": {
       "close": 140.7899932861328,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 28.21
+      "peRatio": 28.21,
+      "sharesOutstanding": 180,
+      "marketCap": 25342
     },
     "2025-06-25": {
       "close": 141.67999267578125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 28.39
+      "peRatio": 28.39,
+      "sharesOutstanding": 180,
+      "marketCap": 25502
     },
     "2025-06-26": {
       "close": 143.9499969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 28.85
+      "peRatio": 28.85,
+      "sharesOutstanding": 180,
+      "marketCap": 25911
     },
     "2025-06-27": {
       "close": 143.00999450683594,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 4.99,
-      "peRatio": 28.66
+      "peRatio": 28.66,
+      "sharesOutstanding": 180,
+      "marketCap": 25742
     },
     "2025-06-30": {
       "close": 150.57000732421875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 27.38
+      "peRatio": 27.38,
+      "sharesOutstanding": 180,
+      "marketCap": 27103
     },
     "2025-07-01": {
       "close": 152.22999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 27.68
+      "peRatio": 27.68,
+      "sharesOutstanding": 180,
+      "marketCap": 27401
     },
     "2025-07-02": {
       "close": 159.33999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 28.97
+      "peRatio": 28.97,
+      "sharesOutstanding": 180,
+      "marketCap": 28681
     },
     "2025-07-03": {
       "close": 157.02999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 28.55
+      "peRatio": 28.55,
+      "sharesOutstanding": 180,
+      "marketCap": 28265
     },
     "2025-07-07": {
       "close": 153.3699951171875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 27.89
+      "peRatio": 27.89,
+      "sharesOutstanding": 180,
+      "marketCap": 27607
     },
     "2025-07-08": {
       "close": 145.9600067138672,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.54
+      "peRatio": 26.54,
+      "sharesOutstanding": 180,
+      "marketCap": 26273
     },
     "2025-07-09": {
       "close": 145.64999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.48
+      "peRatio": 26.48,
+      "sharesOutstanding": 180,
+      "marketCap": 26217
     },
     "2025-07-10": {
       "close": 143,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26
+      "peRatio": 26,
+      "sharesOutstanding": 180,
+      "marketCap": 25740
     },
     "2025-07-11": {
       "close": 145.58999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.47
+      "peRatio": 26.47,
+      "sharesOutstanding": 180,
+      "marketCap": 26206
     },
     "2025-07-14": {
       "close": 146.3800048828125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.61
+      "peRatio": 26.61,
+      "sharesOutstanding": 180,
+      "marketCap": 26348
     },
     "2025-07-15": {
       "close": 144.8000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.33
+      "peRatio": 26.33,
+      "sharesOutstanding": 180,
+      "marketCap": 26064
     },
     "2025-07-16": {
       "close": 144.30999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.24
+      "peRatio": 26.24,
+      "sharesOutstanding": 180,
+      "marketCap": 25976
     },
     "2025-07-17": {
       "close": 142.52000427246094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 25.91
+      "peRatio": 25.91,
+      "sharesOutstanding": 180,
+      "marketCap": 25654
     },
     "2025-07-18": {
       "close": 148.24000549316406,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.95
+      "peRatio": 26.95,
+      "sharesOutstanding": 180,
+      "marketCap": 26683
     },
     "2025-07-21": {
       "close": 146.2899932861328,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.6
+      "peRatio": 26.6,
+      "sharesOutstanding": 180,
+      "marketCap": 26332
     },
     "2025-07-22": {
       "close": 145.8000030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.51
+      "peRatio": 26.51,
+      "sharesOutstanding": 180,
+      "marketCap": 26244
     },
     "2025-07-23": {
       "close": 146.10000610351562,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.56
+      "peRatio": 26.56,
+      "sharesOutstanding": 180,
+      "marketCap": 26298
     },
     "2025-07-24": {
       "close": 148.1300048828125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.93
+      "peRatio": 26.93,
+      "sharesOutstanding": 180,
+      "marketCap": 26663
     },
     "2025-07-25": {
       "close": 149.66000366210938,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 27.21
+      "peRatio": 27.21,
+      "sharesOutstanding": 180,
+      "marketCap": 26939
     },
     "2025-07-28": {
       "close": 151.60000610351562,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 27.56
+      "peRatio": 27.56,
+      "sharesOutstanding": 180,
+      "marketCap": 27288
     },
     "2025-07-29": {
       "close": 144.85000610351562,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 26.34
+      "peRatio": 26.34,
+      "sharesOutstanding": 180,
+      "marketCap": 26073
     },
     "2025-07-30": {
       "close": 149.3300018310547,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 27.15
+      "peRatio": 27.15,
+      "sharesOutstanding": 180,
+      "marketCap": 26879
     },
     "2025-07-31": {
       "close": 160.58999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 29.2
+      "peRatio": 29.2,
+      "sharesOutstanding": 180,
+      "marketCap": 28906
     },
     "2025-08-01": {
       "close": 188.63999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 34.3
+      "peRatio": 34.3,
+      "sharesOutstanding": 180,
+      "marketCap": 33955
     },
     "2025-08-04": {
       "close": 201.75999450683594,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 36.68
+      "peRatio": 36.68,
+      "sharesOutstanding": 180,
+      "marketCap": 36317
     },
     "2025-08-05": {
       "close": 199.08999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 36.2
+      "peRatio": 36.2,
+      "sharesOutstanding": 180,
+      "marketCap": 35836
     },
     "2025-08-06": {
       "close": 212.80999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 38.69
+      "peRatio": 38.69,
+      "sharesOutstanding": 180,
+      "marketCap": 38306
     },
     "2025-08-07": {
       "close": 211.82000732421875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 38.51
+      "peRatio": 38.51,
+      "sharesOutstanding": 180,
+      "marketCap": 38128
     },
     "2025-08-08": {
       "close": 215.44000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 39.17
+      "peRatio": 39.17,
+      "sharesOutstanding": 180,
+      "marketCap": 38779
     },
     "2025-08-11": {
       "close": 220.75,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 40.14
+      "peRatio": 40.14,
+      "sharesOutstanding": 180,
+      "marketCap": 39735
     },
     "2025-08-12": {
       "close": 224.02000427246094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 40.73
+      "peRatio": 40.73,
+      "sharesOutstanding": 180,
+      "marketCap": 40324
     },
     "2025-08-13": {
       "close": 234.77000427246094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 42.69
+      "peRatio": 42.69,
+      "sharesOutstanding": 180,
+      "marketCap": 42259
     },
     "2025-08-14": {
       "close": 243.47000122070312,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 44.27
+      "peRatio": 44.27,
+      "sharesOutstanding": 180,
+      "marketCap": 43825
     },
     "2025-08-15": {
       "close": 246.5,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 44.82
+      "peRatio": 44.82,
+      "sharesOutstanding": 180,
+      "marketCap": 44370
     },
     "2025-08-18": {
       "close": 241.75999450683594,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 43.96
+      "peRatio": 43.96,
+      "sharesOutstanding": 180,
+      "marketCap": 43517
     },
     "2025-08-19": {
       "close": 228.17999267578125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 41.49
+      "peRatio": 41.49,
+      "sharesOutstanding": 180,
+      "marketCap": 41072
     },
     "2025-08-20": {
       "close": 218.3699951171875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 39.7
+      "peRatio": 39.7,
+      "sharesOutstanding": 180,
+      "marketCap": 39307
     },
     "2025-08-21": {
       "close": 218.64999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 39.75
+      "peRatio": 39.75,
+      "sharesOutstanding": 180,
+      "marketCap": 39357
     },
     "2025-08-22": {
       "close": 217.30999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 39.51
+      "peRatio": 39.51,
+      "sharesOutstanding": 180,
+      "marketCap": 39116
     },
     "2025-08-25": {
       "close": 219.72999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 39.95
+      "peRatio": 39.95,
+      "sharesOutstanding": 180,
+      "marketCap": 39551
     },
     "2025-08-26": {
       "close": 219.42999267578125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 39.9
+      "peRatio": 39.9,
+      "sharesOutstanding": 180,
+      "marketCap": 39497
     },
     "2025-08-27": {
       "close": 211.10000610351562,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 38.38
+      "peRatio": 38.38,
+      "sharesOutstanding": 180,
+      "marketCap": 37998
     },
     "2025-08-28": {
       "close": 225.5399932861328,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 41.01
+      "peRatio": 41.01,
+      "sharesOutstanding": 180,
+      "marketCap": 40597
     },
     "2025-08-29": {
       "close": 225.0800018310547,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 40.92
+      "peRatio": 40.92,
+      "sharesOutstanding": 180,
+      "marketCap": 40514
     },
     "2025-09-02": {
       "close": 220.05999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 40.01
+      "peRatio": 40.01,
+      "sharesOutstanding": 180,
+      "marketCap": 39611
     },
     "2025-09-03": {
       "close": 223.13999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 40.57
+      "peRatio": 40.57,
+      "sharesOutstanding": 180,
+      "marketCap": 40165
     },
     "2025-09-04": {
       "close": 232.11000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 42.2
+      "peRatio": 42.2,
+      "sharesOutstanding": 180,
+      "marketCap": 41780
     },
     "2025-09-05": {
       "close": 240,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 43.64
+      "peRatio": 43.64,
+      "sharesOutstanding": 180,
+      "marketCap": 43200
     },
     "2025-09-08": {
       "close": 229.97999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 41.81
+      "peRatio": 41.81,
+      "sharesOutstanding": 180,
+      "marketCap": 41396
     },
     "2025-09-09": {
       "close": 240.1999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 43.67
+      "peRatio": 43.67,
+      "sharesOutstanding": 180,
+      "marketCap": 43236
     },
     "2025-09-10": {
       "close": 259.0299987792969,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 47.1
+      "peRatio": 47.1,
+      "sharesOutstanding": 180,
+      "marketCap": 46625
     },
     "2025-09-11": {
       "close": 260.5400085449219,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 47.37
+      "peRatio": 47.37,
+      "sharesOutstanding": 180,
+      "marketCap": 46897
     },
     "2025-09-12": {
       "close": 254.2899932861328,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 46.23
+      "peRatio": 46.23,
+      "sharesOutstanding": 180,
+      "marketCap": 45772
     },
     "2025-09-15": {
       "close": 263.6400146484375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 47.93
+      "peRatio": 47.93,
+      "sharesOutstanding": 180,
+      "marketCap": 47455
     },
     "2025-09-16": {
       "close": 266.6600036621094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 48.48
+      "peRatio": 48.48,
+      "sharesOutstanding": 180,
+      "marketCap": 47999
     },
     "2025-09-17": {
       "close": 266.4700012207031,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 48.45
+      "peRatio": 48.45,
+      "sharesOutstanding": 180,
+      "marketCap": 47965
     },
     "2025-09-18": {
       "close": 270.7099914550781,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 49.22
+      "peRatio": 49.22,
+      "sharesOutstanding": 180,
+      "marketCap": 48728
     },
     "2025-09-19": {
       "close": 264.4800109863281,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 48.09
+      "peRatio": 48.09,
+      "sharesOutstanding": 180,
+      "marketCap": 47606
     },
     "2025-09-22": {
       "close": 257.55999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 46.83
+      "peRatio": 46.83,
+      "sharesOutstanding": 180,
+      "marketCap": 46361
     },
     "2025-09-23": {
       "close": 237.4499969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 43.17
+      "peRatio": 43.17,
+      "sharesOutstanding": 180,
+      "marketCap": 42741
     },
     "2025-09-24": {
       "close": 235.69000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 42.85
+      "peRatio": 42.85,
+      "sharesOutstanding": 180,
+      "marketCap": 42424
     },
     "2025-09-25": {
       "close": 232.75,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 42.32
+      "peRatio": 42.32,
+      "sharesOutstanding": 180,
+      "marketCap": 41895
     },
     "2025-09-26": {
       "close": 240.11000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 43.66
+      "peRatio": 43.66,
+      "sharesOutstanding": 180,
+      "marketCap": 43220
     },
     "2025-09-29": {
       "close": 241.97999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 5.5,
-      "peRatio": 44
+      "peRatio": 44,
+      "sharesOutstanding": 180,
+      "marketCap": 43556
     },
     "2025-09-30": {
       "close": 229.99000549316406,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 37.46
+      "peRatio": 37.46,
+      "sharesOutstanding": 180,
+      "marketCap": 41398
     },
     "2025-10-01": {
       "close": 202.60000610351562,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33
+      "peRatio": 33,
+      "sharesOutstanding": 180,
+      "marketCap": 36468
     },
     "2025-10-02": {
       "close": 200.9199981689453,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 32.72
+      "peRatio": 32.72,
+      "sharesOutstanding": 180,
+      "marketCap": 36166
     },
     "2025-10-03": {
       "close": 207.1999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33.75
+      "peRatio": 33.75,
+      "sharesOutstanding": 180,
+      "marketCap": 37296
     },
     "2025-10-06": {
       "close": 203.6300048828125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33.16
+      "peRatio": 33.16,
+      "sharesOutstanding": 180,
+      "marketCap": 36653
     },
     "2025-10-07": {
       "close": 205.9199981689453,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33.54
+      "peRatio": 33.54,
+      "sharesOutstanding": 180,
+      "marketCap": 37066
     },
     "2025-10-08": {
       "close": 202.2899932861328,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 32.95
+      "peRatio": 32.95,
+      "sharesOutstanding": 180,
+      "marketCap": 36412
     },
     "2025-10-09": {
       "close": 211.6999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 34.48
+      "peRatio": 34.48,
+      "sharesOutstanding": 180,
+      "marketCap": 38106
     },
     "2025-10-10": {
       "close": 198.5500030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 32.34
+      "peRatio": 32.34,
+      "sharesOutstanding": 180,
+      "marketCap": 35739
     },
     "2025-10-13": {
       "close": 203.67999267578125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33.17
+      "peRatio": 33.17,
+      "sharesOutstanding": 180,
+      "marketCap": 36662
     },
     "2025-10-14": {
       "close": 196.35000610351562,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 31.98
+      "peRatio": 31.98,
+      "sharesOutstanding": 180,
+      "marketCap": 35343
     },
     "2025-10-15": {
       "close": 200.75999450683594,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 32.7
+      "peRatio": 32.7,
+      "sharesOutstanding": 180,
+      "marketCap": 36137
     },
     "2025-10-16": {
       "close": 198.97000122070312,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 32.41
+      "peRatio": 32.41,
+      "sharesOutstanding": 180,
+      "marketCap": 35815
     },
     "2025-10-17": {
       "close": 194.9499969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 31.75
+      "peRatio": 31.75,
+      "sharesOutstanding": 180,
+      "marketCap": 35091
     },
     "2025-10-20": {
       "close": 202.47999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 32.98
+      "peRatio": 32.98,
+      "sharesOutstanding": 180,
+      "marketCap": 36446
     },
     "2025-10-21": {
       "close": 205.7100067138672,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33.5
+      "peRatio": 33.5,
+      "sharesOutstanding": 180,
+      "marketCap": 37028
     },
     "2025-10-22": {
       "close": 197.0500030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 32.09
+      "peRatio": 32.09,
+      "sharesOutstanding": 180,
+      "marketCap": 35469
     },
     "2025-10-23": {
       "close": 200.82000732421875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 32.71
+      "peRatio": 32.71,
+      "sharesOutstanding": 180,
+      "marketCap": 36148
     },
     "2025-10-24": {
       "close": 214.1999969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 34.89
+      "peRatio": 34.89,
+      "sharesOutstanding": 180,
+      "marketCap": 38556
     },
     "2025-10-27": {
       "close": 219.24000549316406,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 35.71
+      "peRatio": 35.71,
+      "sharesOutstanding": 180,
+      "marketCap": 39463
     },
     "2025-10-28": {
       "close": 212.97000122070312,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 34.69
+      "peRatio": 34.69,
+      "sharesOutstanding": 180,
+      "marketCap": 38335
     },
     "2025-10-29": {
       "close": 210.77000427246094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 34.33
+      "peRatio": 34.33,
+      "sharesOutstanding": 180,
+      "marketCap": 37939
     },
     "2025-10-30": {
       "close": 194.4199981689453,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 31.66
+      "peRatio": 31.66,
+      "sharesOutstanding": 180,
+      "marketCap": 34996
     },
     "2025-10-31": {
       "close": 208.9499969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 34.03
+      "peRatio": 34.03,
+      "sharesOutstanding": 180,
+      "marketCap": 37611
     },
     "2025-11-03": {
       "close": 204.97999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33.38
+      "peRatio": 33.38,
+      "sharesOutstanding": 180,
+      "marketCap": 36896
     },
     "2025-11-04": {
       "close": 187.77000427246094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 30.58
+      "peRatio": 30.58,
+      "sharesOutstanding": 180,
+      "marketCap": 33799
     },
     "2025-11-05": {
       "close": 196.27000427246094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 31.97
+      "peRatio": 31.97,
+      "sharesOutstanding": 180,
+      "marketCap": 35329
     },
     "2025-11-06": {
       "close": 183.63999938964844,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 29.91
+      "peRatio": 29.91,
+      "sharesOutstanding": 180,
+      "marketCap": 33055
     },
     "2025-11-07": {
       "close": 194.5800018310547,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 31.69
+      "peRatio": 31.69,
+      "sharesOutstanding": 180,
+      "marketCap": 35024
     },
     "2025-11-10": {
       "close": 204.19000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33.26
+      "peRatio": 33.26,
+      "sharesOutstanding": 180,
+      "marketCap": 36754
     },
     "2025-11-11": {
       "close": 208.2100067138672,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33.91
+      "peRatio": 33.91,
+      "sharesOutstanding": 180,
+      "marketCap": 37478
     },
     "2025-11-12": {
       "close": 202.82000732421875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33.03
+      "peRatio": 33.03,
+      "sharesOutstanding": 180,
+      "marketCap": 36508
     },
     "2025-11-13": {
       "close": 189.4199981689453,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 30.85
+      "peRatio": 30.85,
+      "sharesOutstanding": 180,
+      "marketCap": 34096
     },
     "2025-11-14": {
       "close": 193.30999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 31.48
+      "peRatio": 31.48,
+      "sharesOutstanding": 180,
+      "marketCap": 34796
     },
     "2025-11-17": {
       "close": 187.5500030517578,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 30.55
+      "peRatio": 30.55,
+      "sharesOutstanding": 180,
+      "marketCap": 33759
     },
     "2025-11-18": {
       "close": 185.69000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 30.24
+      "peRatio": 30.24,
+      "sharesOutstanding": 180,
+      "marketCap": 33424
     },
     "2025-11-19": {
       "close": 187.77999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 30.58
+      "peRatio": 30.58,
+      "sharesOutstanding": 180,
+      "marketCap": 33800
     },
     "2025-11-20": {
       "close": 181.8800048828125,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 29.62
+      "peRatio": 29.62,
+      "sharesOutstanding": 180,
+      "marketCap": 32738
     },
     "2025-11-21": {
       "close": 183.47999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 29.88
+      "peRatio": 29.88,
+      "sharesOutstanding": 180,
+      "marketCap": 33026
     },
     "2025-11-24": {
       "close": 195,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 31.76
+      "peRatio": 31.76,
+      "sharesOutstanding": 180,
+      "marketCap": 35100
     },
     "2025-11-25": {
       "close": 218.47999572753906,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 35.58
+      "peRatio": 35.58,
+      "sharesOutstanding": 180,
+      "marketCap": 39326
     },
     "2025-11-26": {
       "close": 207.55999755859375,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 33.8
+      "peRatio": 33.8,
+      "sharesOutstanding": 180,
+      "marketCap": 37361
     },
     "2025-11-28": {
       "close": 216.47000122070312,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 35.26
+      "peRatio": 35.26,
+      "sharesOutstanding": 180,
+      "marketCap": 38965
     },
     "2025-12-01": {
       "close": 223.39999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 36.38
+      "peRatio": 36.38,
+      "sharesOutstanding": 180,
+      "marketCap": 40212
     },
     "2025-12-02": {
       "close": 222.75999450683594,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 36.28
+      "peRatio": 36.28,
+      "sharesOutstanding": 180,
+      "marketCap": 40097
     },
     "2025-12-03": {
       "close": 220.83999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 35.97
+      "peRatio": 35.97,
+      "sharesOutstanding": 180,
+      "marketCap": 39751
     },
     "2025-12-04": {
       "close": 222.75,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 36.28
+      "peRatio": 36.28,
+      "sharesOutstanding": 180,
+      "marketCap": 40095
     },
     "2025-12-05": {
       "close": 234.11000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 38.13
+      "peRatio": 38.13,
+      "sharesOutstanding": 180,
+      "marketCap": 42140
     },
     "2025-12-08": {
       "close": 236.9499969482422,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 38.59
+      "peRatio": 38.59,
+      "sharesOutstanding": 180,
+      "marketCap": 42651
     },
     "2025-12-09": {
       "close": 236.11000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 38.45
+      "peRatio": 38.45,
+      "sharesOutstanding": 180,
+      "marketCap": 42500
     },
     "2025-12-10": {
       "close": 238.11000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 38.78
+      "peRatio": 38.78,
+      "sharesOutstanding": 180,
+      "marketCap": 42860
     },
     "2025-12-11": {
       "close": 233.5399932861328,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 38.04
+      "peRatio": 38.04,
+      "sharesOutstanding": 180,
+      "marketCap": 42037
     },
     "2025-12-12": {
       "close": 224.77999877929688,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 36.61
+      "peRatio": 36.61,
+      "sharesOutstanding": 180,
+      "marketCap": 40460
     },
     "2025-12-15": {
       "close": 218.5,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 35.59
+      "peRatio": 35.59,
+      "sharesOutstanding": 180,
+      "marketCap": 39330
     },
     "2025-12-16": {
       "close": 224,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 36.48
+      "peRatio": 36.48,
+      "sharesOutstanding": 180,
+      "marketCap": 40320
     },
     "2025-12-17": {
       "close": 227.33999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 37.03
+      "peRatio": 37.03,
+      "sharesOutstanding": 180,
+      "marketCap": 40921
     },
     "2025-12-18": {
       "close": 231.33999633789062,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 37.68
+      "peRatio": 37.68,
+      "sharesOutstanding": 180,
+      "marketCap": 41641
     },
     "2025-12-19": {
       "close": 233.19000244140625,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 37.98
+      "peRatio": 37.98,
+      "sharesOutstanding": 180,
+      "marketCap": 41974
     },
     "2025-12-22": {
       "close": 233.14999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 37.97
+      "peRatio": 37.97,
+      "sharesOutstanding": 180,
+      "marketCap": 41967
     },
     "2025-12-23": {
       "close": 225.82000732421875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 36.78
+      "peRatio": 36.78,
+      "sharesOutstanding": 180,
+      "marketCap": 40648
     },
     "2025-12-24": {
       "close": 225.85000610351562,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 36.78
+      "peRatio": 36.78,
+      "sharesOutstanding": 180,
+      "marketCap": 40653
     },
     "2025-12-26": {
       "close": 225.77000427246094,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 36.77
+      "peRatio": 36.77,
+      "sharesOutstanding": 180,
+      "marketCap": 40639
     },
     "2025-12-29": {
       "close": 234.64999389648438,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 38.22
+      "peRatio": 38.22,
+      "sharesOutstanding": 180,
+      "marketCap": 42237
     },
     "2025-12-30": {
       "close": 233.36000061035156,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 6.14,
-      "peRatio": 38.01
+      "peRatio": 38.01,
+      "sharesOutstanding": 180,
+      "marketCap": 42005
     },
     "2025-12-31": {
       "close": 229.8699951171875,
       "isPayoutDate": false,
       "dividendPerShare": 0,
       "ttmEps": 2.62,
-      "peRatio": 87.74
+      "peRatio": 87.74,
+      "sharesOutstanding": 180,
+      "marketCap": 41377
     }
   }
 }

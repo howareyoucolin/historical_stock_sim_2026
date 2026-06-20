@@ -6,6 +6,10 @@ import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME, normalizeStockCode, pathExists,
 export const EPS_FILE_NAME = 'eps.json'
 export const DATA_FILE_NAME = 'data.json'
 
+// Central config mapping each ticker to its (approximate, current) shares outstanding in millions,
+// used to derive market cap. Repo-relative so it resolves per build run.
+export const SHARES_CONFIG_RELATIVE_PATH = 'config/shares-outstanding.json'
+
 type NullableNumber = number | null
 
 interface HistoryEntry {
@@ -32,6 +36,10 @@ interface EpsFile {
 export interface DataEntry extends HistoryEntry {
     ttmEps: NullableNumber
     peRatio: NullableNumber
+    // Shares outstanding in millions (constant per ticker from config) and the derived market cap in
+    // USD millions (close * sharesOutstanding). Both null when shares are unknown or the day is unpriced.
+    sharesOutstanding: NullableNumber
+    marketCap: NullableNumber
 }
 
 export interface BuiltDataPayload {
@@ -65,6 +73,12 @@ const FIELD_DESCRIPTIONS: Record<string, string> = {
     dividendPerShare: 'Dividend per share paid on this date',
     ttmEps: 'Most recent reported trailing-twelve-month Net EPS as of this date (forward-filled from quarterly reports)',
     peRatio: 'Derived price-to-earnings ratio: close / ttmEps (null when either input is unavailable)',
+    sharesOutstanding: 'Approximate current shares outstanding in millions (constant per ticker, from config/shares-outstanding.json)',
+    marketCap: 'Derived market capitalization in USD millions: close * sharesOutstanding (null when either is unavailable)',
+}
+
+interface SharesConfigFile {
+    sharesOutstanding?: Record<string, number>
 }
 
 // Round a derived ratio to two decimals so the output file stays readable.
@@ -97,9 +111,23 @@ export function derivePeRatio(close: NullableNumber, ttmEps: NullableNumber): Nu
     return roundToTwoDecimals(close / ttmEps)
 }
 
-// Merge the daily price history with the quarterly EPS series, enriching each
-// day with its trailing EPS and derived PE ratio.
-export function buildHistoryByDate(historyByDate: Record<string, HistoryEntry>, epsByDate: Record<string, number>): Record<string, DataEntry> {
+// Derive market cap (USD millions) from a close price and shares outstanding (millions); undefined
+// without a price or a known share count. Rounded to whole millions to keep the file readable.
+export function deriveMarketCap(close: NullableNumber, sharesOutstanding: NullableNumber): NullableNumber {
+    if (close === null || sharesOutstanding === null) {
+        return null
+    }
+
+    return Math.round(close * sharesOutstanding)
+}
+
+// Merge the daily price history with the quarterly EPS series, enriching each day with its trailing
+// EPS, derived PE ratio, the (constant) shares outstanding, and the derived market cap.
+export function buildHistoryByDate(
+    historyByDate: Record<string, HistoryEntry>,
+    epsByDate: Record<string, number>,
+    sharesOutstanding: NullableNumber = null
+): Record<string, DataEntry> {
     const merged: Record<string, DataEntry> = {}
 
     for (const day of Object.keys(historyByDate).sort()) {
@@ -112,6 +140,8 @@ export function buildHistoryByDate(historyByDate: Record<string, HistoryEntry>, 
             dividendPerShare: entry.dividendPerShare,
             ttmEps,
             peRatio: derivePeRatio(entry.close, ttmEps),
+            sharesOutstanding,
+            marketCap: deriveMarketCap(entry.close, sharesOutstanding),
         }
     }
 
@@ -119,8 +149,8 @@ export function buildHistoryByDate(historyByDate: Record<string, HistoryEntry>, 
 }
 
 // Build the persisted JSON payload for the combined per-stock data file.
-export function buildDataPayload(stockCode: string, history: HistoryFile, eps: EpsFile): BuiltDataPayload {
-    const historyByDate = buildHistoryByDate(history.historyByDate, eps.epsByDate)
+export function buildDataPayload(stockCode: string, history: HistoryFile, eps: EpsFile, sharesOutstanding: NullableNumber = null): BuiltDataPayload {
+    const historyByDate = buildHistoryByDate(history.historyByDate, eps.epsByDate, sharesOutstanding)
     const days = Object.keys(historyByDate).sort()
 
     if (days.length === 0) {
@@ -156,6 +186,18 @@ async function readSourceJson<T>(readFile: (path: string, encoding: BufferEncodi
     }
 }
 
+// Read the per-ticker shares-outstanding config, returning an empty map when it is missing or
+// malformed so the build still succeeds (those tickers just get a null market cap).
+async function readSharesConfig(cwd: () => string, readFile: NonNullable<BuildStockDataActionDependencies['readFile']>): Promise<Record<string, number>> {
+    try {
+        const parsed = JSON.parse(await readFile(path.join(cwd(), SHARES_CONFIG_RELATIVE_PATH), 'utf8')) as SharesConfigFile
+
+        return parsed.sharesOutstanding ?? {}
+    } catch {
+        return {}
+    }
+}
+
 // Create the reusable build action so the CLI and UI can share the merge logic.
 export function createBuildStockDataAction({
     cwd = process.cwd,
@@ -185,7 +227,10 @@ export function createBuildStockDataAction({
         const history = await readSourceJson<HistoryFile>(readFile, historyPath, 'price history')
         const eps = await readSourceJson<EpsFile>(readFile, epsPath, 'EPS')
 
-        const payload = buildDataPayload(normalizedStockCode, history, eps)
+        const sharesByTicker = await readSharesConfig(cwd, readFile)
+        const sharesOutstanding = sharesByTicker[normalizedStockCode] ?? null
+
+        const payload = buildDataPayload(normalizedStockCode, history, eps, sharesOutstanding)
 
         await makeDirectory(stockDirectory, { recursive: true })
         await writeFile(outputPath, `${JSON.stringify(payload, null, 2)}\n`, 'utf8')

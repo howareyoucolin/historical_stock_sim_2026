@@ -6,6 +6,7 @@ import {
     buildDataPayload,
     buildHistoryByDate,
     createBuildStockDataAction,
+    deriveMarketCap,
     derivePeRatio,
     findTrailingEps,
 } from './build-data'
@@ -37,14 +38,22 @@ function testDerivePeRatio(): void {
     assert.equal(derivePeRatio(8.4, 0), null)
 }
 
-// Verify each daily row is enriched with trailing EPS and a derived PE ratio.
+// Verify market cap is close * shares (millions), and null when either input is missing.
+function testDeriveMarketCap(): void {
+    assert.equal(deriveMarketCap(8.4, 1000), 8400)
+    assert.equal(deriveMarketCap(null, 1000), null)
+    assert.equal(deriveMarketCap(8.4, null), null)
+}
+
+// Verify each daily row is enriched with trailing EPS, a derived PE ratio, shares, and market cap.
 function testBuildHistoryByDate(): void {
     const merged = buildHistoryByDate(
         {
             '2010-04-01': { close: 8.4, isPayoutDate: false, dividendPerShare: 0 },
             '2009-06-30': { close: 3.7, isPayoutDate: false, dividendPerShare: 0 },
         },
-        EPS_BY_DATE
+        EPS_BY_DATE,
+        1000
     )
 
     assert.deepEqual(merged['2010-04-01'], {
@@ -53,14 +62,18 @@ function testBuildHistoryByDate(): void {
         dividendPerShare: 0,
         ttmEps: 0.42,
         peRatio: 20,
+        sharesOutstanding: 1000,
+        marketCap: 8400,
     })
-    // Day before the first reported quarter carries null EPS and PE.
+    // Day before the first reported quarter carries null EPS and PE, but still has a market cap.
     assert.deepEqual(merged['2009-06-30'], {
         close: 3.7,
         isPayoutDate: false,
         dividendPerShare: 0,
         ttmEps: null,
         peRatio: null,
+        sharesOutstanding: 1000,
+        marketCap: 3700,
     })
 }
 
@@ -128,7 +141,8 @@ async function testBuildStockDataAction(): Promise<void> {
     assert.equal(result.rowCount, 1)
     assert.equal(result.outputPath, `${DATA_DIRECTORY_NAME}/AAPL/${DATA_FILE_NAME}`)
     assert.equal(captured.writePath, `/repo/${DATA_DIRECTORY_NAME}/AAPL/${DATA_FILE_NAME}`)
-    assert.deepEqual(parsed.historyByDate['2010-04-01'], { close: 8.4, isPayoutDate: false, dividendPerShare: 0, ttmEps: 0.42, peRatio: 20 })
+    // No shares config is reachable in this test, so shares/market cap come back null.
+    assert.deepEqual(parsed.historyByDate['2010-04-01'], { close: 8.4, isPayoutDate: false, dividendPerShare: 0, ttmEps: 0.42, peRatio: 20, sharesOutstanding: null, marketCap: null })
     assert.ok(reads.some((p) => p.endsWith(HISTORY_FILE_NAME)))
     assert.ok(reads.some((p) => p.endsWith(EPS_FILE_NAME)))
 }
@@ -176,6 +190,7 @@ export async function runBuildDataActionTests(): Promise<void> {
     testFindTrailingEps()
     testFindTrailingEpsBeforeFirstQuarter()
     testDerivePeRatio()
+    testDeriveMarketCap()
     testBuildHistoryByDate()
     testBuildDataPayload()
     await testBuildStockDataAction()

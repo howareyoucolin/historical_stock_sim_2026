@@ -29,6 +29,23 @@ function formatNumber(value: number | null): string {
     return value === null || value === undefined ? '-' : value.toFixed(2)
 }
 
+// Render a market cap (given in USD millions) with a magnitude suffix, e.g. 2311050 -> "2.31T".
+export function formatMarketCap(millions: number | null | undefined): string {
+    if (millions === null || millions === undefined) {
+        return '-'
+    }
+
+    if (millions >= 1_000_000) {
+        return `${(millions / 1_000_000).toFixed(2)}T`
+    }
+
+    if (millions >= 1_000) {
+        return `${(millions / 1_000).toFixed(1)}B`
+    }
+
+    return `${millions.toFixed(0)}M`
+}
+
 // Describe the day's move against the prior trading close as an absolute and percent change.
 function formatChange(close: number | null, previousClose: number | null): string {
     if (close === null || previousClose === null) {
@@ -61,6 +78,7 @@ export function formatStockStatus({ stockCode, simDate, asOfDate, row, previousC
         `${stockCode} status on ${simDate}${asOfNote}:`,
         `  close:    ${formatNumber(row.close)}`,
         `  change:   ${formatChange(row.close, previousClose)}`,
+        `  market_cap: ${formatMarketCap(row.marketCap)}`,
         `  pe_ratio: ${formatNumber(row.peRatio)}`,
         `  ttm_eps:  ${formatNumber(row.ttmEps)}`,
         `  dividend: ${formatDividend(row)}`,

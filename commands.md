@@ -58,8 +58,12 @@ These can appear anywhere in a command:
 - **Value log** `user-sessions/values.log` — daily total portfolio value, the
   source for `values show`.
 - **Market data** in `market-data/<CODE>/`: `history.json` (raw closes used to
-  price trades) and `data.json` (close + dividends + TTM EPS + P/E, used by
-  `stock status`/`history`/`price`/`compare`/`screen`).
+  price trades) and `data.json` (close + dividends + TTM EPS + P/E + shares
+  outstanding + market cap, used by
+  `stock status`/`history`/`price`/`compare`/`screen`). Market cap is
+  `close × sharesOutstanding` (shares from `config/shares-outstanding.json`, an
+  approximate current figure per ticker) and is reported in USD millions; ETFs
+  have no market cap.
 - **Pricing rule:** trades execute at the close on the simulated `date`. If that
   date is not a trading day for the stock, the command fails; advance with
   `date next` to land on one.
@@ -108,7 +112,7 @@ Success output: `<qty> stocks of <CODE> successfully bought.` / `...sold.`
 | `stock status <code>` | Fuller snapshot: close, day change, P/E, TTM EPS, dividend, as of the sim date (falls back to the most recent prior trading day). |
 | `stock history <code>` | Daily series from the start of the stock's data through the sim date. |
 | `stock compare <code> [<code>...]` | Side-by-side table of several stocks' sim-date figures. |
-| `stock screen [filters]` | Screen all stocks. Filters: `--max-pe=`, `--min-pe=`, `--max-price=`, `--min-price=`, `--dividends` (payers only), `--limit=`. |
+| `stock screen [filters]` | Screen all stocks. Filters: `--max-pe=`, `--min-pe=`, `--max-price=`, `--min-price=`, `--min-cap=`/`--max-cap=` (market cap in **billions**), `--dividends` (payers only), `--limit=`. |
 | `stock download <code>` | Download price history into `market-data/<code>/history.json`. |
 | `stock scrape-eps <code>` | Scrape TTM Net EPS into `eps.json`. |
 | `stock build <code>` | Combine `history.json` + `eps.json` into `data.json`. |

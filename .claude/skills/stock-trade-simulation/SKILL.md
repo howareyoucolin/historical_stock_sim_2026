@@ -73,7 +73,11 @@ When the user asks to start a new simulation:
   `stock price`, `stock history`, `stock compare`, `stock screen`) and account
   commands (`account show`, `values show`, `history show`) — all with `--json`.
 - **Decide from what you observed.** Base each trade on the figures you just read
-  (price, P/E, trend, the strategy's rules) — never on outside knowledge.
+  (price, P/E, trend, market cap, the strategy's rules) — never on outside
+  knowledge. Market cap (shown by `stock status`/`compare`/`screen`, filterable
+  with `--min-cap`/`--max-cap`) tells you company size: weigh it for risk,
+  liquidity, and remaining growth runway (a mega-cap and a small-cap can share a
+  price and P/E yet be very different bets).
 - **Act** with `account buy` / `account sell` (`--amount=`, `max`, `all`,
   `--percent=` as the strategy calls for; preview risky moves with `--dry-run`).
   Trades only work on a trading day, so always be on one first.

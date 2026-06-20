@@ -13,6 +13,8 @@ interface DataFileEntry {
     dividendPerShare: number
     ttmEps: NullableNumber
     peRatio: NullableNumber
+    sharesOutstanding?: NullableNumber
+    marketCap?: NullableNumber
 }
 
 interface StockDataFile {
@@ -26,6 +28,8 @@ export interface StockHistoryRow {
     peRatio: NullableNumber
     dividendPerShare: number
     isPayoutDate: boolean
+    sharesOutstanding?: NullableNumber
+    marketCap?: NullableNumber
 }
 
 export interface StockHistoryDependencies extends AccountSessionDependencies {

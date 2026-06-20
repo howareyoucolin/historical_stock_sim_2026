@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } f
 
 import './style.css'
 import { useAppSelector } from '../../../../../store/hooks'
-import { money, signedMoney, signedPercent, tone } from '../../../../shared/format'
+import { marketCap, money, signedMoney, signedPercent, tone } from '../../../../shared/format'
 import type { StockPricePoint } from '../../../../../actions/stock/analysis'
 
 // Chart paddings mirror the Summary graph so both views read consistently; padLeft fits a price label.
@@ -229,6 +229,10 @@ export function StockChart() {
                 <div className="stockChartStat">
                     <dt>Previous close</dt>
                     <dd>{stat(analysis.previousClose)}</dd>
+                </div>
+                <div className="stockChartStat">
+                    <dt>Market cap</dt>
+                    <dd>{marketCap(analysis.marketCap)}</dd>
                 </div>
                 <div className="stockChartStat">
                     <dt>P/E ratio</dt>

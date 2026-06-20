@@ -2,7 +2,7 @@ import { buildStockDataAction } from '../../app/actions/stock/build-data'
 import { downloadStockDataAction } from '../../app/actions/stock/download-data'
 import { buildStockHistory, formatStockHistory } from '../../app/actions/stock/history'
 import { buildStockList, formatStockList } from '../../app/actions/stock/list'
-import { buildStockStatus, formatStockStatus, type StockStatus } from '../../app/actions/stock/status'
+import { buildStockStatus, formatStockStatus, formatMarketCap, type StockStatus } from '../../app/actions/stock/status'
 import { scrapeEpsAction } from '../../app/actions/stock/scrape-eps'
 import { seedWatchlistAction, type StepOutcome, type SeedWatchlistSummary } from '../../app/actions/stock/seed-watchlist'
 import type { CommandResult } from '../command-types'
@@ -55,7 +55,7 @@ export const STOCK_HELP_LINES = [
     '  stock price <code>       Show just the close and day change for the account date',
     '  stock list               List every available stock code',
     '  stock compare <codes...> Compare several stocks side by side on the account date',
-    '  stock screen [filters]   Screen all stocks (--max-pe, --min-pe, --max-price, --dividends, --limit)',
+    '  stock screen [filters]   Screen all stocks (--max-pe, --min-pe, --max-price, --min-price, --min-cap, --max-cap (billions), --dividends, --limit)',
     '  stock seed               Run download, scrape-eps, and build for every watchlist ticker',
 ]
 
@@ -70,6 +70,7 @@ interface ComparisonRow {
     asOfDate: string | null
     close: number | null
     changePercent: number | null
+    marketCap: number | null
     peRatio: number | null
     ttmEps: number | null
     isPayoutDate: boolean
@@ -85,6 +86,7 @@ function toComparisonRow(status: StockStatus): ComparisonRow {
         asOfDate: status.asOfDate,
         close,
         changePercent,
+        marketCap: status.row?.marketCap ?? null,
         peRatio: status.row?.peRatio ?? null,
         ttmEps: status.row?.ttmEps ?? null,
         isPayoutDate: status.row?.isPayoutDate ?? false,
@@ -93,11 +95,12 @@ function toComparisonRow(status: StockStatus): ComparisonRow {
 
 // Render comparison rows as an aligned plain-text table.
 function formatComparisonTable(rows: ComparisonRow[]): string {
-    const header = ['stock', 'close', 'change%', 'pe_ratio', 'ttm_eps', 'dividend']
+    const header = ['stock', 'close', 'change%', 'market_cap', 'pe_ratio', 'ttm_eps', 'dividend']
     const dataRows = rows.map((row) => [
         row.stockCode,
         formatNumber(row.close),
         row.changePercent === null ? '-' : `${row.changePercent >= 0 ? '+' : ''}${row.changePercent.toFixed(2)}%`,
+        formatMarketCap(row.marketCap),
         formatNumber(row.peRatio),
         formatNumber(row.ttmEps),
         row.isPayoutDate ? 'payout' : '-',
@@ -298,7 +301,7 @@ export function createStockCommandHandler({
 
     // Run `stock screen [filters]` over every available stock, keeping those that pass the filters.
     async function runScreen(args: string[]): Promise<CommandResult> {
-        const filters: { maxPe?: number; minPe?: number; maxPrice?: number; minPrice?: number; dividends?: boolean; limit?: number } = {}
+        const filters: { maxPe?: number; minPe?: number; maxPrice?: number; minPrice?: number; minCap?: number; maxCap?: number; dividends?: boolean; limit?: number } = {}
 
         for (const arg of args) {
             if (arg === '--dividends') {
@@ -311,6 +314,11 @@ export function createStockCommandHandler({
                 filters.maxPrice = Number(arg.slice('--max-price='.length))
             } else if (arg.startsWith('--min-price=')) {
                 filters.minPrice = Number(arg.slice('--min-price='.length))
+            } else if (arg.startsWith('--min-cap=')) {
+                // Cap filters are given in billions of dollars; data stores market cap in USD millions.
+                filters.minCap = Number(arg.slice('--min-cap='.length)) * 1_000
+            } else if (arg.startsWith('--max-cap=')) {
+                filters.maxCap = Number(arg.slice('--max-cap='.length)) * 1_000
             } else if (arg.startsWith('--limit=')) {
                 filters.limit = Number(arg.slice('--limit='.length))
             } else {
@@ -339,6 +347,13 @@ export function createStockCommandHandler({
                     return false
                 }
                 if (filters.minPrice !== undefined && row.close < filters.minPrice) {
+                    return false
+                }
+                // Cap filters only keep stocks that actually have a market cap (excludes ETFs).
+                if (filters.minCap !== undefined && (row.marketCap === null || row.marketCap < filters.minCap)) {
+                    return false
+                }
+                if (filters.maxCap !== undefined && (row.marketCap === null || row.marketCap > filters.maxCap)) {
                     return false
                 }
                 if (filters.dividends && !row.isPayoutDate) {
