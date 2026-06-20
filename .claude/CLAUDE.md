@@ -19,3 +19,6 @@ Read only the files relevant to the current task:
   git commit.
 - `skills/stock-trade-simulation/SKILL.md`: workflow for running an automated
   stock trade simulation through the CLI (see also `commands.md`).
+- `skills/update-market-data/SKILL.md`: workflow for refreshing the per-stock
+  market data (re-download history, re-scrape EPS, rebuild data files) and
+  extending the data date range (see also `commands.md`).
