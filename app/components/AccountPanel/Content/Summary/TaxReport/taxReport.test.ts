@@ -36,14 +36,23 @@ function testBuildsPerYearGains(): void {
     assert.equal(y2017.dividendGain, 60)
 }
 
-// Verify the estimated tax taxes positive categories at their rate and gives no credit for losses.
+// Verify per-category tax: positive categories taxed at their rate, loss categories owe nothing,
+// and the total is the sum of the category taxes.
 function testEstimatedTax(): void {
     const report = buildTaxReport(HISTORY)
     const [y2016, y2017] = report.years
 
-    // 2016: short-term net loss => no capital-gains tax; only the $50 dividend is taxed.
+    // 2016: short-term net loss => no short-term tax; only the $50 dividend is taxed.
+    assert.equal(y2016.shortTermTax, 0)
+    assert.equal(y2016.longTermTax, 0)
+    assert.equal(y2016.dividendTax, 50 * TAX_RATES.dividend)
+    assert.equal(y2016.interestTax, 0)
+    assert.equal(y2016.estimatedTax, y2016.longTermTax + y2016.shortTermTax + y2016.dividendTax + y2016.interestTax)
     assert.equal(y2016.estimatedTax, 50 * TAX_RATES.dividend)
-    // 2017: $800 long-term gain + $60 dividend.
+
+    // 2017: $800 long-term gain + $60 dividend, each taxed at its category rate.
+    assert.equal(y2017.longTermTax, 800 * TAX_RATES.longTerm)
+    assert.equal(y2017.dividendTax, 60 * TAX_RATES.dividend)
     assert.equal(y2017.estimatedTax, 800 * TAX_RATES.longTerm + 60 * TAX_RATES.dividend)
 }
 
@@ -56,6 +65,10 @@ function testTotalsRow(): void {
     assert.equal(total.longTermGain, 800)
     assert.equal(total.shortTermGain, -200)
     assert.equal(total.dividendGain, 110)
+    // Per-category taxes also roll up, and the total tax is their sum across years.
+    assert.equal(total.longTermTax, report.years[1].longTermTax)
+    assert.equal(total.dividendTax, report.years[0].dividendTax + report.years[1].dividendTax)
+    assert.equal(total.estimatedTax, total.longTermTax + total.shortTermTax + total.dividendTax + total.interestTax)
     assert.equal(total.estimatedTax, report.years[0].estimatedTax + report.years[1].estimatedTax)
 }
 

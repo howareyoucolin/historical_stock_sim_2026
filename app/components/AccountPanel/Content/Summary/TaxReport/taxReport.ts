@@ -20,6 +20,12 @@ export interface YearTaxRow {
     shortTermGain: number
     dividendGain: number
     interestGain: number
+    // Estimated tax owed per category, plus their sum. Each is the category's positive gain times its
+    // assumed rate; a category that nets to a loss owes 0.
+    longTermTax: number
+    shortTermTax: number
+    dividendTax: number
+    interestTax: number
     estimatedTax: number
 }
 
@@ -94,18 +100,29 @@ function buildBuyPriceIndex(events: ParsedEvent[]): Map<string, number> {
 
 // Create a zeroed row for a given year (or the total label).
 function emptyRow(year: string): YearTaxRow {
-    return { year, longTermGain: 0, shortTermGain: 0, dividendGain: 0, interestGain: 0, estimatedTax: 0 }
+    return {
+        year,
+        longTermGain: 0,
+        shortTermGain: 0,
+        dividendGain: 0,
+        interestGain: 0,
+        longTermTax: 0,
+        shortTermTax: 0,
+        dividendTax: 0,
+        interestTax: 0,
+        estimatedTax: 0,
+    }
 }
 
-// Estimate tax for a year. Each positive category is taxed at its assumed rate; categories that net to
-// a loss contribute no tax (losses are not turned into a credit here), keeping the estimate conservative.
-function estimateTax(row: YearTaxRow): number {
-    return (
-        Math.max(0, row.longTermGain) * TAX_RATES.longTerm +
-        Math.max(0, row.shortTermGain) * TAX_RATES.shortTerm +
-        Math.max(0, row.dividendGain) * TAX_RATES.dividend +
-        Math.max(0, row.interestGain) * TAX_RATES.interest
-    )
+// Fill in a year's per-category estimated tax and their total. Each positive category is taxed at its
+// assumed rate; a category that nets to a loss owes nothing (losses are not credited here), keeping
+// the estimate conservative.
+function applyEstimatedTaxes(row: YearTaxRow): void {
+    row.longTermTax = Math.max(0, row.longTermGain) * TAX_RATES.longTerm
+    row.shortTermTax = Math.max(0, row.shortTermGain) * TAX_RATES.shortTerm
+    row.dividendTax = Math.max(0, row.dividendGain) * TAX_RATES.dividend
+    row.interestTax = Math.max(0, row.interestGain) * TAX_RATES.interest
+    row.estimatedTax = row.longTermTax + row.shortTermTax + row.dividendTax + row.interestTax
 }
 
 // Build the per-year realized-gain and estimated-tax report from raw history log lines.
@@ -165,11 +182,15 @@ export function buildTaxReport(entries: string[]): TaxReport {
     const total = emptyRow('Total')
 
     for (const row of years) {
-        row.estimatedTax = estimateTax(row)
+        applyEstimatedTaxes(row)
         total.longTermGain += row.longTermGain
         total.shortTermGain += row.shortTermGain
         total.dividendGain += row.dividendGain
         total.interestGain += row.interestGain
+        total.longTermTax += row.longTermTax
+        total.shortTermTax += row.shortTermTax
+        total.dividendTax += row.dividendTax
+        total.interestTax += row.interestTax
         total.estimatedTax += row.estimatedTax
     }
 

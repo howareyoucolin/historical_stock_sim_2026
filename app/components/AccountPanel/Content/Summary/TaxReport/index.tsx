@@ -7,8 +7,9 @@ import { money, signedMoney, tone } from '../../../../shared/format'
 import { loadHistory } from '../../Histories/actions'
 import { buildTaxReport, TAX_RATES, type YearTaxRow } from './taxReport'
 
-// Render one table row of realized gains and estimated tax. Gains are tone-colored; tax is always
-// a non-negative cost, so it is shown plainly.
+// Render one table row: realized gain/loss per category (tone-colored), then the estimated tax owed
+// per category (a non-negative cost), then the total estimated tax. A divider class marks where the
+// tax group begins so the two halves stay visually distinct in the wide table.
 function TaxRow({ row, isTotal }: { row: YearTaxRow; isTotal?: boolean }) {
     return (
         <tr className={isTotal ? 'taxTotalRow' : ''}>
@@ -17,6 +18,10 @@ function TaxRow({ row, isTotal }: { row: YearTaxRow; isTotal?: boolean }) {
             <td className={`taxNum ${tone(row.shortTermGain)}`}>{signedMoney(row.shortTermGain)}</td>
             <td className={`taxNum ${tone(row.dividendGain)}`}>{signedMoney(row.dividendGain)}</td>
             <td className={`taxNum ${tone(row.interestGain)}`}>{signedMoney(row.interestGain)}</td>
+            <td className="taxNum taxGroupStart">{money(row.longTermTax)}</td>
+            <td className="taxNum">{money(row.shortTermTax)}</td>
+            <td className="taxNum">{money(row.dividendTax)}</td>
+            <td className="taxNum">{money(row.interestTax)}</td>
             <td className="taxNum taxOwed">{money(row.estimatedTax)}</td>
         </tr>
     )
@@ -48,19 +53,29 @@ export function TaxReport() {
             </header>
 
             {report.years.length === 0 ? (
-                <div className="taxReportEmpty">No realized gains yet. Sells and dividends show up here once they happen.</div>
+                <div className="taxReportEmpty">No taxable activity yet. Sells, dividends, and interest show up here once they happen.</div>
             ) : (
                 <>
                     <div className="taxTableWrap">
                         <table className="taxTable">
                             <thead>
+                                {/* Two-tier header: group labels span the gain and tax halves; the row below
+                                    names each category so "gain"/"tax" need not repeat in every cell. */}
                                 <tr>
-                                    <th className="taxYear">Year</th>
-                                    <th>Long-term gain</th>
-                                    <th>Short-term gain</th>
-                                    <th>Dividend gain</th>
-                                    <th>Interest gain</th>
-                                    <th>Estimated tax</th>
+                                    <th className="taxYear" rowSpan={2}>Year</th>
+                                    <th className="groupHead" colSpan={4}>Realized Gain / Loss</th>
+                                    <th className="groupHead taxGroupStart" colSpan={5}>Estimated Tax</th>
+                                </tr>
+                                <tr>
+                                    <th>Long-term</th>
+                                    <th>Short-term</th>
+                                    <th>Dividend</th>
+                                    <th>Interest</th>
+                                    <th className="taxGroupStart">Long-term</th>
+                                    <th>Short-term</th>
+                                    <th>Dividend</th>
+                                    <th>Interest</th>
+                                    <th>Total</th>
                                 </tr>
                             </thead>
                             <tbody>

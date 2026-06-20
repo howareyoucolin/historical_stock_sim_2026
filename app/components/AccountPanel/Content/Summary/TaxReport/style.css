@@ -59,28 +59,38 @@
     background: rgba(243, 230, 218, 0.6);
 }
 
+/* Group labels (Realized Gain / Loss, Estimated Tax) are centered over their column span. */
+.taxTable .groupHead {
+    text-align: center;
+}
+
 .taxTable .taxYear {
     text-align: left;
     font-weight: 600;
+}
+
+/* Divider separating the gain half from the tax half, applied to both header and body cells. */
+.taxTable .taxGroupStart {
+    border-left: 1px solid var(--border-strong);
 }
 
 .taxNum {
     color: #2b2320;
 }
 
-/* Tax owed reads as a cost; keep it neutral but distinct from the gain columns. */
-.taxNum.taxOwed {
-    font-weight: 600;
-    color: var(--accent-strong);
-}
-
-/* Tone classes win over the default numeric color for gain/loss columns. */
+/* Tone classes win over the default numeric color for the gain/loss columns. */
 .taxTable td.taxNum.pos {
     color: var(--pos);
 }
 
 .taxTable td.taxNum.neg {
     color: var(--neg);
+}
+
+/* The total tax owed is emphasized to stand apart from the per-category tax columns. */
+.taxNum.taxOwed {
+    font-weight: 600;
+    color: var(--accent-strong);
 }
 
 .taxTotalRow td {
