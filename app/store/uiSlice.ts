@@ -8,6 +8,11 @@ export interface CalendarPosition {
 // The content-area tabs shown above the main column.
 export type ContentTab = 'summary' | 'positions' | 'histories' | 'analysis'
 
+// Lifecycle of the background refresh poll, surfaced as a subtle status line in the sidebar.
+// 'polling' = waiting for the next tick, 'updating' = a refresh is in flight, 'updated'/'nochange'
+// reflect whether that refresh changed anything, and 'paused' = auto-stopped after a long idle stretch.
+export type PollStatus = 'polling' | 'updating' | 'updated' | 'nochange' | 'paused'
+
 interface UiSliceState {
     isSidebarCollapsed: boolean
     isResetModalOpen: boolean
@@ -15,6 +20,9 @@ interface UiSliceState {
     isCalendarOpen: boolean
     calendarPosition: CalendarPosition | null
     activeTab: ContentTab
+    pollStatus: PollStatus
+    // Control flag for the polling loop: when true the interval is torn down until the user resumes.
+    pollPaused: boolean
 }
 
 const initialState: UiSliceState = {
@@ -25,6 +33,9 @@ const initialState: UiSliceState = {
     calendarPosition: null,
     // Default to Positions so real holdings show on load rather than a placeholder tab.
     activeTab: 'positions',
+    // Idle/waiting until the first refresh tick fires.
+    pollStatus: 'polling',
+    pollPaused: false,
 }
 
 // Track purely presentational toggles (sidebar, modals, calendar popover) so any component can read
@@ -58,6 +69,12 @@ const uiSlice = createSlice({
         setActiveTab(state, action: PayloadAction<ContentTab>) {
             state.activeTab = action.payload
         },
+        setPollStatus(state, action: PayloadAction<PollStatus>) {
+            state.pollStatus = action.payload
+        },
+        setPollPaused(state, action: PayloadAction<boolean>) {
+            state.pollPaused = action.payload
+        },
     },
 })
 
@@ -70,5 +87,7 @@ export const {
     openCalendar,
     closeCalendar,
     setActiveTab,
+    setPollStatus,
+    setPollPaused,
 } = uiSlice.actions
 export default uiSlice.reducer

@@ -61,6 +61,16 @@
     font-weight: 700;
 }
 
+/* Bottom row: reset control on the left, refresh status on the right. margin-top:auto pins it to the
+   bottom of the sidebar body regardless of content height. */
+.sidebarFooter {
+    margin-top: auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
 .status {
     margin: 0;
     font-size: 0.82rem;

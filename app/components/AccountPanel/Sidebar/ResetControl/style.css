@@ -1,11 +1,9 @@
-/* Small, low-emphasis reset pinned to the bottom-left so it is hard to hit by accident. */
+/* Small, low-emphasis reset (positioned bottom-left by the sidebar footer) so it is hard to hit by accident. */
 .resetButton {
     font: inherit;
     font-weight: 500;
     border-radius: 8px;
     cursor: pointer;
-    margin-top: auto;
-    align-self: flex-start;
     padding: 5px 12px;
     font-size: 0.76rem;
     background: transparent;
