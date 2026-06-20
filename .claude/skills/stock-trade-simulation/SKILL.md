@@ -90,6 +90,32 @@ When the user asks to start a new simulation:
   overrode it). Track the last month you contributed so you deposit exactly once
   per month.
 
+### Factor in tax and cash interest
+
+These two real costs/returns affect after-tax results, so weigh them when you
+decide — don't optimize on gross price moves alone:
+
+- **Tax on realized gains.** Selling a position realizes a taxable gain or loss,
+  classified by holding period: a lot held **one year or less is short-term**
+  (taxed at the higher ordinary rate), and **more than a year is long-term**
+  (taxed lower). Dividends and cash interest are taxable too. So churn has a tax
+  cost: rapid in-and-out trading piles up short-term gains and drags returns.
+  Where the strategy allows, prefer letting a winner cross its **one-year mark**
+  for long-term treatment, and avoid needless turnover. Realized losses offset
+  gains, so harvesting a loser can be tax-efficient. The Summary tab shows
+  per-year realized gains and estimated tax by category, mirroring what the run
+  produces.
+- **Interest on parked cash.** Uninvested cash earns money-market (SPAXX)
+  interest, accrued daily and paid on the first trading day of each month, then
+  compounding. So idle cash is not dead weight — it carries a small positive
+  yield (more meaningful in higher-rate years). Factor this in when choosing
+  between holding cash and deploying: staying partly in cash has a real, if
+  modest, return, and that interest is itself taxable.
+
+Keep these as inputs to the decision, not overrides of the user's strategy — if a
+trade follows the strategy, tax/interest considerations refine *how* and *when*
+you act (sizing, timing around the one-year mark), not *whether* to follow it.
+
 ### Pace it like a real investor
 
 Do **not** jump ahead with `date set` during the run — landing on a chosen future
@@ -142,6 +168,8 @@ from data you observed.
 - Never read source code or data files to inform decisions (CLI only).
 - Never use post-date / real-world knowledge; keep decisions traceable to observed data.
 - Maximize gain *within* the strategy's rules — don't override the strategy.
+- Account for tax (short- vs long-term gains, dividends, interest) and the
+  interest earned on parked cash when deciding — optimize after-tax, not gross.
 - Always run on the default session; never reset the data at the end.
 - Ask for and confirm the strategy before the first trade; the end date
   defaults to `2026-01-01` unless the user specifies one.
