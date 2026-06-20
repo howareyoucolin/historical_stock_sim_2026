@@ -13,6 +13,7 @@ import { runSetDateToTomorrowActionTests } from './actions/date/set-to-tomorrow.
 import { runDownloadDataActionTests } from './actions/stock/download-data.test'
 import { runBuildDataActionTests } from './actions/stock/build-data.test'
 import { runStockHistoryActionTests } from './actions/stock/history.test'
+import { runStockInfoActionTests } from './actions/stock/info.test'
 import { runStockStatusActionTests } from './actions/stock/status.test'
 import { runStockListActionTests } from './actions/stock/list.test'
 import { runStockAnalysisActionTests } from './actions/stock/analysis.test'
@@ -38,6 +39,7 @@ const TEST_SUITES: TestSuite[] = [
     { label: 'Download stock data action tests', run: runDownloadDataActionTests },
     { label: 'Build stock data action tests', run: runBuildDataActionTests },
     { label: 'Stock history action tests', run: runStockHistoryActionTests },
+    { label: 'Stock info action tests', run: runStockInfoActionTests },
     { label: 'Stock status action tests', run: runStockStatusActionTests },
     { label: 'Stock list action tests', run: runStockListActionTests },
     { label: 'Stock analysis action tests', run: runStockAnalysisActionTests },

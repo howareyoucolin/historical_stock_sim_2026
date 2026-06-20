@@ -3,11 +3,17 @@ import path from 'node:path'
 
 import { DATA_FILE_NAME } from './build-data'
 import { DATA_DIRECTORY_NAME, pathExists } from './download-data'
+import { buildStockInfo } from './info'
 
 export interface StockListDependencies {
     cwd?: () => string
     readDirectory?: (path: string) => Promise<string[]>
     fileExists?: (path: string) => Promise<boolean>
+}
+
+export interface StockListEntry {
+    code: string
+    segment: string
 }
 
 // Number of stock codes shown per row in the listing grid.
@@ -39,6 +45,13 @@ export async function buildStockList({
     const availability = await Promise.all(entries.map((entry) => fileExists(path.join(marketDataPath, entry, DATA_FILE_NAME))))
 
     return entries.filter((_entry, index) => availability[index]).sort()
+}
+
+// Resolve every available stock code plus its curated segment so the UI can filter long lists.
+export async function buildStockListEntries(dependencies: StockListDependencies = {}): Promise<StockListEntry[]> {
+    const codes = await buildStockList(dependencies)
+
+    return Promise.all(codes.map(async (code) => ({ code, segment: (await buildStockInfo(code)).segment })))
 }
 
 // Lay the stock codes out in a left-aligned grid so a long list stays scannable in the terminal.

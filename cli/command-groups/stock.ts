@@ -1,6 +1,7 @@
 import { buildStockDataAction } from '../../app/actions/stock/build-data'
 import { downloadStockDataAction } from '../../app/actions/stock/download-data'
 import { buildStockHistory, formatStockHistory } from '../../app/actions/stock/history'
+import { buildStockInfo, formatStockInfo } from '../../app/actions/stock/info'
 import { buildStockList, formatStockList } from '../../app/actions/stock/list'
 import { buildStockStatus, formatStockStatus, formatMarketCap, type StockStatus } from '../../app/actions/stock/status'
 import { scrapeEpsAction } from '../../app/actions/stock/scrape-eps'
@@ -14,6 +15,7 @@ export interface StockCommandDependencies {
     scrapeEps?: typeof scrapeEpsAction
     seedWatchlist?: typeof seedWatchlistAction
     fetchStockHistory?: typeof buildStockHistory
+    fetchStockInfo?: typeof buildStockInfo
     fetchStockStatus?: typeof buildStockStatus
     fetchStockList?: typeof buildStockList
 }
@@ -51,6 +53,7 @@ export const STOCK_HELP_LINES = [
     '  stock scrape-eps <code>  Scrape TTM Net EPS from Macrotrends into eps.json',
     '  stock build <code>       Combine downloaded history and EPS into data.json',
     '  stock history <code>     Show data.json from its start through the account date',
+    '  stock info <code>        Show the stock profile, segment, and simulation notes',
     '  stock status <code>      Show the stock data for the account simulation date',
     '  stock price <code>       Show just the close and day change for the account date',
     '  stock list               List every available stock code',
@@ -118,6 +121,7 @@ export function createStockCommandHandler({
     scrapeEps = scrapeEpsAction,
     seedWatchlist = seedWatchlistAction,
     fetchStockHistory = buildStockHistory,
+    fetchStockInfo = buildStockInfo,
     fetchStockStatus = buildStockStatus,
     fetchStockList = buildStockList,
 }: StockCommandDependencies = {}) {
@@ -210,6 +214,23 @@ export function createStockCommandHandler({
             const message = error instanceof Error ? error.message : String(error)
 
             return { output: `History failed: ${message}`, shouldExit: false, exitCode: 1 }
+        }
+    }
+
+    // Run `stock info <code>` and print the stock's curated profile and simulation segment.
+    async function runInfo(args: string[]): Promise<CommandResult> {
+        if (args.length !== 1) {
+            return { output: 'Usage: stock info <code>', shouldExit: false, exitCode: 1 }
+        }
+
+        try {
+            const stockInfo = await fetchStockInfo(args[0])
+
+            return { output: formatStockInfo(stockInfo), data: stockInfo, shouldExit: false, exitCode: 0 }
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error)
+
+            return { output: `Info failed: ${message}`, shouldExit: false, exitCode: 1 }
         }
     }
 
@@ -415,6 +436,8 @@ export function createStockCommandHandler({
                 return runBuild(args.slice(1))
             case 'history':
                 return runHistory(args.slice(1))
+            case 'info':
+                return runInfo(args.slice(1))
             case 'status':
                 return runStatus(args.slice(1))
             case 'price':
@@ -426,7 +449,7 @@ export function createStockCommandHandler({
             case 'screen':
                 return runScreen(args.slice(1))
             default:
-                return { output: 'Usage: stock <download <code>|scrape-eps <code>|build <code>|history <code>|status <code>|price <code>|list|compare <codes...>|screen [filters]|seed>', shouldExit: false, exitCode: 1 }
+                return { output: 'Usage: stock <download <code>|scrape-eps <code>|build <code>|history <code>|info <code>|status <code>|price <code>|list|compare <codes...>|screen [filters]|seed>', shouldExit: false, exitCode: 1 }
         }
     }
 }

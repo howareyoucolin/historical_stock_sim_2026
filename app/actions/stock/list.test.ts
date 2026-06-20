@@ -3,7 +3,7 @@ import path from 'node:path'
 
 import { DATA_FILE_NAME } from './build-data'
 import { DATA_DIRECTORY_NAME } from './download-data'
-import { buildStockList, showStockList } from './list'
+import { buildStockList, buildStockListEntries, showStockList } from './list'
 
 // Build a deps object whose readers report a fixed set of entries and which of them carry data.json.
 function createDependencies(entries: string[], built: string[]) {
@@ -64,10 +64,22 @@ async function testShowStockListEmpty(): Promise<void> {
     assert.equal(output, 'No stocks available. Run `stock seed` to download the watchlist.')
 }
 
+// Verify list entries include the stock code and a curated fallback-safe segment for filtering.
+async function testBuildStockListEntries(): Promise<void> {
+    const entries = await buildStockListEntries(createDependencies(['MSFT', 'AAPL', 'TSLA'], ['AAPL', 'MSFT', 'TSLA']))
+
+    assert.deepEqual(
+        entries.map((entry) => entry.code),
+        ['AAPL', 'MSFT', 'TSLA'],
+    )
+    assert.equal(entries[0].segment, 'Consumer Technology')
+}
+
 // Run the focused action tests that protect the stock listing logic.
 export async function runStockListActionTests(): Promise<void> {
     await testBuildStockListKeepsBuiltOnly()
     await testBuildStockListMissingDirectory()
+    await testBuildStockListEntries()
     await testShowStockList()
     await testShowStockListEmpty()
 }

@@ -30,6 +30,22 @@
     color: var(--muted);
 }
 
+.stockChartCompanyName {
+    margin: 0 0 4px;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.stockChartMeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    margin-bottom: 8px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--muted);
+}
+
 .stockChartPrice {
     font-size: 1.7rem;
     font-weight: 700;
@@ -67,6 +83,26 @@
     margin-bottom: 12px;
     border-bottom: 1px solid var(--border);
     padding-bottom: 8px;
+}
+
+.stockChartProfile {
+    margin-bottom: 12px;
+    padding: 12px 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface) 70%, var(--surface-soft) 30%);
+}
+
+.stockChartSummary,
+.stockChartDataNote {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.45;
+}
+
+.stockChartDataNote {
+    margin-top: 8px;
+    color: var(--muted);
 }
 
 .stockChartRange {
@@ -129,6 +165,14 @@
 }
 
 @media (max-width: 520px) {
+    .stockChartHeader {
+        flex-direction: column;
+    }
+
+    .stockChartChange {
+        text-align: left;
+    }
+
     .stockChartStats {
         grid-template-columns: repeat(2, 1fr);
     }

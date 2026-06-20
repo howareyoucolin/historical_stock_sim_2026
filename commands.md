@@ -108,6 +108,7 @@ Success output: `<qty> stocks of <CODE> successfully bought.` / `...sold.`
 | Command | Effect |
 | --- | --- |
 | `stock list` | List every available stock code (`--json` returns the array). |
+| `stock info <code>` | Show the stock's curated basic profile: company name, segment, listing status, and simulation note. |
 | `stock price <code>` | One-line close + day change for the sim date. |
 | `stock status <code>` | Fuller snapshot: close, day change, P/E, TTM EPS, dividend, as of the sim date (falls back to the most recent prior trading day). |
 | `stock history <code>` | Daily series from the start of the stock's data through the sim date. |

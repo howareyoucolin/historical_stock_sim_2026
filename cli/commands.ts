@@ -105,6 +105,7 @@ export function createRunCommand({
     fetchAccountSession,
     readHistoryEntries,
     fetchStockHistory,
+    fetchStockInfo,
     fetchStockStatus,
     fetchStockList,
     fetchValuesSummary,
@@ -131,6 +132,7 @@ export function createRunCommand({
         scrapeEps,
         seedWatchlist,
         fetchStockHistory,
+        fetchStockInfo,
         fetchStockStatus,
         fetchStockList,
     })

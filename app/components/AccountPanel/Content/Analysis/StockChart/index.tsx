@@ -82,6 +82,7 @@ function stat(value: number | null): string {
 export function StockChart() {
     const selectedStock = useAppSelector((state) => state.analysis.selectedStock)
     const analysis = useAppSelector((state) => state.analysis.analysis)
+    const stockInfo = useAppSelector((state) => state.analysis.stockInfo)
     const isLoading = useAppSelector((state) => state.analysis.isLoading)
     const error = useAppSelector((state) => state.analysis.error)
 
@@ -112,7 +113,7 @@ export function StockChart() {
         return <div className="stockChartEmpty">Loading {selectedStock}…</div>
     }
 
-    if (error !== null || analysis === null) {
+    if (error !== null || analysis === null || stockInfo === null) {
         return <div className="stockChartEmpty">{error ?? `No data for ${selectedStock}.`}</div>
     }
 
@@ -154,6 +155,11 @@ export function StockChart() {
             <header className="stockChartHeader">
                 <div>
                     <h3 className="stockChartCode">{analysis.stockCode}</h3>
+                    <h2 className="stockChartCompanyName">{stockInfo.companyName}</h2>
+                    <div className="stockChartMeta">
+                        <span>{stockInfo.segment}</span>
+                        <span>{stockInfo.listingStatus}</span>
+                    </div>
                     <span className="stockChartPrice">{money(analysis.close)} <span className="stockChartCurrency">USD</span></span>
                 </div>
                 <div className={`stockChartChange ${dayTone}`}>
@@ -165,6 +171,11 @@ export function StockChart() {
                     <span className="stockChartAsOf">as of {analysis.asOfDate}</span>
                 </div>
             </header>
+
+            <section className="stockChartProfile" aria-label="Company profile">
+                <p className="stockChartSummary">{stockInfo.summary}</p>
+                {stockInfo.dataNote && <p className="stockChartDataNote">Data note: {stockInfo.dataNote}</p>}
+            </section>
 
             <div className="stockChartRanges" role="tablist" aria-label="Chart range">
                 {RANGES.map((entry) => (

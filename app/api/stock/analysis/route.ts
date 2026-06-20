@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 
 import { buildStockAnalysis } from '../../../actions/stock/analysis'
+import { buildStockInfo } from '../../../actions/stock/info'
 
 export const runtime = 'nodejs'
 // The analysis depends on the current simulation date stored in the account session, so this route
@@ -22,7 +23,9 @@ export async function GET(request: Request): Promise<Response> {
             return NextResponse.json({ error: `No price data for ${code.trim().toUpperCase()} on or before the simulation date.` }, { status: 404 })
         }
 
-        return NextResponse.json({ analysis })
+        const info = await buildStockInfo(code)
+
+        return NextResponse.json({ analysis, info })
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
 

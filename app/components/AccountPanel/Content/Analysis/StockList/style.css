@@ -3,11 +3,57 @@
     flex-direction: column;
     gap: 4px;
     max-height: 520px;
-    overflow-y: auto;
     padding: 8px;
     border: 1px solid var(--border);
     border-radius: 14px;
     background: var(--surface);
+}
+
+.stockListFilters {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+}
+
+.stockListField {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.stockListFieldLabel {
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--muted);
+}
+
+.stockListSelect,
+.stockListInput {
+    width: 100%;
+    font: inherit;
+    font-size: 0.78rem;
+    padding: 7px 9px;
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    background: var(--surface-strong);
+    color: inherit;
+}
+
+.stockListSummary {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 6px 2px 4px;
+}
+
+.stockListButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 0;
+    overflow-y: auto;
 }
 
 .stockList.empty {
@@ -15,6 +61,13 @@
     text-align: center;
     color: var(--muted);
     font-size: 0.82rem;
+}
+
+.stockListNoMatches {
+    padding: 16px 8px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.78rem;
 }
 
 .stockListButton {
@@ -46,8 +99,12 @@
 /* On narrow screens the rail becomes a horizontal wrap of chips above the chart. */
 @media (max-width: 640px) {
     .stockList {
+        max-height: none;
+    }
+
+    .stockListButtons {
         flex-direction: row;
         flex-wrap: wrap;
-        max-height: none;
+        overflow: visible;
     }
 }

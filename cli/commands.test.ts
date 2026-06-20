@@ -15,6 +15,7 @@ function testGetHelpText(): void {
     assert.match(getHelpText(), /history show/)
     assert.match(getHelpText(), /stock download <code>/)
     assert.match(getHelpText(), /stock history <code>/)
+    assert.match(getHelpText(), /stock info <code>/)
     assert.match(getHelpText(), /stock status <code>/)
     assert.match(getHelpText(), /stock list/)
 }
@@ -547,6 +548,42 @@ async function testStockHistoryCommandUsage(): Promise<void> {
     assert.equal(result.output, 'Usage: stock history <code>')
 }
 
+// Verify stock info routes through the dedicated stock command handler with the requested code.
+async function testStockInfoCommand(): Promise<void> {
+    let requestedStockCode = ''
+    const runCommand = createRunCommand({
+        fetchStockInfo: async (stockCode) => {
+            requestedStockCode = stockCode
+
+            return {
+                stockCode: 'AAPL',
+                companyName: 'Apple',
+                segment: 'Consumer Technology',
+                summary: 'Consumer-facing technology platforms, devices, and digital ecosystems.',
+                listingStatus: 'Active public company',
+                dataNote: null,
+            }
+        },
+    })
+
+    const result = await runCommand('stock info AAPL')
+
+    assert.equal(requestedStockCode, 'AAPL')
+    assert.equal(result.exitCode, 0)
+    assert.match(result.output, /AAPL info:/)
+    assert.match(result.output, /company: Apple/)
+}
+
+// Verify stock info without a code reports its usage line and a non-zero exit code.
+async function testStockInfoCommandUsage(): Promise<void> {
+    const runCommand = createRunCommand()
+
+    const result = await runCommand('stock info')
+
+    assert.equal(result.exitCode, 1)
+    assert.equal(result.output, 'Usage: stock info <code>')
+}
+
 // Verify stock status routes through the dedicated stock command handler with the requested code.
 async function testStockStatusCommand(): Promise<void> {
     let requestedStockCode = ''
@@ -858,6 +895,8 @@ export async function runCliCommandTests(): Promise<void> {
     await testStockBuildCommand()
     await testStockHistoryCommand()
     await testStockHistoryCommandUsage()
+    await testStockInfoCommand()
+    await testStockInfoCommandUsage()
     await testStockStatusCommand()
     await testStockStatusCommandUsage()
     await testStockListCommand()
