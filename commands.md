@@ -57,6 +57,8 @@ These can appear anywhere in a command:
   (BUY, SELL, DIVIDEND, DEPOSIT). See [History log format](#history-log-format).
 - **Value log** `user-sessions/values.log` — daily total portfolio value, the
   source for `values show`.
+- **Report file** `user-sessions/report.json` — compact simulation summary
+  artifact built by `report build` for storage, review, or later agent study.
 - **Market data** in `market-data/<CODE>/`: `history.json` (raw closes used to
   price trades) and `data.json` (close + dividends + TTM EPS + P/E + shares
   outstanding + market cap, used by
@@ -125,6 +127,7 @@ Success output: `<qty> stocks of <CODE> successfully bought.` / `...sold.`
 | --- | --- |
 | `values show` | Daily total-value series plus a return summary (start → now, %, high/low). `--json` returns the full summary. |
 | `history show [filters]` | Recorded activity. Filters: `--type=<BUY\|SELL\|DIVIDEND\|DEPOSIT>`, `--stock=<CODE>`, `--since=<date>`, `--until=<date>` (compared against the simulated date), `--limit=<n>` (most recent n). |
+| `report build [flags]` | Build `report.json` for the active session. Flags: `--out=<path>`, `--strategy=<name>`, `--strategy-version=<version>`, `--strategy-summary=<text>`, `--objective=<title>`, `--objective-metric=<metric>`, `--objective-constraint=<text>` (repeatable), `--market-regime=<label>`, `--volatility-level=<label>`, `--note=<text>`. `--json` returns the full report payload. |
 
 ### Other
 

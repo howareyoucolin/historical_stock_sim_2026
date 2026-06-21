@@ -6,7 +6,7 @@ export interface CalendarPosition {
 }
 
 // The content-area tabs shown above the main column.
-export type ContentTab = 'summary' | 'positions' | 'histories' | 'analysis'
+export type ContentTab = 'summary' | 'positions' | 'histories' | 'report' | 'analysis'
 
 // Lifecycle of the background refresh poll, surfaced as a subtle status line in the sidebar.
 // 'polling' = waiting for the next tick, 'updating' = a refresh is in flight, 'updated'/'nochange'

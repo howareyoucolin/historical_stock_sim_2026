@@ -3,6 +3,7 @@ import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
 import { createEmptyDefaultUserAccountSessionView, type DefaultUserAccountSessionView } from '../actions/account/view-model'
 import { createDefaultAccountState } from '../actions/account/state'
 import type { DailyValueSnapshot } from '../actions/account/values-log'
+import type { SimulationReport } from '../actions/report/build'
 
 // Shared shape returned by every account-mutating API route, surfaced to thunks for refreshing state.
 export interface AccountResponse {
@@ -19,6 +20,8 @@ interface AccountSliceState {
     tradingDates: string[]
     historyEntries: string[]
     valueSnapshots: DailyValueSnapshot[]
+    report: SimulationReport | null
+    reportError: string | null
 }
 
 const initialState: AccountSliceState = {
@@ -28,6 +31,8 @@ const initialState: AccountSliceState = {
     tradingDates: [],
     historyEntries: [],
     valueSnapshots: [],
+    report: null,
+    reportError: null,
 }
 
 // Hold the server-owned account snapshot plus the transient busy/status flags the UI reacts to.
@@ -53,8 +58,15 @@ const accountSlice = createSlice({
         setValueSnapshots(state, action: PayloadAction<DailyValueSnapshot[]>) {
             state.valueSnapshots = action.payload
         },
+        setReport(state, action: PayloadAction<SimulationReport | null>) {
+            state.report = action.payload
+            state.reportError = null
+        },
+        setReportError(state, action: PayloadAction<string | null>) {
+            state.reportError = action.payload
+        },
     },
 })
 
-export const { setView, setStatus, setBusy, setTradingDates, setHistoryEntries, setValueSnapshots } = accountSlice.actions
+export const { setView, setStatus, setBusy, setTradingDates, setHistoryEntries, setValueSnapshots, setReport, setReportError } = accountSlice.actions
 export default accountSlice.reducer

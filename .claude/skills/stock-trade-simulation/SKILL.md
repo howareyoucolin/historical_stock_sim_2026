@@ -41,8 +41,10 @@ When the user asks to start a new simulation:
    until these are clear:
    - The strategy itself: which stocks/sectors, entry and exit rules, position
      sizing, risk limits, rebalance cadence.
-   - **End date / time horizon** — defaults to `2026-01-01` unless the user
-     specifies otherwise; the run loop advances until this date is reached.
+   - **End date / time horizon** — defaults to the current configured market-data
+     end date in `config/download-date-range.json`, which is `2026-06-15` right
+     now, unless the user specifies otherwise; the run loop advances until this
+     date is reached.
    - The contribution schedule, only if the user wants to change it: the default
      is a recurring `2500` deposit on the first trading day of every month (see
      below). Confirm a different amount, cadence, or a one-time-only deposit only
@@ -51,7 +53,7 @@ When the user asks to start a new simulation:
    are easier to execute faithfully and to audit.
 2. **Confirm setup overrides** (use these defaults unless the user says otherwise):
    - Start date: `2016-01-04`
-   - End date: `2026-01-01`
+   - End date: the configured data end date, currently `2026-06-15`
    - Initial cash deposit: `200000`
    - Recurring contribution: `2500` deposited on the first trading day of every
      month, for the whole run (not a one-time deposit). The first month's `2500`
@@ -81,6 +83,12 @@ When the user asks to start a new simulation:
 - **Act** with `account buy` / `account sell` (`--amount=`, `max`, `all`,
   `--percent=` as the strategy calls for; preview risky moves with `--dry-run`).
   Trades only work on a trading day, so always be on one first.
+- **Before each sell, explicitly check tax character.** Use the account view and
+  history you have observed to judge whether the lot is likely to be
+  **short-term** or **long-term**, and weigh that tax cost before deciding to
+  exit. When the strategy allows flexibility, prefer a long-term realization over
+  a short-term one; when the strategy demands an exit, still sell, but note the
+  tax tradeoff in the sell note.
 - **Verify** each trade executed: re-check `account show --json` (cash and
   position changed as expected). CLI commands can fail (insufficient cash,
   non-trading day, no data) — react to failures, don't assume success.
@@ -93,6 +101,10 @@ When the user asks to start a new simulation:
   monthly contribution set up in step 1 (use the user's amount/cadence if they
   overrode it). Track the last month you contributed so you deposit exactly once
   per month.
+- **Treat cash as an earning asset, not dead space.** Uninvested cash accrues
+  modeled money-market interest over time, so when the strategy is uncertain or
+  risk is elevated, compare the expected stock edge against the value of waiting
+  in cash rather than assuming every free dollar must be deployed immediately.
 
 ### Factor in tax and cash interest
 
@@ -109,12 +121,20 @@ decide — don't optimize on gross price moves alone:
   gains, so harvesting a loser can be tax-efficient. The Summary tab shows
   per-year realized gains and estimated tax by category, mirroring what the run
   produces.
+- **Operational rule for sells.** Do not treat two profitable exits as equal if
+  one is short-term and the other is long-term. When choosing between holding a
+  little longer versus selling now, include the holding-period tax difference in
+  the decision. If a stop-loss, thesis break, or hard strategy rule says sell
+  now, obey it — but still record the tax-aware reasoning in the trade note.
 - **Interest on parked cash.** Uninvested cash earns money-market (SPAXX)
   interest, accrued daily and paid on the first trading day of each month, then
   compounding. So idle cash is not dead weight — it carries a small positive
   yield (more meaningful in higher-rate years). Factor this in when choosing
   between holding cash and deploying: staying partly in cash has a real, if
   modest, return, and that interest is itself taxable.
+- **Operational rule for buys.** Do not force a buy just because cash is
+  available. If no candidate clearly beats the after-tax, interest-bearing option
+  of staying in cash, waiting is a valid strategic choice.
 
 Keep these as inputs to the decision, not overrides of the user's strategy — if a
 trade follows the strategy, tax/interest considerations refine *how* and *when*
@@ -149,13 +169,23 @@ understandable on its own. Keep it concrete and tied to what you actually
 observed, e.g. `--note="Top momentum name, +24% trailing 3mo and still leading the
 screen, so entering at an equal-weight slot"` rather than `--note="buy"`. These
 notes are how the user follows your reasoning and audits that each decision came
-from data you observed.
+from data you observed. For sells, mention whether the exit is short-term or
+long-term when that affects the decision. For buys, mention why deploying cash is
+better than continuing to earn interest in cash.
 
 ## 4. End of simulation
 
 - **Do not reset or clean up.** Leave the account, history, and value logs exactly
   as the run left them in the default session — the user investigates the details
   in the UI.
+- **Build the structured report only at the true end of the run.** Once the
+  simulation reaches or passes the agreed end date, run `report build` to create
+  `report.json` for the completed simulation. Do **not** build a report midway
+  through the run just because you paused at an intermediate year or checkpoint;
+  many users progress the simulation in stages. The only exception is when the
+  user explicitly asks for an interim report before the final end date. Follow
+  `.claude/skills/simulation-reporting/SKILL.md` for the report-building
+  workflow, metadata flags, and summary expectations.
 - **Produce a final research report** covering: the strategy as run; the setup
   (start date, deposits, end date); key decisions and notable trades; dividends
   received; final cash/holdings and total return (`account show`, `values show`);
@@ -176,4 +206,7 @@ from data you observed.
   interest earned on parked cash when deciding — optimize after-tax, not gross.
 - Always run on the default session; never reset the data at the end.
 - Ask for and confirm the strategy before the first trade; the end date
-  defaults to `2026-01-01` unless the user specifies one.
+  defaults to the configured market-data end date (currently `2026-06-15`)
+  unless the user specifies one.
+- Only run `report build` after the simulation reaches the final end date, unless
+  the user explicitly asks for a report earlier.

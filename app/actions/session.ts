@@ -41,7 +41,17 @@ export function valuesLogFileName(): string {
     return activeSession ? `${activeSession}.values.log` : 'values.log'
 }
 
+// Built report file name for the active session (default: report.json).
+export function reportFileName(): string {
+    return activeSession ? `${activeSession}.report.json` : 'report.json'
+}
+
 // Repo-relative path of the active session's account data file, for user-facing messages.
 export function activeAccountSessionRelativePath(): string {
     return `${USER_SESSIONS_DIRECTORY_NAME}/${accountDataFileName()}`
+}
+
+// Repo-relative path of the active session's built report file, for user-facing messages.
+export function activeReportRelativePath(): string {
+    return `${USER_SESSIONS_DIRECTORY_NAME}/${reportFileName()}`
 }

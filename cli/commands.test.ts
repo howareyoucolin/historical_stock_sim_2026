@@ -13,6 +13,7 @@ function testGetHelpText(): void {
     assert.match(getHelpText(), /date next/)
     assert.match(getHelpText(), /date set <yyyy-mm-dd>/)
     assert.match(getHelpText(), /history show/)
+    assert.match(getHelpText(), /report build/)
     assert.match(getHelpText(), /stock download <code>/)
     assert.match(getHelpText(), /stock history <code>/)
     assert.match(getHelpText(), /stock info <code>/)
@@ -269,6 +270,55 @@ async function testHistoryCommandUsage(): Promise<void> {
     assert.match(badHistoryResult.output, /Usage: history show/)
     assert.equal(badFilterResult.exitCode, 1)
     assert.equal(badFilterResult.output, 'Unknown history filter: now')
+}
+
+// Verify report build routes through the dedicated report command handler and carries the built report as JSON data.
+async function testReportBuildCommand(): Promise<void> {
+    let capturedOptions: Record<string, unknown> | null = null
+    const runCommand = createRunCommand({
+        buildReport: async (options) => {
+            capturedOptions = options as Record<string, unknown>
+
+            return {
+                outputPath: 'user-sessions/report.json',
+                report: {
+                    reportVersion: 1,
+                    sessionId: 'default',
+                },
+            }
+        },
+    })
+
+    const result = await runCommand(
+        'report build --strategy="Quality Pullback Rotation" --objective="Compound capital" --objective-constraint="max 10 positions" --market-regime=bull --volatility-level=medium --note="learning run"'
+    )
+
+    assert.deepEqual(capturedOptions, {
+        strategyName: 'Quality Pullback Rotation',
+        objectiveTitle: 'Compound capital',
+        objectiveConstraints: ['max 10 positions'],
+        marketRegime: 'bull',
+        volatilityLevel: 'medium',
+        note: 'learning run',
+    })
+    assert.equal(result.exitCode, 0)
+    assert.equal(result.output, 'Built report at user-sessions/report.json.')
+    assert.deepEqual(result.data, { reportVersion: 1, sessionId: 'default' })
+}
+
+// Verify bad report command arguments return the expected usage guidance.
+async function testReportCommandUsage(): Promise<void> {
+    const runCommand = createRunCommand()
+    const reportResult = await runCommand('report')
+    const badReportResult = await runCommand('report wrong')
+    const badFlagResult = await runCommand('report build --nope')
+
+    assert.equal(reportResult.exitCode, 1)
+    assert.match(reportResult.output, /^Usage: report build/)
+    assert.equal(badReportResult.exitCode, 1)
+    assert.match(badReportResult.output, /^Usage: report build/)
+    assert.equal(badFlagResult.exitCode, 1)
+    assert.equal(badFlagResult.output, 'Unknown report flag: --nope')
 }
 
 // Verify date next steps one trading day and reports the updated day.
@@ -885,6 +935,8 @@ export async function runCliCommandTests(): Promise<void> {
     await testDateShowCommand()
     await testHistoryShowCommand()
     await testHistoryCommandUsage()
+    await testReportBuildCommand()
+    await testReportCommandUsage()
     await testAccountDepositInvalidValue()
     await testAccountBuyInvalidQuantity()
     await testAccountSellInvalidQuantity()

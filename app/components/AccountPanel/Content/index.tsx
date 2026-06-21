@@ -6,6 +6,7 @@ import { Tabs } from './Tabs'
 import { Summary } from './Summary'
 import { Positions } from './Positions'
 import { Histories } from './Histories'
+import { Report } from './Report'
 import { Analysis } from './Analysis'
 
 // Render the main content column: the tab bar above the panel for the active tab. Inactive panels
@@ -20,6 +21,7 @@ export function Content() {
             {activeTab === 'summary' && <Summary />}
             {activeTab === 'positions' && <Positions />}
             {activeTab === 'histories' && <Histories />}
+            {activeTab === 'report' && <Report />}
             {activeTab === 'analysis' && <Analysis />}
         </main>
     )

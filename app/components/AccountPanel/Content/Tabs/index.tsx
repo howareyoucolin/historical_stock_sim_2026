@@ -10,6 +10,7 @@ const TABS: Array<{ id: ContentTab; label: string }> = [
     { id: 'positions', label: 'Positions' },
     { id: 'histories', label: 'Histories' },
     { id: 'analysis', label: 'Analysis' },
+    { id: 'report', label: 'Report' },
 ]
 
 // Render the tab bar above the content column and switch the active tab through the ui slice.
