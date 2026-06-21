@@ -20,6 +20,8 @@ interface HistoryRow {
 
 type HistoryTypeSelection = Record<string, boolean>
 
+const DEFAULT_HIDDEN_HISTORY_TYPES = new Set(['INTEREST', 'DIVIDEND'])
+
 // Parse one raw log line ("<iso> <ACTION> <key=value>...") into table columns. The real timestamp
 // is dropped in favor of the simulated date carried in the `sim` token. The optional note is JSON-
 // quoted and always last, so it is split off and parsed as a unit before the rest is tokenized — that
@@ -84,7 +86,7 @@ function syncHistoryTypeSelection(selection: HistoryTypeSelection, types: string
     const nextSelection: HistoryTypeSelection = {}
 
     for (const type of types) {
-        nextSelection[type] = selection[type] ?? true
+        nextSelection[type] = selection[type] ?? !DEFAULT_HIDDEN_HISTORY_TYPES.has(type)
     }
 
     return nextSelection
