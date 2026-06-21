@@ -6,12 +6,20 @@ import { fetchDefaultUserAccountSessionView } from '../account/show'
 import { readDefaultUserAccountMeta, USER_SESSIONS_DIRECTORY_NAME, type AccountMeta } from '../account/model'
 import type { DefaultUserAccountSessionView } from '../account/view-model'
 import { readHistoryLogEntries } from '../history/log'
+import { DATA_DIRECTORY_NAME } from '../stock/download-data'
+import { DATA_FILE_NAME, type BuiltDataPayload } from '../stock/build-data'
 import { getActiveSession, reportFileName } from '../session'
+import { buildTaxReport } from '../../components/AccountPanel/Content/Summary/TaxReport/taxReport'
 
 interface ParsedHistoryEntry {
     timestamp: string
     action: string
     fields: Record<string, string>
+}
+
+interface InvestorCashFlow {
+    date: string
+    amount: number
 }
 
 export interface ReportBuildOptions {
@@ -60,6 +68,7 @@ export interface SimulationReport {
         endingCash: number
         endingValue: number
         totalReturnPct: number | null
+        annualizedReturnPct: number | null
     }
     activity: {
         historyEventCount: number
@@ -75,6 +84,15 @@ export interface SimulationReport {
         currentTotal: number
         totalGainLoss: number
         totalReturnPct: number | null
+        annualizedReturnPct: number | null
+        unrealizedGainLoss: number
+        unrealizedGainLossPct: number | null
+    }
+    benchmark: {
+        stockCode: string
+        endingValue: number | null
+        annualizedReturnPct: number | null
+        methodology: string
     }
     portfolio: {
         openPositionCount: number
@@ -82,22 +100,17 @@ export interface SimulationReport {
         largestPositionPct: number
         maxDrawdownPct: number | null
     }
-    positions: Array<{
-        bucket: string
-        status: 'open'
-        sharesHeld: number
-        avgCost: number
-        lastPrice: number
-        marketValue: number
-        unrealizedGainLoss: number
-        unrealizedGainLossPct: number
-        weightPct: number
-        activity: {
-            buys: number
-            sells: number
-            dividends: number
-        }
-    }>
+    taxes: {
+        longTermGain: number
+        shortTermGain: number
+        dividendGain: number
+        interestGain: number
+        longTermTax: number
+        shortTermTax: number
+        dividendTax: number
+        interestTax: number
+        estimatedTax: number
+    }
     takeaways: {
         summary: string
         worked: AssessmentItem[]
@@ -140,6 +153,7 @@ export interface BuildSimulationReportDependencies {
     fetchValuesSummary?: typeof buildValuesSummary
     readHistoryEntries?: typeof readHistoryLogEntries
     readAccountMeta?: typeof readDefaultUserAccountMeta
+    readMarketDataFile?: (path: string, encoding: BufferEncoding) => Promise<string>
     writeFile?: (path: string, data: string, encoding: BufferEncoding) => Promise<unknown>
     makeDirectory?: (path: string, options?: { recursive?: boolean }) => Promise<unknown>
 }
@@ -173,13 +187,168 @@ function parseHistoryEntry(line: string): ParsedHistoryEntry {
 }
 
 function deriveSimulationStartDate(valuesSummary: ValuesSummary, historyEntries: ParsedHistoryEntry[], accountDate: string): string | null {
-    if (valuesSummary.first) {
-        return valuesSummary.first.date
+    const firstMeaningfulSnapshot = valuesSummary.snapshots.find((snapshot) => snapshot.value > 0)
+
+    if (firstMeaningfulSnapshot) {
+        return firstMeaningfulSnapshot.date
     }
 
     const firstSimDate = historyEntries[0]?.fields.sim
 
     return firstSimDate ?? accountDate ?? null
+}
+
+function deriveStartingValue(valuesSummary: ValuesSummary): number | null {
+    const firstMeaningfulSnapshot = valuesSummary.snapshots.find((snapshot) => snapshot.value > 0)
+
+    return firstMeaningfulSnapshot ? Number(firstMeaningfulSnapshot.value.toFixed(2)) : null
+}
+
+function buildInvestorCashFlows(historyEntries: ParsedHistoryEntry[]): InvestorCashFlow[] {
+    return historyEntries
+        .filter((entry) => entry.action === 'DEPOSIT' && entry.fields.sim)
+        .map((entry) => ({
+            date: entry.fields.sim,
+            amount: Number((-parseSignedAmount(entry.fields.cash)).toFixed(2)),
+        }))
+        .filter((cashFlow) => cashFlow.amount !== 0)
+        .sort((left, right) => left.date.localeCompare(right.date))
+}
+
+function calculateXnpv(rate: number, cashFlows: InvestorCashFlow[]): number {
+    const firstDate = cashFlows[0]?.date
+
+    if (!firstDate) {
+        return 0
+    }
+
+    const firstTime = new Date(`${firstDate}T00:00:00.000Z`).getTime()
+
+    return cashFlows.reduce((total, cashFlow) => {
+        const cashFlowTime = new Date(`${cashFlow.date}T00:00:00.000Z`).getTime()
+        const yearFraction = (cashFlowTime - firstTime) / (365.25 * 24 * 60 * 60 * 1000)
+
+        return total + cashFlow.amount / Math.pow(1 + rate, yearFraction)
+    }, 0)
+}
+
+function calculateAnnualizedReturnPct(cashFlows: InvestorCashFlow[], endingValue: number, endDate: string): number | null {
+    const fullCashFlows = [...cashFlows, { date: endDate, amount: Number(endingValue.toFixed(2)) }]
+
+    if (fullCashFlows.length < 2 || endingValue <= 0) {
+        return null
+    }
+
+    const hasPositive = fullCashFlows.some((cashFlow) => cashFlow.amount > 0)
+    const hasNegative = fullCashFlows.some((cashFlow) => cashFlow.amount < 0)
+
+    if (!hasPositive || !hasNegative) {
+        return null
+    }
+
+    let low = -0.9999
+    let high = 0.1
+    let lowValue = calculateXnpv(low, fullCashFlows)
+    let highValue = calculateXnpv(high, fullCashFlows)
+
+    while (lowValue * highValue > 0 && high < 100) {
+        high *= 2
+        highValue = calculateXnpv(high, fullCashFlows)
+    }
+
+    if (!Number.isFinite(lowValue) || !Number.isFinite(highValue) || lowValue * highValue > 0) {
+        return null
+    }
+
+    for (let iteration = 0; iteration < 200; iteration += 1) {
+        const mid = (low + high) / 2
+        const midValue = calculateXnpv(mid, fullCashFlows)
+
+        if (!Number.isFinite(midValue)) {
+            return null
+        }
+
+        if (Math.abs(midValue) < 1e-7) {
+            return Number((mid * 100).toFixed(2))
+        }
+
+        if (lowValue * midValue <= 0) {
+            high = mid
+            highValue = midValue
+        } else {
+            low = mid
+            lowValue = midValue
+        }
+    }
+
+    return Number((((low + high) / 2) * 100).toFixed(2))
+}
+
+async function readBenchmarkData(
+    stockCode: string,
+    cwd: () => string,
+    readMarketDataFile: (path: string, encoding: BufferEncoding) => Promise<string>
+): Promise<BuiltDataPayload | null> {
+    const filePath = path.join(cwd(), DATA_DIRECTORY_NAME, stockCode, DATA_FILE_NAME)
+
+    try {
+        return JSON.parse(await readMarketDataFile(filePath, 'utf8')) as BuiltDataPayload
+    } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+            return null
+        }
+
+        if (error instanceof SyntaxError) {
+            throw new Error(`Invalid benchmark market-data JSON for ${stockCode}: ${error.message}`)
+        }
+
+        throw error
+    }
+}
+
+function calculateBenchmarkEndingValue(
+    benchmarkData: BuiltDataPayload | null,
+    cashFlows: InvestorCashFlow[],
+    endDate: string
+): number | null {
+    if (!benchmarkData || cashFlows.length === 0) {
+        return null
+    }
+
+    const tradingDates = Object.keys(benchmarkData.historyByDate).filter((date) => date <= endDate).sort()
+    const endingEntry = benchmarkData.historyByDate[endDate]
+
+    if (tradingDates.length === 0 || !endingEntry?.close) {
+        return null
+    }
+
+    const depositsByDate = new Map<string, number>()
+    for (const cashFlow of cashFlows) {
+        depositsByDate.set(cashFlow.date, (depositsByDate.get(cashFlow.date) ?? 0) + Math.abs(cashFlow.amount))
+    }
+
+    let shares = 0
+
+    for (const tradingDate of tradingDates) {
+        const entry = benchmarkData.historyByDate[tradingDate]
+
+        if (!entry?.close) {
+            continue
+        }
+
+        if (entry.isPayoutDate && entry.dividendPerShare > 0 && shares > 0) {
+            const dividendCash = shares * entry.dividendPerShare
+            shares += dividendCash / entry.close
+        }
+
+        const depositAmount = depositsByDate.get(tradingDate) ?? 0
+
+        if (depositAmount > 0) {
+            shares += depositAmount / entry.close
+        }
+    }
+
+    return Number((shares * endingEntry.close).toFixed(2))
 }
 
 function deriveStartedAt(historyEntries: ParsedHistoryEntry[], meta: AccountMeta | null): string | null {
@@ -304,35 +473,15 @@ function calculateMaxDrawdown(valuesSummary: ValuesSummary): number | null {
     return Number(maxDrawdown.toFixed(2))
 }
 
-function buildPositionSummaries(
-    view: DefaultUserAccountSessionView,
-    activityByStock: Record<string, { buys: number; sells: number; dividends: number }>
-): SimulationReport['positions'] {
-    return [...view.rows]
-        .sort((left, right) => right.totalValue - left.totalValue)
-        .map((row, index) => ({
-            bucket: `position_${index + 1}`,
-            status: 'open',
-            sharesHeld: row.quantity,
-            avgCost: Number(row.averageCost.toFixed(2)),
-            lastPrice: Number(row.currentPrice.toFixed(2)),
-            marketValue: Number(row.totalValue.toFixed(2)),
-            unrealizedGainLoss: Number(row.totalGainLoss.toFixed(2)),
-            unrealizedGainLossPct: Number(row.percentGainLoss.toFixed(2)),
-            weightPct: Number(row.percentOfGroup.toFixed(2)),
-            activity: activityByStock[row.stockCode] ?? { buys: 0, sells: 0, dividends: 0 },
-        }))
-}
-
 function buildTakeaways(
     totalReturnPct: number | null,
     maxDrawdownPct: number | null,
     largestPositionPct: number,
-    cashPct: number
+    cashPct: number,
+    activity: SimulationReport['activity']
 ): SimulationReport['takeaways'] {
     const worked: AssessmentItem[] = []
     const didNotWork: AssessmentItem[] = []
-    const nextChanges: AssessmentItem[] = []
 
     const summary = totalReturnPct === null
         ? 'The simulation finished without enough value history to calculate a total return.'
@@ -340,52 +489,86 @@ function buildTakeaways(
             ? `The simulation finished up ${totalReturnPct.toFixed(2)}% versus contributed principal.`
             : `The simulation finished down ${Math.abs(totalReturnPct).toFixed(2)}% versus contributed principal.`
 
-    if (totalReturnPct !== null && totalReturnPct > 0) {
-        worked.push({ text: 'The strategy produced a positive overall return.', score: clampScore(totalReturnPct / 40) })
-    }
+    worked.push({
+        text: `The strategy followed the trading-universe rule: ${activity.uniqueStocksTraded} user-selected stocks were traded, with ${activity.buyCount} buys and ${activity.sellCount} sells.`,
+        score: 1,
+    })
 
-    if (maxDrawdownPct !== null && maxDrawdownPct > -15) {
-        worked.push({ text: 'Drawdowns stayed fairly contained during the run.', score: clampScore(1 - Math.abs(maxDrawdownPct) / 20) })
-    }
-
-    if (largestPositionPct <= 20) {
-        worked.push({ text: 'Position sizing stayed reasonably balanced.', score: clampScore(1 - largestPositionPct / 30) })
-    }
-
-    if (maxDrawdownPct !== null && maxDrawdownPct <= -20) {
-        didNotWork.push({ text: 'Drawdowns were significant and exposed weak risk controls.', score: clampScore(Math.abs(maxDrawdownPct) / 60) })
-        nextChanges.push({ text: 'Add tighter drawdown or stop-loss rules.', score: clampScore(Math.abs(maxDrawdownPct) / 60) })
-    }
-
-    if (largestPositionPct > 25) {
-        didNotWork.push({ text: 'One position became too large and increased concentration risk.', score: clampScore((largestPositionPct - 20) / 40) })
-        nextChanges.push({ text: 'Cap single-position exposure earlier in the run.', score: clampScore((largestPositionPct - 20) / 40) })
-    }
-
-    if (cashPct > 25) {
-        didNotWork.push({ text: 'A large cash balance sat idle for much of the portfolio.', score: clampScore((cashPct - 20) / 40) })
-        nextChanges.push({ text: 'Define clearer deployment rules for excess cash.', score: clampScore((cashPct - 20) / 40) })
-    }
-
-    if (totalReturnPct !== null && totalReturnPct <= 0) {
-        nextChanges.push({ text: 'Review entry and exit rules before re-running the same strategy.', score: clampScore(Math.abs(totalReturnPct) / 50) })
-    }
-
-    if (worked.length === 0) {
-        const fallbackScore =
-            cashPct <= 20
-                ? clampScore(0.45)
-                : clampScore(0.3)
-
+    if (totalReturnPct !== null) {
         worked.push({
-            text: cashPct <= 20
-                ? 'Cash usage stayed reasonably disciplined even though the overall run struggled.'
-                : 'The run still produced usable evidence about where the strategy broke down.',
-            score: fallbackScore,
+            text: totalReturnPct >= 0
+                ? `The strategy met the capital-growth goal in absolute terms, finishing with a ${totalReturnPct.toFixed(2)}% return on contributed principal.`
+                : `The strategy did not meet the capital-growth goal in absolute terms, finishing with a ${Math.abs(totalReturnPct).toFixed(2)}% loss on contributed principal.`,
+            score: totalReturnPct >= 0 ? 1 : clampScore(Math.abs(totalReturnPct) / 100),
         })
     }
 
-    return { summary, worked, didNotWork, nextChanges }
+    if (activity.sellCount === 0) {
+        worked.push({ text: 'The strategy followed the no-sell rule for the full run.', score: 1 })
+    }
+
+    if (largestPositionPct > 20) {
+        didNotWork.push({
+            text: `The portfolio did not fully satisfy the anti-concentration goal: the largest ending position reached ${largestPositionPct.toFixed(2)}% of the portfolio.`,
+            score: clampScore((largestPositionPct - 15) / 20),
+        })
+    }
+
+    if (maxDrawdownPct !== null) {
+        didNotWork.push({
+            text: `The path was volatile: maximum drawdown reached ${maxDrawdownPct.toFixed(2)}%.`,
+            score: clampScore(Math.abs(maxDrawdownPct) / 50),
+        })
+    }
+
+    if (cashPct > 5) {
+        didNotWork.push({
+            text: `Cash usage drifted higher than intended at the end of the run, finishing at ${cashPct.toFixed(2)}% of the portfolio.`,
+            score: clampScore(cashPct / 25),
+        })
+    }
+
+    return { summary, worked, didNotWork, nextChanges: [] }
+}
+
+function looksProceduralNote(note: string): boolean {
+    const normalized = note.trim().toLowerCase()
+
+    if (normalized.length === 0) {
+        return true
+    }
+
+    return [
+        'rebuilt report',
+        'built report',
+        'for review',
+        'last available market-data date',
+        'dataset did not include',
+        'final report uses',
+    ].some((pattern) => normalized.includes(pattern))
+}
+
+function buildObservationNote(
+    totalReturnPct: number | null,
+    largestPositionPct: number,
+    maxDrawdownPct: number | null,
+    largestStockCode: string | null
+): string {
+    if (largestStockCode && largestPositionPct > 20) {
+        return `The ending portfolio drifted away from the original diversification intent: ${largestStockCode} finished as the largest holding at ${largestPositionPct.toFixed(2)}% of the portfolio.`
+    }
+
+    if (maxDrawdownPct !== null && maxDrawdownPct <= -20) {
+        return `The strategy finished profitable overall, but the path included a deep drawdown of ${maxDrawdownPct.toFixed(2)}%, showing that long-run gains came with substantial interim volatility.`
+    }
+
+    if (totalReturnPct !== null) {
+        return totalReturnPct >= 0
+            ? `The strategy finished with a positive return of ${totalReturnPct.toFixed(2)}% while staying within the user-selected stock universe and no-sell rule.`
+            : `The strategy finished with a negative return of ${Math.abs(totalReturnPct).toFixed(2)}% despite staying within the user-selected stock universe and no-sell rule.`
+    }
+
+    return ''
 }
 
 function buildAgentLearning(
@@ -434,6 +617,7 @@ export async function buildSimulationReport(
         fetchValuesSummary = buildValuesSummary,
         readHistoryEntries = readHistoryLogEntries,
         readAccountMeta = readDefaultUserAccountMeta,
+        readMarketDataFile = fs.readFile,
         writeFile = fs.writeFile,
         makeDirectory = fs.mkdir,
     }: BuildSimulationReportDependencies = {}
@@ -446,17 +630,32 @@ export async function buildSimulationReport(
     ])
     const historyEntries = historyLines.map(parseHistoryEntry)
     const activity = buildActivitySummary(historyEntries)
-    const activityByStock = buildActivityByStock(historyEntries)
     const principal = calculatePrincipal(historyEntries)
     const largestPositionPct = view.rows.reduce((max, row) => Math.max(max, row.percentOfGroup), 0)
+    const largestPosition = view.rows.reduce<DefaultUserAccountSessionView['rows'][number] | null>(
+        (largest, row) => (largest === null || row.percentOfGroup > largest.percentOfGroup ? row : largest),
+        null
+    )
     const endingValue = view.account.cash + view.summary.totalCurrentValue
     const totalGainLoss = Number((endingValue - principal).toFixed(2))
     const totalReturnPct = principal === 0 ? null : Number((((endingValue - principal) / principal) * 100).toFixed(2))
     const cashPct = endingValue === 0 ? 0 : (view.account.cash / endingValue) * 100
     const maxDrawdownPct = calculateMaxDrawdown(valuesSummary)
+    const simStartDate = deriveSimulationStartDate(valuesSummary, historyEntries, view.account.date)
+    const startingValue = deriveStartingValue(valuesSummary)
+    const investorCashFlows = buildInvestorCashFlows(historyEntries)
+    const annualizedReturnPct = calculateAnnualizedReturnPct(investorCashFlows, endingValue, view.account.date)
+    const benchmarkData = await readBenchmarkData('SPY', cwd, readMarketDataFile)
+    const benchmarkEndingValue = calculateBenchmarkEndingValue(benchmarkData, investorCashFlows, view.account.date)
+    const benchmarkAnnualizedReturnPct = benchmarkEndingValue === null
+        ? null
+        : calculateAnnualizedReturnPct(investorCashFlows, benchmarkEndingValue, view.account.date)
     const finishedAt = now().toISOString()
     const sessionId = getActiveSession() ?? 'default'
     const outputPath = options.outputPath?.trim() || path.join(USER_SESSIONS_DIRECTORY_NAME, reportFileName())
+    const generatedNote = buildObservationNote(totalReturnPct, largestPositionPct, maxDrawdownPct, largestPosition?.stockCode ?? null)
+    const normalizedNote = options.note?.trim() ?? ''
+    const taxSummary = buildTaxReport(historyLines).total
     const report: SimulationReport = {
         reportVersion: 1,
         sessionId,
@@ -475,14 +674,15 @@ export async function buildSimulationReport(
             beliefs: [],
         },
         simulation: {
-            simStartDate: deriveSimulationStartDate(valuesSummary, historyEntries, view.account.date),
+            simStartDate,
             simEndDate: view.account.date,
             startedAt: deriveStartedAt(historyEntries, meta),
             finishedAt,
-            startingValue: valuesSummary.first ? Number(valuesSummary.first.value.toFixed(2)) : null,
+            startingValue,
             endingCash: Number(view.account.cash.toFixed(2)),
             endingValue: Number(endingValue.toFixed(2)),
             totalReturnPct,
+            annualizedReturnPct,
         },
         activity,
         portfolioSummary: {
@@ -490,6 +690,15 @@ export async function buildSimulationReport(
             currentTotal: Number(endingValue.toFixed(2)),
             totalGainLoss,
             totalReturnPct,
+            annualizedReturnPct,
+            unrealizedGainLoss: Number(view.summary.totalGainLoss.toFixed(2)),
+            unrealizedGainLossPct: Number(view.summary.percentGainLoss.toFixed(2)),
+        },
+        benchmark: {
+            stockCode: 'SPY',
+            endingValue: benchmarkEndingValue,
+            annualizedReturnPct: benchmarkAnnualizedReturnPct,
+            methodology: 'Same DEPOSIT cash-flow schedule invested into SPY using local close prices with dividends reinvested on payout dates.',
         },
         portfolio: {
             openPositionCount: view.rows.length,
@@ -497,8 +706,18 @@ export async function buildSimulationReport(
             largestPositionPct: Number(largestPositionPct.toFixed(2)),
             maxDrawdownPct,
         },
-        positions: buildPositionSummaries(view, activityByStock),
-        takeaways: buildTakeaways(totalReturnPct, maxDrawdownPct, largestPositionPct, cashPct),
+        taxes: {
+            longTermGain: Number(taxSummary.longTermGain.toFixed(2)),
+            shortTermGain: Number(taxSummary.shortTermGain.toFixed(2)),
+            dividendGain: Number(taxSummary.dividendGain.toFixed(2)),
+            interestGain: Number(taxSummary.interestGain.toFixed(2)),
+            longTermTax: Number(taxSummary.longTermTax.toFixed(2)),
+            shortTermTax: Number(taxSummary.shortTermTax.toFixed(2)),
+            dividendTax: Number(taxSummary.dividendTax.toFixed(2)),
+            interestTax: Number(taxSummary.interestTax.toFixed(2)),
+            estimatedTax: Number(taxSummary.estimatedTax.toFixed(2)),
+        },
+        takeaways: buildTakeaways(totalReturnPct, maxDrawdownPct, largestPositionPct, cashPct, activity),
         agentLearning: buildAgentLearning(
             totalReturnPct,
             maxDrawdownPct,
@@ -515,7 +734,7 @@ export async function buildSimulationReport(
             marketRegime: normalizeText(options.marketRegime, 'unknown'),
             volatilityLevel: normalizeText(options.volatilityLevel, 'unknown'),
         },
-        note: options.note?.trim() ?? '',
+        note: looksProceduralNote(normalizedNote) ? generatedNote : normalizedNote,
         files: {
             account: `${USER_SESSIONS_DIRECTORY_NAME}/${sessionId === 'default' ? 'account.json' : `${sessionId}.account.json`}`,
             history: `${USER_SESSIONS_DIRECTORY_NAME}/${sessionId === 'default' ? 'history.log' : `${sessionId}.history.log`}`,

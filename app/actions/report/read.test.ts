@@ -22,6 +22,7 @@ async function testReadSimulationReport(): Promise<void> {
                     endingCash: 12000,
                     endingValue: 164500,
                     totalReturnPct: 64.5,
+                    annualizedReturnPct: 10.45,
                 },
                 activity: {
                     historyEventCount: 12,
@@ -37,6 +38,15 @@ async function testReadSimulationReport(): Promise<void> {
                     currentTotal: 164500,
                     totalGainLoss: 64500,
                     totalReturnPct: 64.5,
+                    annualizedReturnPct: 10.45,
+                    unrealizedGainLoss: 52500,
+                    unrealizedGainLossPct: 46.46,
+                },
+                benchmark: {
+                    stockCode: 'SPY',
+                    endingValue: 152000,
+                    annualizedReturnPct: 8.22,
+                    methodology: 'Same DEPOSIT cash-flow schedule invested into SPY using local close prices with dividends reinvested on payout dates.',
                 },
                 portfolio: {
                     openPositionCount: 2,
@@ -44,7 +54,17 @@ async function testReadSimulationReport(): Promise<void> {
                     largestPositionPct: 18.4,
                     maxDrawdownPct: -18.2,
                 },
-                positions: [],
+                taxes: {
+                    longTermGain: 800,
+                    shortTermGain: -200,
+                    dividendGain: 110,
+                    interestGain: 0,
+                    longTermTax: 120,
+                    shortTermTax: 0,
+                    dividendTax: 16.5,
+                    interestTax: 0,
+                    estimatedTax: 136.5,
+                },
                 takeaways: {
                     summary: 'Outperformed.',
                     worked: [{ text: 'The strategy produced a positive overall return.', score: 0.9 }],
@@ -66,6 +86,7 @@ async function testReadSimulationReport(): Promise<void> {
     assert.equal(report?.strategy.name, 'Quality Pullback')
     assert.equal(report?.thesis.summary, 'Technology should outperform the broader market.')
     assert.equal(report?.context.marketRegime, 'bull')
+    assert.equal(report?.taxes.estimatedTax, 136.5)
 }
 
 // Verify a missing report file yields null so the UI can show a friendly empty state.
