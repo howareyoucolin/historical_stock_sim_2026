@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 
 import './style.css'
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks'
@@ -17,6 +17,8 @@ interface HistoryRow {
     cash: string
     note: string
 }
+
+type HistoryTypeSelection = Record<string, boolean>
 
 // Parse one raw log line ("<iso> <ACTION> <key=value>...") into table columns. The real timestamp
 // is dropped in favor of the simulated date carried in the `sim` token. The optional note is JSON-
@@ -63,6 +65,31 @@ function parseHistoryLine(line: string): HistoryRow {
     }
 }
 
+// Keep the available history action types in first-seen order so the filters stay stable and match
+// the rows currently loaded into the tab.
+function listHistoryTypes(rows: HistoryRow[]): string[] {
+    const seen = new Set<string>()
+
+    for (const row of rows) {
+        if (row.action && !seen.has(row.action)) {
+            seen.add(row.action)
+        }
+    }
+
+    return Array.from(seen)
+}
+
+// Ensure new history action types start enabled while preserving any existing checkbox choices.
+function syncHistoryTypeSelection(selection: HistoryTypeSelection, types: string[]): HistoryTypeSelection {
+    const nextSelection: HistoryTypeSelection = {}
+
+    for (const type of types) {
+        nextSelection[type] = selection[type] ?? true
+    }
+
+    return nextSelection
+}
+
 // Map a signed cash string to the shared gain/loss tone class.
 function cashTone(cash: string): string {
     if (cash.startsWith('+')) {
@@ -81,50 +108,86 @@ function cashTone(cash: string): string {
 export function Histories() {
     const dispatch = useAppDispatch()
     const entries = useAppSelector((state) => state.account.historyEntries)
+    const [selectedTypes, setSelectedTypes] = useState<HistoryTypeSelection>({})
+    const rows = entries.map(parseHistoryLine).reverse()
+    const availableTypes = listHistoryTypes(rows)
+    const availableTypesKey = availableTypes.join('|')
+    const effectiveSelectedTypes = syncHistoryTypeSelection(selectedTypes, availableTypes)
+    const visibleRows = rows.filter((row) => effectiveSelectedTypes[row.action] ?? true)
 
     useEffect(() => {
         void dispatch(loadHistory())
     }, [dispatch])
 
+    useEffect(() => {
+        setSelectedTypes((current) => syncHistoryTypeSelection(current, availableTypes))
+    }, [availableTypesKey])
+
+    // Flip a single action-type checkbox without disturbing the others.
+    function toggleType(type: string) {
+        setSelectedTypes((current) => ({
+            ...current,
+            [type]: !(current[type] ?? true),
+        }))
+    }
+
     if (entries.length === 0) {
         return <div className="historiesEmpty">No activity recorded yet. Buys, sells, dividends, deposits, and corporate actions will show up here.</div>
     }
 
-    const rows = entries.map(parseHistoryLine).reverse()
-
     return (
         <section className="histories">
+            <div className="historiesToolbar">
+                <span className="historiesToolbarLabel">Show types</span>
+                <div className="historiesFilters" role="group" aria-label="Filter history by event type">
+                    {availableTypes.map((type) => (
+                        <label key={type} className="historiesFilterOption">
+                            <input
+                                checked={effectiveSelectedTypes[type] ?? true}
+                                className="historiesFilterCheckbox"
+                                onChange={() => toggleType(type)}
+                                type="checkbox"
+                            />
+                            <span>{type}</span>
+                        </label>
+                    ))}
+                </div>
+            </div>
             <div className="tableScroll">
-                <table className="historiesTable">
-                    <thead>
-                        <tr>
-                            <th className="alignLeft" scope="col">Date</th>
-                            <th className="alignLeft" scope="col">Action</th>
-                            <th className="alignLeft" scope="col">Symbol</th>
-                            <th scope="col">Qty</th>
-                            <th scope="col">Price</th>
-                            <th className="alignLeft" scope="col">Acquired</th>
-                            <th className="alignLeft" scope="col">Term</th>
-                            <th scope="col">Cash</th>
-                            <th className="alignLeft" scope="col">Note</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {rows.map((row, index) => (
-                            <tr key={`${row.date}-${row.action}-${index}`}>
-                                <td className="alignLeft">{row.date}</td>
-                                <td className="alignLeft action">{row.action}</td>
-                                <td className="alignLeft symbol">{row.symbol || '—'}</td>
-                                <td>{row.quantity || '—'}</td>
-                                <td>{row.price || '—'}</td>
-                                <td className="alignLeft">{row.acquired || '—'}</td>
-                                <td className="alignLeft">{row.term ? <span className={`termBadge ${row.term.toLowerCase()}`}>{row.term}</span> : '—'}</td>
-                                <td className={cashTone(row.cash)}>{row.cash || '—'}</td>
-                                <td className="alignLeft note">{row.note || '—'}</td>
+                {visibleRows.length === 0 ? (
+                    <div className="historiesFilteredEmpty">No history rows match the selected data types.</div>
+                ) : (
+                    <table className="historiesTable">
+                        <thead>
+                            <tr>
+                                <th className="alignLeft" scope="col">Date</th>
+                                <th className="alignLeft" scope="col">Action</th>
+                                <th className="alignLeft" scope="col">Symbol</th>
+                                <th scope="col">Qty</th>
+                                <th scope="col">Price</th>
+                                <th className="alignLeft" scope="col">Acquired</th>
+                                <th className="alignLeft" scope="col">Term</th>
+                                <th scope="col">Cash</th>
+                                <th className="alignLeft" scope="col">Note</th>
                             </tr>
-                        ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {visibleRows.map((row, index) => (
+                                <tr key={`${row.date}-${row.action}-${index}`}>
+                                    <td className="alignLeft">{row.date}</td>
+                                    <td className="alignLeft action">{row.action}</td>
+                                    <td className="alignLeft symbol">{row.symbol || '—'}</td>
+                                    <td>{row.quantity || '—'}</td>
+                                    <td>{row.price || '—'}</td>
+                                    <td className="alignLeft">{row.acquired || '—'}</td>
+                                    <td className="alignLeft">{row.term ? <span className={`termBadge ${row.term.toLowerCase()}`}>{row.term}</span> : '—'}</td>
+                                    <td className={cashTone(row.cash)}>{row.cash || '—'}</td>
+                                    <td className="alignLeft note">{row.note || '—'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </section>
     )

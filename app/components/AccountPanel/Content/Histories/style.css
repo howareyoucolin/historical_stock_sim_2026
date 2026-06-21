@@ -5,6 +5,43 @@
     overflow: hidden;
 }
 
+.historiesToolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 14px 16px;
+    border-bottom: 1px solid rgba(120, 72, 50, 0.1);
+    background: rgba(243, 230, 218, 0.35);
+}
+
+.historiesToolbarLabel {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.historiesFilters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+
+.historiesFilterOption {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    color: var(--text);
+    cursor: pointer;
+}
+
+.historiesFilterCheckbox {
+    margin: 0;
+}
+
 .historiesEmpty {
     padding: 48px 18px;
     text-align: center;
@@ -12,6 +49,12 @@
     border: 1px dashed var(--border-strong);
     border-radius: 14px;
     background: var(--surface);
+}
+
+.historiesFilteredEmpty {
+    padding: 28px 18px;
+    text-align: center;
+    color: var(--muted);
 }
 
 .historiesTable {
