@@ -43,7 +43,7 @@ The current endpoint behavior is:
 
 The stock report website currently accepts a POST to:
 
-- `/insert.php?key=<SECRET>`
+- `https://stock.369usa.com/insert.php?key=<SECRET>`
 
 With these form fields:
 
@@ -58,7 +58,7 @@ With these form fields:
 From the `simulator/` directory, a typical upload command is:
 
 ```bash
-curl -X POST 'http://localhost:8700/insert.php?key=<SECRET>' \
+curl -X POST 'https://stock.369usa.com/insert.php?key=<SECRET>' \
   -d 'report_json_file=report.json' \
   -d 'account_json_file=account.json' \
   -d 'history_log_file=history.log' \
@@ -66,8 +66,9 @@ curl -X POST 'http://localhost:8700/insert.php?key=<SECRET>' \
   -d 'values_log_file=values.log'
 ```
 
-This assumes the report website is already configured to read the source session
-files from this repo's `simulator/user-sessions/` directory.
+This assumes the production report website is configured to read the source
+session files from this repo's `simulator/user-sessions/` directory or an
+equivalent server-side path mapping.
 
 ## Guardrails
 
