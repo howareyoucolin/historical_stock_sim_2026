@@ -54,6 +54,27 @@ async function testReadSimulationReport(): Promise<void> {
                     largestPositionPct: 18.4,
                     maxDrawdownPct: -18.2,
                 },
+                positions: {
+                    asOfDate: '2020-12-31',
+                    rows: [
+                        {
+                            stockCode: 'AAPL',
+                            averageCost: 85.2,
+                            currentPrice: 132.5,
+                            priceChange: 1.2,
+                            priceChangePercent: 0.91,
+                            dayChangeValue: 48,
+                            peRatio: 28,
+                            quantity: 40,
+                            totalCostBasis: 3408,
+                            totalValue: 5300,
+                            totalGainLoss: 1892,
+                            percentGainLoss: 55.52,
+                            purchaseDate: '2016-01-04',
+                            percentOfGroup: 66.25,
+                        },
+                    ],
+                },
                 taxes: {
                     longTermGain: 800,
                     shortTermGain: -200,
@@ -74,12 +95,6 @@ async function testReadSimulationReport(): Promise<void> {
                 agentLearning: { reuseScore: 0.81, improvementPotentialScore: 0.68, confidenceScore: 0.74, tags: ['bull'] },
                 context: { marketRegime: 'bull', volatilityLevel: 'medium' },
                 note: 'Focused run.',
-                files: {
-                    account: 'user-sessions/account.json',
-                    history: 'user-sessions/history.log',
-                    values: 'user-sessions/values.log',
-                    report: 'user-sessions/report.json',
-                },
             }),
     })
 

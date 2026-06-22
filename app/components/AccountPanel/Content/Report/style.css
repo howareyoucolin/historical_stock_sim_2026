@@ -110,6 +110,10 @@
     color: var(--muted);
 }
 
+.reportSectionNote {
+    margin-top: 10px;
+}
+
 .reportInlineMeta {
     font-size: 0.82rem;
     font-weight: 500;

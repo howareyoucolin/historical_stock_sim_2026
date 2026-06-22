@@ -4,7 +4,7 @@ import path from 'node:path'
 import { buildValuesSummary, type ValuesSummary } from '../account/values-summary'
 import { fetchDefaultUserAccountSessionView } from '../account/show'
 import { readDefaultUserAccountMeta, USER_SESSIONS_DIRECTORY_NAME, type AccountMeta } from '../account/model'
-import type { DefaultUserAccountSessionView } from '../account/view-model'
+import type { AccountStockTableRow, DefaultUserAccountSessionView } from '../account/view-model'
 import { readHistoryLogEntries } from '../history/log'
 import { DATA_DIRECTORY_NAME } from '../stock/download-data'
 import { DATA_FILE_NAME, type BuiltDataPayload } from '../stock/build-data'
@@ -35,6 +35,8 @@ export interface ReportBuildOptions {
     volatilityLevel?: string
     note?: string
 }
+
+type ReportPositionRow = Omit<AccountStockTableRow, 'lots'>
 
 export interface SimulationReport {
     reportVersion: number
@@ -100,6 +102,10 @@ export interface SimulationReport {
         largestPositionPct: number
         maxDrawdownPct: number | null
     }
+    positions: {
+        asOfDate: string
+        rows: ReportPositionRow[]
+    }
     taxes: {
         longTermGain: number
         shortTermGain: number
@@ -128,12 +134,6 @@ export interface SimulationReport {
         volatilityLevel: string
     }
     note: string
-    files: {
-        account: string
-        history: string
-        values: string
-        report: string
-    }
 }
 
 export interface AssessmentItem {
@@ -706,6 +706,10 @@ export async function buildSimulationReport(
             largestPositionPct: Number(largestPositionPct.toFixed(2)),
             maxDrawdownPct,
         },
+        positions: {
+            asOfDate: view.account.date,
+            rows: view.rows.map(({ lots: _lots, ...row }) => ({ ...row })),
+        },
         taxes: {
             longTermGain: Number(taxSummary.longTermGain.toFixed(2)),
             shortTermGain: Number(taxSummary.shortTermGain.toFixed(2)),
@@ -735,12 +739,6 @@ export async function buildSimulationReport(
             volatilityLevel: normalizeText(options.volatilityLevel, 'unknown'),
         },
         note: looksProceduralNote(normalizedNote) ? generatedNote : normalizedNote,
-        files: {
-            account: `${USER_SESSIONS_DIRECTORY_NAME}/${sessionId === 'default' ? 'account.json' : `${sessionId}.account.json`}`,
-            history: `${USER_SESSIONS_DIRECTORY_NAME}/${sessionId === 'default' ? 'history.log' : `${sessionId}.history.log`}`,
-            values: `${USER_SESSIONS_DIRECTORY_NAME}/${sessionId === 'default' ? 'values.log' : `${sessionId}.values.log`}`,
-            report: outputPath,
-        },
     }
 
     const absoluteOutputPath = path.isAbsolute(outputPath) ? outputPath : path.join(cwd(), outputPath)

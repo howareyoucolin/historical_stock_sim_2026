@@ -5,6 +5,7 @@ import { useEffect } from 'react'
 import './style.css'
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks'
 import type { SimulationReport } from '../../../../actions/report/build'
+import type { AccountStockTableRow } from '../../../../actions/account/view-model'
 import { money, percent, signedMoney, signedPercent, tone } from '../../../shared/format'
 import { loadReport } from './actions'
 
@@ -20,6 +21,8 @@ function SummaryRow({ label, value, detail, valueClass = '' }: { label: string; 
         </div>
     )
 }
+
+type ReportPositionRow = Omit<AccountStockTableRow, 'lots'>
 
 // Render the saved simulation report as a flowing memo-style document instead of dashboard cards.
 export function Report() {
@@ -95,6 +98,7 @@ export function Report() {
         interestTax: 0,
         estimatedTax: 0,
     }
+    const positions = safeReport.positions ?? { asOfDate: simulation.simEndDate, rows: [] as ReportPositionRow[] }
     const takeaways = safeReport.takeaways ?? {
         summary: 'No written assessment is available for this report yet.',
         worked: [],
@@ -200,6 +204,47 @@ export function Report() {
                         <dd>{activity.uniqueStocksTraded}</dd>
                     </div>
                 </dl>
+            </section>
+
+            <section className="reportSection">
+                <h2>Positions At Report Date</h2>
+                {positions.rows.length === 0 ? (
+                    <p className="reportEmptyLine">—</p>
+                ) : (
+                    <div className="reportTableScroll">
+                        <table className="reportTable">
+                            <thead>
+                                <tr>
+                                    <th className="alignLeft" scope="col">Symbol</th>
+                                    <th scope="col">Quantity</th>
+                                    <th scope="col">Last Price</th>
+                                    <th scope="col">Market Value</th>
+                                    <th scope="col">Unit Cost</th>
+                                    <th scope="col">Total Cost</th>
+                                    <th scope="col">$ Gain/Loss</th>
+                                    <th scope="col">% Gain/Loss</th>
+                                    <th scope="col">% of Group</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {positions.rows.map((row) => (
+                                    <tr key={row.stockCode}>
+                                        <td className="alignLeft reportPositionName">{row.stockCode}</td>
+                                        <td>{row.quantity}</td>
+                                        <td>{money(row.currentPrice)}</td>
+                                        <td>{money(row.totalValue)}</td>
+                                        <td>{money(row.averageCost)}</td>
+                                        <td>{money(row.totalCostBasis)}</td>
+                                        <td className={tone(row.totalGainLoss)}>{signedMoney(row.totalGainLoss)}</td>
+                                        <td className={tone(row.totalGainLoss)}>{signedPercent(row.percentGainLoss)}</td>
+                                        <td>{percent(row.percentOfGroup)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+                <p className="reportMuted reportSectionNote">As of {positions.asOfDate}</p>
             </section>
 
             <section className="reportSection">
