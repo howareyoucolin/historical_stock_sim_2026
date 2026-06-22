@@ -12,7 +12,7 @@ Use this skill when the task is to send the current session artifacts from
 
 - Uploading the latest completed session report to the report website
 - Sending the companion session artifacts that belong with the report
-- Reusing the project's current filename-based upload contract
+- Reusing the project's current upload contract
 
 The report website currently expects these five files from `user-sessions/`:
 
@@ -26,6 +26,7 @@ The current endpoint behavior is:
 
 - `report.json` is read and stored in the database
 - the other four files are copied into server storage and referenced by path
+- the preferred production flow is multipart file upload
 
 ## Required behavior
 
@@ -45,30 +46,30 @@ The stock report website currently accepts a POST to:
 
 - `https://stock.369usa.com/insert.php?key=<SECRET>`
 
-With these form fields:
+With these multipart form fields:
 
-- `report_json_file=report.json`
-- `account_json_file=account.json`
-- `history_log_file=history.log`
-- `meta_json_file=meta.json`
-- `values_log_file=values.log`
+- `report_json_file=@simulator/user-sessions/report.json`
+- `account_json_file=@simulator/user-sessions/account.json`
+- `history_log_file=@simulator/user-sessions/history.log`
+- `meta_json_file=@simulator/user-sessions/meta.json`
+- `values_log_file=@simulator/user-sessions/values.log`
 
 ## Suggested command pattern
 
-From the `simulator/` directory, a typical upload command is:
+From the repo root, a typical upload command is:
 
 ```bash
 curl -X POST 'https://stock.369usa.com/insert.php?key=<SECRET>' \
-  -d 'report_json_file=report.json' \
-  -d 'account_json_file=account.json' \
-  -d 'history_log_file=history.log' \
-  -d 'meta_json_file=meta.json' \
-  -d 'values_log_file=values.log'
+  -F 'report_json_file=@simulator/user-sessions/report.json' \
+  -F 'account_json_file=@simulator/user-sessions/account.json' \
+  -F 'history_log_file=@simulator/user-sessions/history.log' \
+  -F 'meta_json_file=@simulator/user-sessions/meta.json' \
+  -F 'values_log_file=@simulator/user-sessions/values.log'
 ```
 
-This assumes the production report website is configured to read the source
-session files from this repo's `simulator/user-sessions/` directory or an
-equivalent server-side path mapping.
+For local compatibility, the endpoint still supports the older filename-based
+request shape when the report website can read a configured session files
+directory on the same machine.
 
 ## Guardrails
 
