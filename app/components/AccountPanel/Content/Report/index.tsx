@@ -207,47 +207,6 @@ export function Report() {
             </section>
 
             <section className="reportSection">
-                <h2>Positions At Report Date</h2>
-                {positions.rows.length === 0 ? (
-                    <p className="reportEmptyLine">—</p>
-                ) : (
-                    <div className="reportTableScroll">
-                        <table className="reportTable">
-                            <thead>
-                                <tr>
-                                    <th className="alignLeft" scope="col">Symbol</th>
-                                    <th scope="col">Quantity</th>
-                                    <th scope="col">Last Price</th>
-                                    <th scope="col">Market Value</th>
-                                    <th scope="col">Unit Cost</th>
-                                    <th scope="col">Total Cost</th>
-                                    <th scope="col">$ Gain/Loss</th>
-                                    <th scope="col">% Gain/Loss</th>
-                                    <th scope="col">% of Group</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {positions.rows.map((row) => (
-                                    <tr key={row.stockCode}>
-                                        <td className="alignLeft reportPositionName">{row.stockCode}</td>
-                                        <td>{row.quantity}</td>
-                                        <td>{money(row.currentPrice)}</td>
-                                        <td>{money(row.totalValue)}</td>
-                                        <td>{money(row.averageCost)}</td>
-                                        <td>{money(row.totalCostBasis)}</td>
-                                        <td className={tone(row.totalGainLoss)}>{signedMoney(row.totalGainLoss)}</td>
-                                        <td className={tone(row.totalGainLoss)}>{signedPercent(row.percentGainLoss)}</td>
-                                        <td>{percent(row.percentOfGroup)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-                <p className="reportMuted reportSectionNote">As of {positions.asOfDate}</p>
-            </section>
-
-            <section className="reportSection">
                 <h2>Tax Profile</h2>
                 <dl className="reportFacts">
                     <div>
@@ -292,6 +251,47 @@ export function Report() {
                     <p className="reportBody">{safeReport.note}</p>
                 </section>
             )}
+
+            <section className="reportSection">
+                <h2>Positions At Report Date</h2>
+                {positions.rows.length === 0 ? (
+                    <p className="reportEmptyLine">—</p>
+                ) : (
+                    <div className="reportTableScroll">
+                        <table className="reportTable">
+                            <thead>
+                                <tr>
+                                    <th className="alignLeft" scope="col">Symbol</th>
+                                    <th scope="col">Quantity</th>
+                                    <th scope="col">Last Price</th>
+                                    <th scope="col">Market Value</th>
+                                    <th scope="col">Unit Cost</th>
+                                    <th scope="col">Total Cost</th>
+                                    <th scope="col">$ Gain/Loss</th>
+                                    <th scope="col">% Gain/Loss</th>
+                                    <th scope="col">% of Group</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {positions.rows.map((row) => (
+                                    <tr key={row.stockCode}>
+                                        <td className="alignLeft reportPositionName">{row.stockCode}</td>
+                                        <td>{row.quantity}</td>
+                                        <td>{money(row.currentPrice)}</td>
+                                        <td>{money(row.totalValue)}</td>
+                                        <td>{money(row.averageCost)}</td>
+                                        <td>{money(row.totalCostBasis)}</td>
+                                        <td className={tone(row.totalGainLoss)}>{signedMoney(row.totalGainLoss)}</td>
+                                        <td className={tone(row.totalGainLoss)}>{signedPercent(row.percentGainLoss)}</td>
+                                        <td>{percent(row.percentOfGroup)}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
+                <p className="reportMuted reportSectionNote">As of {positions.asOfDate}</p>
+            </section>
         </article>
     )
 }
