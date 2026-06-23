@@ -98,6 +98,24 @@ async function testAccountDepositCommand(): Promise<void> {
     assert.equal(result.output, 'Updated account cash by -25.50 in user-sessions/account.json.')
 }
 
+// Verify account deposit forwards a --note to the session updater and echoes it on the JSON payload.
+async function testAccountDepositCommandWithNote(): Promise<void> {
+    let capturedNote: string | undefined
+    const runCommand = createRunCommand({
+        depositIntoDefaultUserAccount: async (valueCash, note) => {
+            capturedNote = note
+
+            return { date: '2018-03-10', cash: valueCash, positions: {} }
+        },
+    })
+
+    const result = await runCommand('account deposit 2500 --note="Monthly recurring contribution" --json')
+
+    assert.equal(result.exitCode, 0)
+    assert.equal(capturedNote, 'Monthly recurring contribution')
+    assert.equal(JSON.parse(result.output).note, 'Monthly recurring contribution')
+}
+
 // Verify account buy calls the shared purchase action with the provided stock code and quantity and returns a short success message.
 async function testAccountBuyCommand(): Promise<void> {
     let capturedStockCode = ''
@@ -436,7 +454,7 @@ async function testAccountCommandUsage(): Promise<void> {
     assert.equal(badShowResult.exitCode, 1)
     assert.equal(badShowResult.output, 'Usage: account show')
     assert.equal(badDepositResult.exitCode, 1)
-    assert.equal(badDepositResult.output, 'Usage: account deposit <value_cash>')
+    assert.equal(badDepositResult.output, 'Usage: account deposit <value_cash> [--note=<text>]')
     assert.equal(badBuyResult.exitCode, 1)
     assert.match(badBuyResult.output, /^Usage: account buy <stock_code> <quantity\|--amount=<dollars>\|max>/)
     assert.equal(badSellResult.exitCode, 1)
@@ -726,6 +744,19 @@ async function testJsonModeRendersData(): Promise<void> {
     assert.deepEqual(JSON.parse(result.output), { date: '2020-02-14' })
 }
 
+// Verify --json results are flagged for verbatim rendering and carry no ANSI color codes, so machine
+// consumers parse clean JSON instead of color-wrapped text.
+async function testJsonModeOutputIsUncolored(): Promise<void> {
+    const runCommand = createRunCommand({
+        fetchAccountSession: async () => ({ date: '2020-02-14', cash: 0, positions: {} }),
+    })
+
+    const result = await runCommand('date show --json')
+
+    assert.equal(result.json, true)
+    assert.ok(!result.output.includes('\u001b'), 'JSON output must not contain ANSI escape codes')
+}
+
 // Verify --json wraps a plain-message command (no structured data) as a message object.
 async function testJsonModeWrapsMessage(): Promise<void> {
     const runCommand = createRunCommand()
@@ -929,6 +960,7 @@ export async function runCliCommandTests(): Promise<void> {
     await testAccountSellCommand()
     await testAccountSellCommandWithoutNote()
     await testAccountDepositCommand()
+    await testAccountDepositCommandWithNote()
     await testDateNextCommand()
     await testDateNextMultipleCommand()
     await testDateSetCommand()
@@ -957,6 +989,7 @@ export async function runCliCommandTests(): Promise<void> {
     await testStockCommandsReportSkips()
     await testJsonModeRendersData()
     await testJsonModeWrapsMessage()
+    await testJsonModeOutputIsUncolored()
     await testAccountBuyByAmount()
     await testAccountBuyMax()
     await testAccountBuyDryRun()

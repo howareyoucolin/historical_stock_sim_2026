@@ -5,6 +5,7 @@ import path from 'node:path'
 
 import { depositIntoDefaultUserAccountSession } from './deposit'
 import { readDefaultUserAccountSession, writeDefaultUserAccountSession } from './model'
+import { readHistoryLogEntries } from '../history/log'
 
 // Build a temporary repo root so deposit action tests can mutate an isolated session file.
 async function createTempRepoRoot(): Promise<string> {
@@ -75,8 +76,27 @@ async function testDepositIntoDefaultUserAccountSession(): Promise<void> {
     assert.equal(savedAccount.cash, 950)
 }
 
+// Verify an optional note is recorded on the DEPOSIT history row so contributions can be annotated.
+async function testDepositIntoDefaultUserAccountSessionRecordsNote(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+
+    await writeDefaultUserAccountSession(
+        { date: '2018-03-10', cash: 0, positions: {} },
+        { cwd: () => tempRepoRoot }
+    )
+
+    await depositIntoDefaultUserAccountSession(2500, { cwd: () => tempRepoRoot }, 'Monthly recurring contribution')
+
+    const entries = await readHistoryLogEntries({ cwd: () => tempRepoRoot })
+
+    assert.equal(entries.length, 1)
+    assert.match(entries[0], /DEPOSIT/)
+    assert.match(entries[0], /note="Monthly recurring contribution"/)
+}
+
 // Run the focused deposit action tests that protect cash mutations on the shared account file.
 export async function runDepositAccountActionTests(): Promise<void> {
     await testDepositIntoDefaultUserAccountSessionInvalidCash()
     await testDepositIntoDefaultUserAccountSession()
+    await testDepositIntoDefaultUserAccountSessionRecordsNote()
 }

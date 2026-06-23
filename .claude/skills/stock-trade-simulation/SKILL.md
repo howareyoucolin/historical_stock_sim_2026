@@ -41,10 +41,13 @@ When the user asks to start a new simulation:
    until these are clear:
    - The strategy itself: which stocks/sectors, entry and exit rules, position
      sizing, risk limits, rebalance cadence.
-   - **End date / time horizon** — defaults to the current configured market-data
-     end date in `config/download-date-range.json`, which is `2026-06-15` right
-     now, unless the user specifies otherwise; the run loop advances until this
-     date is reached.
+   - **End date / time horizon** — defaults to the last available trading day,
+     which is `2026-06-12` right now, unless the user specifies otherwise; the run
+     loop advances until this date is reached. Note the `end` in
+     `config/download-date-range.json` (`2026-06-15`) is the *exclusive* download
+     boundary, so the last trading day with data is the day before it
+     (`2026-06-12`) — target that, not the config value, or the final `date next`
+     will fail with no trading day available.
    - The contribution schedule, only if the user wants to change it: the default
      is a recurring `2500` deposit on the first trading day of every month (see
      below). Confirm a different amount, cadence, or a one-time-only deposit only
@@ -53,7 +56,8 @@ When the user asks to start a new simulation:
    are easier to execute faithfully and to audit.
 2. **Confirm setup overrides** (use these defaults unless the user says otherwise):
    - Start date: `2016-01-04`
-   - End date: the configured data end date, currently `2026-06-15`
+   - End date: the last available trading day, currently `2026-06-12` (the day
+     before the exclusive `2026-06-15` download boundary)
    - Initial cash deposit: `200000`
    - Recurring contribution: `2500` deposited on the first trading day of every
      month, for the whole run (not a one-time deposit). The first month's `2500`
@@ -152,6 +156,28 @@ keeps a multi-year run to a few hundred steps instead of thousands.) Use batch
 files for multi-command *setup* sequences, but advance the clock in these
 irregular `date next` hops until the end condition is met.
 
+#### Scripted execution for purely mechanical strategies
+
+For a fully mechanical, rule-based strategy (e.g. fixed buckets, market-cap
+weighting, a monthly contribution, and a fixed rebalance cadence), a multi-year
+run can be hundreds of hops and many hundreds of trades — impractical to drive
+turn-by-turn. In that case it is acceptable to drive the run with a **script that
+calls the CLI** (the same `npm run cli -- ...` commands) in a loop, *provided it
+still honors every guardrail*:
+
+- **CLI only** — the script issues CLI commands; it must not read `market-data/`
+  or session files, or import the simulator's source to shortcut a decision.
+- **No future knowledge** — each decision uses only data the CLI returns as of
+  the simulated date (`stock screen`/`status` figures), never post-date facts.
+- **Still pace and contribute** — vary the `date next` hop (1–10), make the
+  monthly contribution on the first observed trading day of each new month, and
+  attach a data-grounded `--note` to every trade just as a manual run would.
+- **React to failures** — check each command's result; a non-zero exit (e.g. the
+  data-boundary `date next`) must end the loop cleanly, not crash silently.
+
+This is an execution convenience for mechanical rules, not license to bypass the
+role-play: a discretionary strategy should still be driven hop-by-hop.
+
 ### End condition
 
 After each advance, read the current date with `date show --json` and stop once it
@@ -227,7 +253,8 @@ better than continuing to earn interest in cash.
   the post-upload `account init` performed by the upload skill once the report
   has been successfully uploaded.
 - Ask for and confirm the strategy before the first trade; the end date
-  defaults to the configured market-data end date (currently `2026-06-15`)
-  unless the user specifies one.
+  defaults to the last available trading day (currently `2026-06-12`, the day
+  before the exclusive `2026-06-15` download boundary) unless the user specifies
+  one.
 - Only run `report build` after the simulation reaches the final end date, unless
   the user explicitly asks for a report earlier.

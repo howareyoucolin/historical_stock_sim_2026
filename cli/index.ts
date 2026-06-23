@@ -8,10 +8,11 @@ import { formatCliResultOutput } from './output'
 
 const CLI_PROMPT = 'stocksimulate> '
 
-// Print a command result to stdout.
-function renderResult(result: { output: string }): void {
+// Print a command result to stdout. JSON-mode output is printed verbatim so machine consumers get
+// clean, parseable JSON; human output is wrapped in the shell's gray ANSI styling.
+function renderResult(result: { output: string; json?: boolean }): void {
     if (result.output) {
-        console.log(formatCliResultOutput(result.output))
+        console.log(result.json ? result.output : formatCliResultOutput(result.output))
     }
 }
 

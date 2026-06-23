@@ -13,6 +13,13 @@ Three modes, same commands:
   ```bash
   npm run cli -- <command> [args...]
   ```
+  For automation, add npm's `--silent` so npm's own `> tsx ...` lifecycle banner
+  is suppressed and stdout is *only* the command output:
+  ```bash
+  npm run --silent cli -- <command> [args...] --json
+  ```
+  In `--json` mode the payload is printed verbatim (no ANSI color codes), so the
+  output parses directly as JSON without any stripping.
 - **Batch:** run a sequence of commands from a file (one per line; blank lines
   and `#` comments are skipped; each line is echoed). Exits non-zero if any line
   failed.
@@ -85,7 +92,7 @@ These can appear anywhere in a command:
 | `account sell <code> <qty>` | Sell `qty` shares (FIFO across lots). |
 | `account sell <code> all` | Sell the entire position in `<code>`. |
 | `account sell <code> --percent=<p>` | Sell `floor(owned × p/100)` shares. |
-| `account deposit <cash>` | Add `<cash>` (negative withdraws). |
+| `account deposit <cash>` | Add `<cash>` (negative withdraws). Accepts `--note=<text>` to annotate the DEPOSIT history row (e.g. a recurring contribution). |
 | `account init` | Reset the (active session's) account to defaults (`date` `2016-01-04`, `cash` `0`, no positions) and wipe its history + value logs. |
 
 Buy/sell extras (any order):
@@ -149,6 +156,45 @@ Space-separated `key=value` tokens; only relevant fields appear. The optional
 
 - Leading token is the real-world timestamp; `sim=` is the simulated date.
 - `cash=` is the signed cash impact; `term=` is `SHORT`/`LONG` on sells.
+
+## report.json shape
+
+`report build` writes (and `--json` returns) a single object with these
+top-level keys. Note the date fields are `simStartDate`/`simEndDate` (not
+`startDate`/`endDate`), and `positions` is an **object** (`{ asOfDate, rows }`),
+not a bare array — `positions.rows` is the per-holding list.
+
+```jsonc
+{
+  "reportVersion": 1,
+  "sessionId": "default",
+  "objective":        { "title", "primaryMetric", "constraints": [string] },
+  "strategy":         { "name", "version", "summary" },
+  "thesis":           { "summary", "beliefs": [string] },
+  "simulation":       { "simStartDate", "simEndDate", "startedAt", "finishedAt",
+                        "startingValue", "endingCash", "endingValue",
+                        "totalReturnPct", "annualizedReturnPct" },
+  "activity":         { "historyEventCount", "buyCount", "sellCount",
+                        "dividendCount", "interestCount",
+                        "corporateActionCount", "uniqueStocksTraded" },
+  "portfolioSummary": { "principal", "currentTotal", "totalGainLoss",
+                        "totalReturnPct", "annualizedReturnPct",
+                        "unrealizedGainLoss", "unrealizedGainLossPct" },
+  "benchmark":        { "stockCode", "endingValue", "annualizedReturnPct",
+                        "methodology" },        // built-in SPY on the DEPOSIT cashflow schedule
+  "portfolio":        { "openPositionCount", "cashPct", "largestPositionPct",
+                        "maxDrawdownPct" },
+  "positions":        { "asOfDate", "rows": [ /* one object per holding */ ] },
+  "taxes":            { "longTermGain", "shortTermGain", "dividendGain",
+                        "interestGain", "longTermTax", "shortTermTax",
+                        "dividendTax", "interestTax", "estimatedTax" },
+  "takeaways":        { "summary", "worked": [], "didNotWork": [], "nextChanges": [] },
+  "agentLearning":    { "reuseScore", "improvementPotentialScore",
+                        "confidenceScore", "tags": [string] },
+  "context":          { "marketRegime", "volatilityLevel" },
+  "note":             "string"
+}
+```
 
 ## Typical automation loop (JSON-driven)
 

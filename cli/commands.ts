@@ -181,7 +181,7 @@ export function createRunCommand({
     function renderJson(result: CommandResult): CommandResult {
         const payload = result.data !== undefined ? result.data : result.exitCode === 0 ? { message: result.output } : { error: result.output }
 
-        return { ...result, output: JSON.stringify(payload, null, 2) }
+        return { ...result, output: JSON.stringify(payload, null, 2), json: true }
     }
 
     // Execute a single CLI command and forward business logic to shared actions. A global `--json`

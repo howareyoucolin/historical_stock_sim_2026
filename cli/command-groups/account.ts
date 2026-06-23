@@ -12,7 +12,7 @@ import type { CommandResult } from '../command-types'
 export interface AccountCommandDependencies {
     initializeDefaultUserAccount?: () => Promise<{ date: string; cash: number }>
     fetchAccountView?: typeof fetchDefaultUserAccountSessionView
-    depositIntoDefaultUserAccount?: (valueCash: number) => Promise<{ date: string; cash: number }>
+    depositIntoDefaultUserAccount?: (valueCash: number, note?: string) => Promise<{ date: string; cash: number }>
     buyStockInDefaultUserAccount?: typeof buyStockInDefaultUserAccountSession
     sellStockInDefaultUserAccount?: typeof sellStockInDefaultUserAccountSession
     quoteStockForAccountDate?: typeof getStockQuoteForAccountDate
@@ -21,13 +21,14 @@ export interface AccountCommandDependencies {
 export const ACCOUNT_HELP_LINES = [
     '  account buy <code> <qty> Buy shares (also: --amount=<$>, max, --note=<text>, --dry-run)',
     '  account sell <code> <qty> Sell shares (also: all, --percent=<pct>, --note=<text>, --dry-run)',
-    '  account deposit <cash> Add cash to the shared account session file',
+    '  account deposit <cash> Add cash to the shared account session file (also: --note=<text>)',
     '  account init           Reset the shared account session file',
     '  account show           Show the tracked stock table for the shared account',
 ]
 
 const BUY_USAGE = 'Usage: account buy <stock_code> <quantity|--amount=<dollars>|max> [--note=<text>] [--dry-run]'
 const SELL_USAGE = 'Usage: account sell <stock_code> <quantity|all|--percent=<pct>> [--note=<text>] [--dry-run]'
+const DEPOSIT_USAGE = 'Usage: account deposit <value_cash> [--note=<text>]'
 
 // Format a numeric dollar amount so CLI output stays consistent for account actions.
 function formatCurrency(value: number): string {
@@ -98,7 +99,8 @@ function failure(label: string, error: unknown): CommandResult {
 export function createAccountCommandHandler({
     initializeDefaultUserAccount = initializeDefaultUserAccountSession,
     fetchAccountView = fetchDefaultUserAccountSessionView,
-    depositIntoDefaultUserAccount = depositIntoDefaultUserAccountSession,
+    depositIntoDefaultUserAccount = (valueCash: number, note?: string) =>
+        depositIntoDefaultUserAccountSession(valueCash, {}, note),
     buyStockInDefaultUserAccount = buyStockInDefaultUserAccountSession,
     sellStockInDefaultUserAccount = sellStockInDefaultUserAccountSession,
     quoteStockForAccountDate = getStockQuoteForAccountDate,
@@ -130,24 +132,41 @@ export function createAccountCommandHandler({
         }
     }
 
-    // Run `account deposit <cash>`: apply a (possibly negative) cash delta.
+    // Run `account deposit <cash> [--note=<text>]`: apply a (possibly negative) cash delta, with an
+    // optional note recorded on the DEPOSIT history row (e.g. to mark a recurring contribution).
     async function runDeposit(args: string[]): Promise<CommandResult> {
-        if (args.length !== 1) {
-            return { output: 'Usage: account deposit <value_cash>', shouldExit: false, exitCode: 1 }
+        let note: string | undefined
+        const positional: string[] = []
+
+        for (const arg of args) {
+            if (arg.startsWith('--note=')) {
+                const text = arg.slice('--note='.length)
+                if (text.length > 0) {
+                    note = text
+                }
+            } else if (arg.startsWith('--')) {
+                return { output: `Unknown flag: ${arg}`, shouldExit: false, exitCode: 1 }
+            } else {
+                positional.push(arg)
+            }
         }
 
-        const valueCash = Number(args[0])
+        if (positional.length !== 1) {
+            return { output: DEPOSIT_USAGE, shouldExit: false, exitCode: 1 }
+        }
+
+        const valueCash = Number(positional[0])
 
         if (!Number.isFinite(valueCash)) {
             return { output: 'Cash value must be a finite number.', shouldExit: false, exitCode: 1 }
         }
 
         try {
-            const account = await depositIntoDefaultUserAccount(valueCash)
+            const account = await depositIntoDefaultUserAccount(valueCash, note)
 
             return {
                 output: `Updated account cash by ${formatCurrency(valueCash)} in ${activeAccountSessionRelativePath()}.`,
-                data: { action: 'deposit', cashDelta: valueCash, cash: account.cash, date: account.date },
+                data: { action: 'deposit', cashDelta: valueCash, cash: account.cash, date: account.date, note },
                 shouldExit: false,
                 exitCode: 0,
             }
