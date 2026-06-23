@@ -235,12 +235,8 @@ better than continuing to earn interest in cash.
   cadence, the built-in SPY benchmark auto-adjusts (just read it from
   `report.json`); recompute the static buy-and-hold figure with a parallel
   session only when needed.
-- **Deliver it both ways:** always output the full report inline in the chat, and
-  also email it to `howareyoucolin@gmail.com` (subject like
-  `Stock Trade Simulation Report — <start> to <end>`) using the available
-  email/Gmail integration. If no email integration is available, say so — the
-  inline report is the fallback. Mention that the run is left in the default
-  session for UI investigation.
+- **Deliver it:** output the full report inline in the chat. Mention that the run
+  is left in the default session for UI investigation.
 
 ## Guardrails
 
