@@ -39,6 +39,12 @@ The current endpoint behavior is:
 4. Use the report website upload endpoint only after the key is provided.
 5. Tell the user whether the upload succeeded and include the returned report id
    when available.
+6. **After a successful upload only** (the server returns `ok: true` with a
+   report id), clear the session for a clean next start: run
+   `npm run cli -- account init`, which resets the default account and wipes its
+   `history.log` and `values.log`. The published copy already lives on the report
+   website, so the local reset loses nothing. If the upload failed, do **not**
+   clear — leave the session intact so it can be retried.
 
 ## Request shape
 

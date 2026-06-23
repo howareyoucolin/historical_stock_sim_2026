@@ -14,7 +14,16 @@
       "Bash(node -e 'let s=\"\";process.stdin.on\\(\"data\",d=>s+=d\\).on\\(\"end\",\\(\\)=>{const a=JSON.parse\\(s\\);console.log\\(\"date:\",a.date,\"cash:\",a.cash\\);let basis=0;for\\(const [code,lots] of Object.entries\\(a.positions\\)\\){const cb=lots.reduce\\(\\(t,l\\)=>t+l.quantity*l.cost_per_share,0\\);const q=lots.reduce\\(\\(t,l\\)=>t+l.quantity,0\\);basis+=cb;console.log\\(`  ${code}: qty=${q} costBasis=${cb.toFixed\\(2\\)} lots=${lots.length}`\\)}console.log\\(\"TOTAL principal \\(cost basis\\):\", basis.toFixed\\(2\\)\\)}\\)')",
       "Bash(npm install *)",
       "Bash(echo \"=== tsc exit: $? ===\")",
-      "Bash(git restore *)"
+      "Bash(git restore *)",
+      "Bash(python3 gen_year.py 2016-02 12 AAPL,AMZN,GOOGL,MSFT 2016)",
+      "Bash(grep -vE \"^>|^$|stocksimulate\")",
+      "Bash(time npx tsx cli/index.ts date show --json)",
+      "Bash(grep -vE \"^>|stocksimulate|^$\")",
+      "Bash(python3 driver.py --end 2026-06-15 --stop-year 2017 --tech AAPL,AMZN,GOOGL,MSFT --last-month 2016-01 --seed 2016)",
+      "Bash(python3 -c \"import sys,json,re; s=re.sub\\(r'\\\\x1b\\\\[[0-9;]*m','',sys.stdin.read\\(\\)\\); d=json.loads\\(s[s.find\\('{'\\):s.rfind\\('}'\\)+1]\\); [print\\(f\\\\\"{r['stockCode']:6} cap={r['marketCap']/1000:7.1f}B pe={r['peRatio']}\\\\\"\\) for r in sorted\\(d['rows'],key=lambda x:-x['marketCap']\\)]\")",
+      "Bash(grep -vE \"^>|stocksimulate|^$|note\")",
+      "Bash(python3 driver.py --end 2026-06-15 --stop-year 2018 --tech AAPL,AMZN,GOOGL,MSFT,META --last-month 2017-01 --seed 2017)",
+      "Bash(python3 -c \"import sys,json,re; s=re.sub\\(r'\\\\x1b\\\\[[0-9;]*m','',sys.stdin.read\\(\\)\\); d=json.loads\\(s[s.find\\('{'\\):s.rfind\\('}'\\)+1]\\); print\\('keys:',list\\(d.keys\\(\\)\\)\\); print\\('sample row:', json.dumps\\(d.get\\('rows',[{}]\\)[0], indent=0\\)\\); print\\('summary keys:', list\\(d.get\\('summary',{}\\).keys\\(\\)\\)\\)\")"
     ]
   }
 }

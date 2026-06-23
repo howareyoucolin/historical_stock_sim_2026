@@ -175,9 +175,12 @@ better than continuing to earn interest in cash.
 
 ## 4. End of simulation
 
-- **Do not reset or clean up.** Leave the account, history, and value logs exactly
-  as the run left them in the default session — the user investigates the details
-  in the UI.
+- **Do not reset or clean up (until the report is uploaded).** Leave the account,
+  history, and value logs exactly as the run left them in the default session so
+  the user can investigate the details in the UI. The one exception is the
+  post-upload reset owned by `.claude/skills/upload-stock-report/SKILL.md`: once
+  the report has been **successfully uploaded**, that skill clears the session
+  (`account init`) for a clean next start. Never reset before a successful upload.
 - **Build the structured report only at the true end of the run.** Once the
   simulation reaches or passes the agreed end date, run `report build` to create
   `report.json` for the completed simulation. Do **not** build a report midway
@@ -190,6 +193,22 @@ better than continuing to earn interest in cash.
   (start date, deposits, end date); key decisions and notable trades; dividends
   received; final cash/holdings and total return (`account show`, `values show`);
   and what worked or didn't.
+- **Benchmarks — reuse, don't recompute.** `report build` already emits a
+  built-in S&P 500 (SPY) benchmark in `report.json` (`benchmark` block), invested
+  on the **same DEPOSIT cashflow schedule** with dividends reinvested. Use that as
+  the VOO / index comparison — do **not** spin up a separate `--session=voo` run
+  to recompute it. For the **default run config** (start `2016-01-04`, end
+  `2026-06-12` at the data boundary, `$200,000` initial + `$2,500`/month =
+  `$515,000` contributed) the reference terminal values are:
+  - **VOO / S&P 500 ≈ `$1,627,832`** (built-in SPY benchmark ≈ `$1,620,924`,
+    ~15.4% annualized) — equivalent, so cite the built-in figure.
+  - **Static Top-15 (Jan-2016 leaders) buy-and-hold ≈ `$2,024,722`.**
+
+  These cached numbers are valid **only for the default cashflow schedule above**.
+  If the user changes the start/end dates, initial deposit, or contribution
+  cadence, the built-in SPY benchmark auto-adjusts (just read it from
+  `report.json`); recompute the static buy-and-hold figure with a parallel
+  session only when needed.
 - **Deliver it both ways:** always output the full report inline in the chat, and
   also email it to `howareyoucolin@gmail.com` (subject like
   `Stock Trade Simulation Report — <start> to <end>`) using the available
@@ -204,7 +223,9 @@ better than continuing to earn interest in cash.
 - Maximize gain *within* the strategy's rules — don't override the strategy.
 - Account for tax (short- vs long-term gains, dividends, interest) and the
   interest earned on parked cash when deciding — optimize after-tax, not gross.
-- Always run on the default session; never reset the data at the end.
+- Always run on the default session; never reset the data at the end — except
+  the post-upload `account init` performed by the upload skill once the report
+  has been successfully uploaded.
 - Ask for and confirm the strategy before the first trade; the end date
   defaults to the configured market-data end date (currently `2026-06-15`)
   unless the user specifies one.
