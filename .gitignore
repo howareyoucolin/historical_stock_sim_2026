@@ -9,3 +9,8 @@ yarn-debug.log*
 yarn-error.log*
 .env*
 !.env.example
+
+# Per-simulation app/market-data improvement notes (generated, not tracked).
+# Keep the folder, ignore its contents.
+suggestions/*
+!suggestions/.gitkeep

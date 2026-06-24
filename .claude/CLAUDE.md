@@ -21,6 +21,9 @@ Read only the files relevant to the current task:
   the structured `report.json` artifact for a completed simulation.
 - `skills/stock-trade-simulation/SKILL.md`: workflow for running an automated
   stock trade simulation through the CLI (see also `commands.md`).
+- `skills/auto-strategy-sweep/SKILL.md`: workflow for continuously auto-running
+  many simulations, generating/adjusting strategy variants until a stop condition
+  or manual stop, leaving an app/market-data suggestion after each run.
 - `skills/upload-stock-report/SKILL.md`: workflow for uploading the completed
   session report and companion files to the report website, with an explicit
   secret-key prompt required before any upload attempt.

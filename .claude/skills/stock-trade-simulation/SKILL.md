@@ -238,6 +238,45 @@ better than continuing to earn interest in cash.
 - **Deliver it:** output the full report inline in the chat. Mention that the run
   is left in the default session for UI investigation.
 
+### Leave an improvement suggestion
+
+After the report is built, write exactly one suggestion file to the repo-root
+`suggestions/` folder capturing any **app/system or market-data** improvement the
+run surfaced. This is the canonical convention reused by `auto-strategy-sweep`.
+
+- **Scope — app/system or market data only.** Suggest improvements to the
+  simulator, CLI, reporting, or the market data itself. Do **not** put
+  trading-strategy ideas here; this folder is exclusively for tooling/data.
+  Examples: the data end-date boundary stopped the run early (extend it); `stock
+  screen` lacks a liquidity/volume filter; no sector field to build
+  sector-neutral strategies; the universe is survivorship-biased (add point-in-time
+  index membership / delisted names); a CLI flag was awkward or a `--json` payload
+  was missing a field.
+- **The folder is gitignored** (its contents are not committed); a `.gitkeep`
+  keeps the folder present. Create `suggestions/` if it is missing.
+- **Path:** `suggestions/<YYYY-MM-DD>-<short-slug>.md` using the real-world date
+  (today). If that name already exists, append `-2`, `-3`, …
+- **Format:**
+
+  ```markdown
+  # Suggestion — <app-system | market-data>
+
+  - Date: <real-world date>
+  - From simulation: <strategy name> (session <sessionId>, report id <id or n/a>)
+  - Category: app-system | market-data
+
+  ## Observation
+  What you actually hit during this run that motivated the idea (specific, grounded).
+
+  ## Suggestion
+  The concrete improvement to the app/system or market data.
+
+  ## Priority
+  low | medium | high — and a one-line why.
+  ```
+- If the run genuinely surfaced nothing new, write a one-line note saying so rather
+  than inventing or duplicating a suggestion.
+
 ## Guardrails
 
 - Never read source code or data files to inform decisions (CLI only).
@@ -254,3 +293,5 @@ better than continuing to earn interest in cash.
   one.
 - Only run `report build` after the simulation reaches the final end date, unless
   the user explicitly asks for a report earlier.
+- After every completed run, leave exactly one `suggestions/` note covering an
+  app/system or market-data improvement only — never a trading-strategy idea.
