@@ -66,13 +66,11 @@ These can appear anywhere in a command:
   source for `values show`.
 - **Report file** `user-sessions/report.json` — compact simulation summary
   artifact built by `report build` for storage, review, or later agent study.
-- **Market data** in `market-data/<CODE>/`: `history.json` (raw closes used to
-  price trades) and `data.json` (close + dividends + TTM EPS + P/E + shares
-  outstanding + market cap, used by
-  `stock status`/`history`/`price`/`compare`/`screen`). Market cap is
-  `close × sharesOutstanding` (shares from `config/shares-outstanding.json`, an
-  approximate current figure per ticker) and is reported in USD millions; ETFs
-  have no market cap.
+- **Market data** is served from the project database via the PHP API (no local
+  files). Each `stock status`/`history`/`price`/`compare`/`screen` reads close +
+  dividends + TTM EPS + P/E + shares outstanding + market cap **as of the simulated
+  date**. Market cap is reported in USD millions; names without share data (e.g.
+  index members/ETFs) have none.
 - **Pricing rule:** trades execute at the close on the simulated `date`. If that
   date is not a trading day for the stock, the command fails; advance with
   `date next` to land on one.
@@ -93,7 +91,7 @@ These can appear anywhere in a command:
 | `account sell <code> all` | Sell the entire position in `<code>`. |
 | `account sell <code> --percent=<p>` | Sell `floor(owned × p/100)` shares. |
 | `account deposit <cash>` | Add `<cash>` (negative withdraws). Accepts `--note=<text>` to annotate the DEPOSIT history row (e.g. a recurring contribution). |
-| `account init` | Reset the (active session's) account to defaults (`date` `2001-01-02`, `cash` `0`, no positions) and wipe its history + value logs. |
+| `account init` | Reset to a clean slate: empty the entire `user-sessions/` directory (every session, log, and report) and write a fresh default account (`date` `2001-01-02`, `cash` `0`, no positions). |
 
 Buy/sell extras (any order):
 
@@ -117,16 +115,18 @@ Success output: `<qty> stocks of <CODE> successfully bought.` / `...sold.`
 | Command | Effect |
 | --- | --- |
 | `stock list` | List every available stock code (`--json` returns the array). |
-| `stock info <code>` | Show the stock's curated basic profile: company name, segment, listing status, and simulation note. |
+| `stock info <code>` | Show the stock's profile from the database: company name, segment (sector), industry, and a short description. |
 | `stock price <code>` | One-line close + day change for the sim date. |
 | `stock status <code>` | Fuller snapshot: close, day change, P/E, TTM EPS, dividend, as of the sim date (falls back to the most recent prior trading day). |
 | `stock history <code>` | Daily series from the start of the stock's data through the sim date. |
 | `stock compare <code> [<code>...]` | Side-by-side table of several stocks' sim-date figures. |
 | `stock screen [filters]` | Screen all stocks. Filters: `--max-pe=`, `--min-pe=`, `--max-price=`, `--min-price=`, `--min-cap=`/`--max-cap=` (market cap in **billions**), `--dividends` (payers only), `--limit=`. |
-| `stock download <code>` | Download price history into `market-data/<code>/history.json`. |
-| `stock scrape-eps <code>` | Scrape TTM Net EPS into `eps.json`. |
-| `stock build <code>` | Combine `history.json` + `eps.json` into `data.json`. |
-| `stock seed` | Run download → scrape-eps → build for every ticker in `config/tickers.json`. |
+
+> **Legacy (pre-v2):** `stock download`, `stock scrape-eps`, `stock build`, and
+> `stock seed` belonged to the old local `market-data/` acquisition pipeline. In v2
+> all price/EPS/dividend data is served from the database, so these commands are no
+> longer part of the workflow (they would write to a `market-data/` folder nothing
+> reads). They remain in the CLI only for historical reference.
 
 ### Values & history
 

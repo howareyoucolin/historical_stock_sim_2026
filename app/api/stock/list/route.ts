@@ -4,7 +4,7 @@ import { buildStockListEntries } from '../../../actions/stock/list'
 
 export const runtime = 'nodejs'
 
-// Return every available stock code (market-data folders with a built data.json) for the analysis tab.
+// Return every available stock code (every symbol with price history in the database) for the analysis tab.
 export async function GET(): Promise<Response> {
     const entries = await buildStockListEntries()
 

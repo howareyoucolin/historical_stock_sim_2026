@@ -56,7 +56,7 @@ function formatStockListGrid(stockCodes: string[]): string {
 // also emit it as JSON) can render the human output without rebuilding it.
 export function formatStockList(stockCodes: string[]): string {
     if (stockCodes.length === 0) {
-        return 'No stocks available. Run `stock seed` to download the watchlist.'
+        return 'No stocks available. Check that the market-data API/database is reachable.'
     }
 
     return [`${stockCodes.length} stocks available:`, '', formatStockListGrid(stockCodes)].join('\n')

@@ -38,7 +38,7 @@ async function testShowStockList(): Promise<void> {
 async function testShowStockListEmpty(): Promise<void> {
     const output = await showStockList(createDependencies([]))
 
-    assert.equal(output, 'No stocks available. Run `stock seed` to download the watchlist.')
+    assert.equal(output, 'No stocks available. Check that the market-data API/database is reachable.')
 }
 
 // Verify list entries pair each (valid, sorted) code with its segment (DB sector) from the bulk fetch.

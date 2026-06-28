@@ -1,13 +1,17 @@
 # StockSimulate2026
 
-Small Next.js 13 app-router project running on port `8600`.
+Small Next.js 13 app-router project running on port `8600`. It simulates trading a
+frozen historical dataset (2001-01-02 → 2026-06-26) sourced from the project
+database via the PHP API.
 
 ## Prerequisites
 
-- Node.js and npm installed locally
-- Dependencies installed with `npm install`
-
-## Local Development
+- **Node.js 18+** and npm. The app and CLI fetch market data over HTTP, which needs
+  a global `fetch` (Node 18+; the repo targets Node 22 — `nvm use 22`).
+- The **market-data backend running**: the PHP site + MySQL (docker compose in
+  `../stock_report_website`). The app/CLI read prices from its API at
+  `http://localhost:8700` by default (override with `MARKET_DATA_API_BASE`).
+- The repo-root `./dev.sh` brings up the Docker backend and this app together.
 
 Install dependencies:
 
@@ -15,96 +19,76 @@ Install dependencies:
 npm install
 ```
 
-Start the dev server:
+## Local Development
 
 ```bash
-npm run dev
+npm run dev          # dev server at http://localhost:8600 (needs the PHP API up)
 ```
 
-Open the app at `http://localhost:8600`.
+Or from the repo root, start the backend + app in one go:
+
+```bash
+./dev.sh
+```
 
 ## CLI
 
-Start the local app CLI:
-
 ```bash
-npm run cli
+npm run cli                  # interactive shell
+npm run cli -- help          # one-shot command
+npm run cli -- account show --json
 ```
 
-This opens an interactive shell where you can run commands such as:
+Common commands (see `commands.md` for the full surface):
 
-- `help`
-- `account init`
-- `account buy AAPL 10`
-- `account deposit 500`
-- `account deposit -125.5`
-- `stock download AAPL`
-- `exit`
-- `quit`
+- `account init` — reset to a clean slate (empties `user-sessions/`, fresh account at `2001-01-02`).
+- `account deposit 200000` / `account buy AAPL 10` / `account sell AAPL all`
+- `date next 5` / `date set 2019-08-15` — advance the simulated clock.
+- `stock status AAPL` / `stock history AAPL` / `stock screen --max-pe=20` — observe, bounded to the sim date.
+- `report build` — write `user-sessions/report.json` for a completed run.
 
-You can also run one command directly:
-
-```bash
-npm run cli -- help
-```
-
-Download historical daily data for a stock code:
-
-```bash
-npm run cli -- stock download AAPL
-```
-
-Downloaded files are stored at `market-data/<STOCK_CODE>/history.json`.
-The current download range is `2016-01-01` through `2026-01-01`.
-After downloading a stock's history, you can buy shares for the account date with `account buy <STOCK_CODE> <QUANTITY>`.
-`account init` resets the simulator account date to `2016-01-04`, the first trading day after the New Year's holiday weekend.
-The CLI is only a controller here; the shared stock-download logic lives in `app/actions/`.
-The saved JSON is keyed by date for faster lookup, and each date entry includes only `close`, `isPayoutDate`, and `dividendPerShare`.
+Market data (prices, dividends, EPS, market cap) comes from the database via the API
+and is bounded to the simulated date — there are no local data files to download.
+(The legacy `stock download`/`scrape-eps`/`build`/`seed` commands belonged to the
+pre-v2 local pipeline and are no longer part of the workflow.)
 
 ## Production Build
 
-Create a production build:
-
 ```bash
-npm run build
+npm run build        # type-checked production build
+npm start            # serve the build on http://localhost:8600
 ```
 
-Start the production server locally after building:
+## Tests
 
 ```bash
-npm start
+npm test             # tsx app/test.ts — all suites (needs Node 18+)
 ```
 
-The production server also runs on `http://localhost:8600`.
+Tests inject in-memory fakes for the market-data API; the runner blocks real network
+access so an un-injected data dependency fails loudly instead of hitting the API.
 
 ## Project Structure
 
-- `app/layout.tsx`: root layout and shared document shell
-- `app/page.tsx`: home page for the app
-- `app/globals.css`: global styles
-- `app/actions/stock/`: stock-related reusable app logic for CLI and future UI flows
-- `cli/`: TypeScript CLI entrypoint and controller-style command dispatch
-- `app/actions/stock/download-data.test.ts`: focused tests for the stock download action
-- `tsconfig.json`: TypeScript configuration for the project
-- `next-env.d.ts` and `global.d.ts`: Next.js and CSS type declarations
+- `app/` — Next.js App Router UI, plus `app/actions/` (reusable CLI/UI logic).
+- `app/actions/stock/market-data-client.ts` — the single client for the PHP data API.
+- `cli/` — TypeScript CLI entrypoint and controller-style command dispatch.
+- `tools/` — reusable analysis tool library (date-capped DB access). See `tools/README.md`.
+- `user-sessions/` — the active simulation's account, logs, and report (git-ignored).
 
 ## Tech Stack
 
-- Next.js 13
-- React 18
-- TypeScript
+- Next.js 13 · React 18 · TypeScript
 
 ## Useful Notes
 
-- This project uses the Next.js App Router under `app/`.
-- Type checking is part of the Next.js production build.
-- The repo currently uses `npm` because `package-lock.json` is checked in.
-- Build output is written to `.next/`, which is ignored by git.
-- Downloaded stock history is written to `market-data/`, which is ignored by git.
-- TypeScript incremental cache files such as `tsconfig.tsbuildinfo` are also ignored by git.
+- Uses the Next.js App Router under `app/`; type checking is part of the build.
+- `npm` is used because `package-lock.json` is checked in.
+- `.next/` build output and `user-sessions/` are git-ignored.
 
 ## Troubleshooting
 
-- If the dev server will not start, confirm that port `8600` is free.
-- If dependencies look out of sync, remove `node_modules` and run `npm install` again.
-- If you change scripts or TypeScript settings, rerun `npm run build` to verify the app still compiles cleanly.
+- `fetch is not defined` → you're on Node < 18; run `nvm use 22`.
+- "Could not reach the market-data API" → the PHP backend isn't up; start it
+  (`../stock_report_website` docker compose) or use `./dev.sh`.
+- If the dev server won't start, confirm port `8600` is free.

@@ -242,10 +242,10 @@ run surfaced. This is the canonical convention reused by `stock-strategy-autopil
   simulator, CLI, reporting, or the market data itself. Do **not** put
   trading-strategy ideas here; this folder is exclusively for tooling/data.
   Examples: the data end-date boundary stopped the run early (extend it); `stock
-  screen` lacks a liquidity/volume filter; no sector field to build
-  sector-neutral strategies; the universe is survivorship-biased (add point-in-time
-  index membership / delisted names); a CLI flag was awkward or a `--json` payload
-  was missing a field.
+  screen` lacks a liquidity/volume or sector filter (segment is on `stock info` but
+  not screenable); the universe is survivorship-biased (add point-in-time index
+  membership / delisted names); a CLI flag was awkward or a `--json` payload was
+  missing a field.
 - **The folder is gitignored** (its contents are not committed); a `.gitkeep`
   keeps the folder present. Create `suggestions/` if it is missing.
 - **Path:** `suggestions/<YYYY-MM-DD>-<short-slug>.md` using the real-world date
