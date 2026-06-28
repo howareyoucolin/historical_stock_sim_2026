@@ -25,8 +25,8 @@ import os
 import subprocess
 from pathlib import Path
 
-# tools/approved/database/db.py -> parents[3] == the simulator project root.
-SIM_ROOT = Path(__file__).resolve().parents[3]
+# tools/approved/db.py -> parents[2] == the simulator project root.
+SIM_ROOT = Path(__file__).resolve().parents[2]
 SESSION_META = SIM_ROOT / "user-sessions" / "meta.json"
 
 DB_CONTAINER = os.environ.get("STOCKAI_DB_CONTAINER", "stock_report_mysql")

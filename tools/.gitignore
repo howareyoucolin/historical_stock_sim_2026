@@ -1,6 +1,9 @@
 # Tools under unapproved/ are AI-generated and pending human review. Their contents
 # are intentionally NOT committed; an administrator promotes vetted tools into
-# approved/ (which IS tracked). The directory scaffold is preserved via .gitkeep.
-unapproved/**
-!unapproved/**/
-!unapproved/**/.gitkeep
+# approved/ (which IS tracked). The empty folder is kept via .gitkeep.
+unapproved/*
+!unapproved/.gitkeep
+
+# Python bytecode caches
+__pycache__/
+*.pyc

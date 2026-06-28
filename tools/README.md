@@ -10,9 +10,9 @@ disposable one-off scripts per run.
   compute an indicator, screen stocks, compute portfolio metrics, export a report…).
 - **Reuse first.** Before writing anything, check [`docs/TOOLS.md`](docs/TOOLS.md).
   Prefer extending an existing tool over creating a duplicate.
-- **New tools start unapproved.** AI-generated tools go in `unapproved/<category>/`
+- **New tools start unapproved.** AI-generated tools go directly in `unapproved/`
   (git-ignored, pending review). An administrator promotes vetted ones into
-  `approved/<category>/` (git-tracked, production-ready) and updates the catalog.
+  `approved/` (git-tracked, production-ready) and updates the catalog.
 
 ```
 tools/
@@ -21,8 +21,8 @@ tools/
   docs/TOOLS.md the catalog — the index of every tool
 ```
 
-Both `approved/` and `unapproved/` share the categories:
-`database/ indicators/ financials/ portfolio/ screening/ reporting/ utilities/`.
+Both folders are flat (no category subfolders), so a newly added script under
+`unapproved/` is easy to spot at a glance.
 
 ## The cardinal rule — no hindsight, ever
 
@@ -30,9 +30,9 @@ Both `approved/` and `unapproved/` share the categories:
 non-negotiable; a future-dated read invalidates the entire run.
 
 The framework enforces this in code, not by convention: all DB access goes through
-[`approved/database/db.py`](approved/database/db.py), whose `fetch()` automatically
-caps every read at the simulation date and clamps any caller-supplied `as_of` to
-`min(as_of, sim_date)`. A tool physically cannot pull future rows through it.
+[`approved/db.py`](approved/db.py), whose `fetch()` automatically caps every read at
+the simulation date and clamps any caller-supplied `as_of` to `min(as_of, sim_date)`.
+A tool physically cannot pull future rows through it.
 
 ```
 Simulation date 2019-08-15  →  allowed: <= 2019-08-15   forbidden: > 2019-08-15
@@ -48,7 +48,7 @@ overridden by a caller.
 Agent  →  Price Loader / data-access tool  →  Database
 ```
 
-Use reusable data-access tools (e.g. `database/price_loader.py`) instead of issuing
+Use reusable data-access tools (e.g. `approved/price_loader.py`) instead of issuing
 raw SQL. This centralizes the date cap and validation, survives schema changes, and
 encourages reuse. `db.run_sql()` is a low-level escape hatch — if you use it
 directly you are responsible for the date cap, so avoid it for dated data.
@@ -67,10 +67,10 @@ directly you are responsible for the date cap, so avoid it for dated data.
 
 ```bash
 # Load a symbol's prices capped at the current simulation date:
-python3 tools/approved/database/price_loader.py AAPL --json
+python3 tools/approved/price_loader.py AAPL --json
 
 # In a tool:
-import sys; sys.path.insert(0, "tools/approved/database")
+import sys; sys.path.insert(0, "tools/approved")
 import db
 rows = db.fetch("stock_daily_prices", ["trade_date", "close"],
                 where="stock_id = :id", params={"id": 1})  # always <= sim date
