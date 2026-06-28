@@ -61,8 +61,29 @@ async function testInitializeDefaultUserAccountSessionClearsHistory(): Promise<v
     await assert.rejects(() => fs.readFile(logFilePath, 'utf8'), /ENOENT/)
 }
 
+// Verify init empties the entire user-sessions directory, removing leftover reports and named
+// sessions (not just the default session), then leaves only the fresh default account + meta.
+async function testInitializeDefaultUserAccountSessionEmptiesEverything(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+    const sessionsDirectory = path.join(tempRepoRoot, 'user-sessions')
+
+    // Seed leftovers: a stale report, a named session's files, and an unrelated file.
+    await fs.mkdir(sessionsDirectory, { recursive: true })
+    await fs.writeFile(path.join(sessionsDirectory, 'report.json'), '{}', 'utf8')
+    await fs.writeFile(path.join(sessionsDirectory, 'voo.account.json'), '{}', 'utf8')
+    await fs.writeFile(path.join(sessionsDirectory, 'voo.history.log'), 'x', 'utf8')
+    await fs.writeFile(path.join(sessionsDirectory, 'stray.txt'), 'x', 'utf8')
+
+    await initializeDefaultUserAccountSession({ cwd: () => tempRepoRoot })
+
+    // Only the freshly written default account + meta should remain.
+    const remaining = (await fs.readdir(sessionsDirectory)).sort()
+    assert.deepEqual(remaining, ['account.json', 'meta.json'])
+}
+
 // Run the focused init action tests that protect the account reset flow.
 export async function runInitializeAccountActionTests(): Promise<void> {
     await testInitializeDefaultUserAccountSession()
     await testInitializeDefaultUserAccountSessionClearsHistory()
+    await testInitializeDefaultUserAccountSessionEmptiesEverything()
 }
