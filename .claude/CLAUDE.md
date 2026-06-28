@@ -5,6 +5,17 @@ close to Claude Code conventions.
 
 Read only the files relevant to the current task:
 
+## Tools
+
+- `tools/`: reusable analysis tool library. Before writing a new helper, check
+  `tools/docs/TOOLS.md` and reuse an existing tool. New AI-created tools go in
+  `tools/unapproved/<category>/` (pending review); vetted ones live in
+  `tools/approved/<category>/`. See `tools/README.md`.
+- **Cardinal data rule:** any tool loading dated data MUST cap it at the current
+  simulation date — go through `tools/approved/database/db.py` (`fetch`), which
+  enforces the cap. Never read data dated after the sim date; never issue raw,
+  uncapped SQL for dated tables.
+
 ## Rules
 
 - `rules/commenting.md`: code commenting conventions for edits.
