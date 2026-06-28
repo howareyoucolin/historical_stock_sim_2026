@@ -8,17 +8,21 @@ disposable one-off scripts per run.
 
 - **One tool, one job.** Each tool performs a single well-defined task (load prices,
   compute an indicator, screen stocks, compute portfolio metrics, export a report…).
-- **Reuse first.** Before writing anything, check [`docs/TOOLS.md`](docs/TOOLS.md).
-  Prefer extending an existing tool over creating a duplicate.
-- **New tools start unapproved.** AI-generated tools go directly in `unapproved/`
-  (git-ignored, pending review). An administrator promotes vetted ones into
-  `approved/` (git-tracked, production-ready) and updates the catalog.
+- **Reuse first.** Before writing anything, check [`docs/TOOLS.md`](docs/TOOLS.md)
+  (approved tools) and `unapproved/INDEX.md` (pending ones). Prefer extending an
+  existing tool over creating a duplicate.
+- **New tools start unapproved — and untracked.** AI-generated tools go directly in
+  `unapproved/` (git-ignored) and are listed in `unapproved/INDEX.md` (also
+  git-ignored). Creating one produces **no git changes**. An administrator promotes
+  vetted ones into `approved/` (git-tracked), which is the only step that adds a tool
+  to version control and the tracked catalog.
 
 ```
 tools/
-  approved/     reviewed, git-tracked, safe to reuse
-  unapproved/   AI-generated, pending review (contents git-ignored)
-  docs/TOOLS.md the catalog — the index of every tool
+  approved/            reviewed, git-tracked, safe to reuse
+  docs/TOOLS.md        catalog of APPROVED tools (tracked)
+  unapproved/          AI-generated, pending review — git-ignored
+  unapproved/INDEX.md  list of pending tools — git-ignored
 ```
 
 Both folders are flat (no category subfolders), so a newly added script under

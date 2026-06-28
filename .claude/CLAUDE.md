@@ -8,9 +8,12 @@ Read only the files relevant to the current task:
 ## Tools
 
 - `tools/`: reusable analysis tool library. Before writing a new helper, check
-  `tools/docs/TOOLS.md` and reuse an existing tool. New AI-created tools go directly
-  in `tools/unapproved/` (flat, pending review); vetted ones live in
-  `tools/approved/`. See `tools/README.md`.
+  `tools/docs/TOOLS.md` (approved) and `tools/unapproved/INDEX.md` (pending), and
+  reuse an existing tool. New AI-created tools go directly in `tools/unapproved/`
+  (flat) and are recorded in `tools/unapproved/INDEX.md` — both git-ignored, so
+  creating a tool makes NO git changes. Never edit the tracked `tools/docs/TOOLS.md`;
+  only the admin does, when promoting a tool into `tools/approved/`. See
+  `tools/README.md`.
 - **Cardinal data rule:** any tool loading dated data MUST cap it at the current
   simulation date — go through `tools/approved/db.py` (`fetch`), which enforces the
   cap. Never read data dated after the sim date; never issue raw, uncapped SQL for
