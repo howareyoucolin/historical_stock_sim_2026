@@ -15,18 +15,13 @@ Read only the files relevant to the current task:
 
 ## Skills
 
-- `skills/git-commit-helper/SKILL.md`: workflow for drafting and finalizing a
-  git commit.
 - `skills/simulation-reporting/SKILL.md`: workflow for building and summarizing
   the structured `report.json` artifact for a completed simulation.
 - `skills/stock-trade-simulation/SKILL.md`: workflow for running an automated
   stock trade simulation through the CLI (see also `commands.md`).
-- `skills/auto-strategy-sweep/SKILL.md`: workflow for continuously auto-running
+- `skills/stock-strategy-autopilot/SKILL.md`: workflow for continuously auto-running
   many simulations, generating/adjusting strategy variants until a stop condition
   or manual stop, leaving an app/market-data suggestion after each run.
 - `skills/upload-stock-report/SKILL.md`: workflow for uploading the completed
   session report and companion files to the report website, with an explicit
   secret-key prompt required before any upload attempt.
-- `skills/update-market-data/SKILL.md`: workflow for refreshing the per-stock
-  market data (re-download history, re-scrape EPS, rebuild data files) and
-  extending the data date range (see also `commands.md`).

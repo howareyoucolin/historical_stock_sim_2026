@@ -54,8 +54,9 @@ After building the report:
 - Tell the user where the file was written.
 - Give a short summary of the most important outcomes:
   - simulation end date
-  - ending value
-  - total return
+  - ending value, total return, and annualized return
+  - how it compared to the built-in benchmark (equal-weight S&P 500 index — the
+    `benchmark` block in `report.json`, invested on the same deposit schedule)
   - drawdown or concentration if notable
 - If metadata fields were left generic, mention that clearly and offer to
   rebuild with better inputs.

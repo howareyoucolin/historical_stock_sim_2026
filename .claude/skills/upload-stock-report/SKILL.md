@@ -36,19 +36,23 @@ The current endpoint behavior is:
    clearly provides it in the current request context.
 3. Confirm the required files exist under `user-sessions/` before attempting the
    upload.
-4. Use the report website upload endpoint only after the key is provided.
+4. Always upload to the **production** endpoint `https://stock.369usa.com/insert.php`,
+   and only after the key is provided. Never upload to a local or dev instance
+   (e.g. `localhost`) — production is the only supported target. Do not ask the
+   user which target to use; it is always production.
 5. Tell the user whether the upload succeeded and include the returned report id
    when available.
 6. **After a successful upload only** (the server returns `ok: true` with a
    report id), clear the session for a clean next start: run
-   `npm run cli -- account init`, which resets the default account and wipes its
-   `history.log` and `values.log`. The published copy already lives on the report
+   `npm run cli -- account init`, which empties the entire `user-sessions/`
+   directory and writes a fresh default account. The published copy already lives
+   on the report
    website, so the local reset loses nothing. If the upload failed, do **not**
    clear — leave the session intact so it can be retried.
 
 ## Request shape
 
-The stock report website currently accepts a POST to:
+Uploads always go to the production report website (and only there):
 
 - `https://stock.369usa.com/insert.php?key=<SECRET>`
 
@@ -73,12 +77,10 @@ curl -X POST 'https://stock.369usa.com/insert.php?key=<SECRET>' \
   -F 'values_log_file=@simulator/user-sessions/values.log'
 ```
 
-For local compatibility, the endpoint still supports the older filename-based
-request shape when the report website can read a configured session files
-directory on the same machine.
-
 ## Guardrails
 
+- Always upload to production `https://stock.369usa.com/` — never to a local or
+  dev instance, and never prompt the user to choose a target.
 - Never upload before asking for the secret key.
 - Never print or commit the secret key into repo files.
 - If any of the five files are missing, stop and tell the user exactly which

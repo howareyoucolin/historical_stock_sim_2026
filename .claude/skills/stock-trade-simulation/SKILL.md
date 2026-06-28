@@ -17,11 +17,13 @@ override the strategy to chase gains). The full command reference is in
   (`npm run cli -- <command> ...`, or a batch file). Do NOT read or run source
   code, and do NOT open data files directly. The only exception is diagnosing a
   genuine technical issue with the CLI itself.
-- **Never read the future.** Do not open files under `market-data/` or
-  `user-sessions/` — `market-data/<CODE>/data.json` holds each stock's *entire
-  future* history, and reading it is cheating. Your only knowledge of a stock is
-  what the stock commands return, and those are already bounded to the simulated
-  date.
+- **Never read the future.** Price/EPS data lives in the project database and is
+  served to the CLI already bounded to the simulated date. Do **not** bypass that
+  bound: never query the market-data HTTP API or database directly (the raw
+  endpoint returns each stock's *entire* history, including the future — reading it
+  is cheating), and never open files under `user-sessions/`. Your only knowledge of
+  a stock is what the stock commands return, and those are already bounded to the
+  simulated date.
 - **No hindsight.** Role-play someone living on the simulated date with zero
   knowledge of what happens next. Do not use real-world memory of how these
   tickers actually performed after that date. Note: this is the hardest rule to
@@ -59,8 +61,9 @@ When the user asks to start a new simulation:
    - Recurring contribution: `2500` deposited on the first trading day of every
      month, for the whole run (not a one-time deposit). The first month's `2500`
      is added alongside the initial deposit on the start day.
-3. **Refresh:** `account init` — resets the account and wipes the history and
-   value logs for a clean run.
+3. **Refresh:** `account init` — empties the entire `user-sessions/` directory
+   (every session, log, and report) and writes a fresh default account, for a
+   clean run.
 4. **Set the start date** if it differs from the post-init default. If the chosen
    start date is not a trading day, land on the closest *next* trading day before
    depositing or trading (`date set <date>` steps forward to the next trading day).
@@ -162,8 +165,9 @@ turn-by-turn. In that case it is acceptable to drive the run with a **script tha
 calls the CLI** (the same `npm run cli -- ...` commands) in a loop, *provided it
 still honors every guardrail*:
 
-- **CLI only** — the script issues CLI commands; it must not read `market-data/`
-  or session files, or import the simulator's source to shortcut a decision.
+- **CLI only** — the script issues CLI commands; it must not query the market-data
+  API/database directly or read session files, or import the simulator's source to
+  shortcut a decision.
 - **No future knowledge** — each decision uses only data the CLI returns as of
   the simulated date (`stock screen`/`status` figures), never post-date facts.
 - **Still pace and contribute** — vary the `date next` hop (1–10), make the
@@ -232,7 +236,7 @@ better than continuing to earn interest in cash.
 
 After the report is built, write exactly one suggestion file to the repo-root
 `suggestions/` folder capturing any **app/system or market-data** improvement the
-run surfaced. This is the canonical convention reused by `auto-strategy-sweep`.
+run surfaced. This is the canonical convention reused by `stock-strategy-autopilot`.
 
 - **Scope — app/system or market data only.** Suggest improvements to the
   simulator, CLI, reporting, or the market data itself. Do **not** put
