@@ -205,9 +205,9 @@ function testResolveDataRange(): void {
     assert.deepEqual(resolveDataRange({ start: '2015-06-01', end: '2024-01-01' }), { start: '2015-06-01', end: '2024-01-01' })
     // A missing file (null) or partial config falls back per field to the built-in defaults.
     const defaults = resolveDataRange(null)
-    assert.equal(defaults.start, '2010-01-01')
-    assert.equal(defaults.end, '2026-01-01')
-    assert.deepEqual(resolveDataRange({ end: '2030-01-01' }), { start: '2010-01-01', end: '2030-01-01' })
+    assert.equal(defaults.start, '2001-01-02')
+    assert.equal(defaults.end, '2026-06-26')
+    assert.deepEqual(resolveDataRange({ end: '2030-01-01' }), { start: '2001-01-02', end: '2030-01-01' })
 }
 
 export async function runDownloadDataActionTests(): Promise<void> {

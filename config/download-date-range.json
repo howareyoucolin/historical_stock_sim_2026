@@ -1,5 +1,5 @@
 {
-  "_note": "Date window used when downloading price history from Yahoo Finance (stock download / seed). Edit start/end to refresh the data window over time, e.g. bump end to the current date, then re-download. Format: YYYY-MM-DD.",
-  "start": "2010-01-01",
-  "end": "2026-06-15"
+  "_note": "Fixed date window the market dataset covers (start = first trading day, end = last trading day). The dataset is frozen and not refreshed, so these are constants. Format: YYYY-MM-DD.",
+  "start": "2001-01-02",
+  "end": "2026-06-26"
 }

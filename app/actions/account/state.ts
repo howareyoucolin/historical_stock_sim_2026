@@ -28,7 +28,10 @@ export interface AccountMeta {
     updated_at: string
 }
 
-export const DEFAULT_ACCOUNT_DATE = '2016-01-04'
+// The simulation start day a fresh/reset account begins on: the first trading day of the dataset.
+// A simulation only advances forward, so this gates how early a new sim can trade. The dataset is
+// frozen (2001-01-02 through 2026-06-26), so this is a fixed constant.
+export const DEFAULT_ACCOUNT_DATE = '2001-01-02'
 
 // Build a fresh default account object so callers never share mutable nested state.
 export function createDefaultAccountState(): AccountState {

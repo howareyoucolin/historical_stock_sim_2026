@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-import { readDefaultUserAccountSession, writeDefaultUserAccountSession } from '../account/model'
+import { DEFAULT_ACCOUNT_DATE, readDefaultUserAccountSession, writeDefaultUserAccountSession } from '../account/model'
 import { setDefaultUserAccountDateToTomorrow } from './set-to-tomorrow'
 import { findNextTradingDate } from './utils'
 import { stockDataFetcher } from '../../test-helpers/market-data'
@@ -94,11 +94,11 @@ async function testSetDefaultUserAccountDateToTomorrowCreatesDefaultSession(): P
 
     const account = await setDefaultUserAccountDateToTomorrow({
         cwd: () => tempRepoRoot,
-        getTradingCalendar: async () => ['2016-01-04', '2016-01-05'],
+        getTradingCalendar: async () => [DEFAULT_ACCOUNT_DATE, '2001-01-03'],
         getCorporateActions: async () => [],
     })
 
-    assert.equal(account.date, '2016-01-05')
+    assert.equal(account.date, '2001-01-03')
     assert.equal(account.cash, 0)
     assert.deepEqual(account.positions, {})
 }

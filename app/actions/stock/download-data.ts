@@ -6,11 +6,11 @@ import path from 'node:path'
 export const DATA_DIRECTORY_NAME = 'market-data'
 export const HISTORY_FILE_NAME = 'history.json'
 
-// The download window is configurable so it can be refreshed over time (e.g. bump the end date to
-// today) without code changes. It lives in config/download-date-range.json; these are the fallbacks.
+// The data window the dataset covers, as fixed constants (the dataset is frozen at 2001-01-02
+// through 2026-06-26 and not refreshed). Still overridable via config/download-date-range.json.
 export const DATA_RANGE_CONFIG_RELATIVE_PATH = 'config/download-date-range.json'
-const DEFAULT_START_DATE = '2010-01-01'
-const DEFAULT_END_DATE = '2026-01-01'
+const DEFAULT_START_DATE = '2001-01-02'
+const DEFAULT_END_DATE = '2026-06-26'
 
 interface DataRange {
     start: string

@@ -128,7 +128,7 @@ async function testSellStockInDefaultUserAccountSessionMissingPriceDate(): Promi
                     AAPL: { '2016-01-05': { close: 12 } },
                 }),
             }),
-        /No price data found for AAPL on 2016-01-04/
+        new RegExp(`No price data found for AAPL on ${DEFAULT_ACCOUNT_DATE}`)
     )
 }
 
@@ -144,10 +144,10 @@ async function testSellStockRecordsPerBatchHistoryWithTerm(): Promise<void> {
             cash: 0,
             positions: {
                 AAPL: [
-                    // Held well over a year before the 2016-01-04 sale date.
-                    { quantity: 2, cost_per_share: 10, purchase_date: '2014-06-01' },
+                    // Held well over a year before the 2001-01-02 sale date.
+                    { quantity: 2, cost_per_share: 10, purchase_date: '1999-06-01' },
                     // Bought exactly one year before the sale: a one-year hold is still short-term.
-                    { quantity: 1, cost_per_share: 11, purchase_date: '2015-01-04' },
+                    { quantity: 1, cost_per_share: 11, purchase_date: '2000-01-02' },
                     // Bought on the sale date itself.
                     { quantity: 2, cost_per_share: 12, purchase_date: DEFAULT_ACCOUNT_DATE },
                 ],
@@ -175,9 +175,9 @@ async function testSellStockRecordsPerBatchHistoryWithTerm(): Promise<void> {
         .map((line) => line.slice(line.indexOf(' ') + 1))
 
     assert.deepEqual(recordedRows, [
-        'SELL stock=AAPL qty=2 price=15.00 acquired=2014-06-01 term=LONG cash=+30.00 sim=2016-01-04',
-        'SELL stock=AAPL qty=1 price=15.00 acquired=2015-01-04 term=SHORT cash=+15.00 sim=2016-01-04',
-        'SELL stock=AAPL qty=1 price=15.00 acquired=2016-01-04 term=SHORT cash=+15.00 sim=2016-01-04',
+        `SELL stock=AAPL qty=2 price=15.00 acquired=1999-06-01 term=LONG cash=+30.00 sim=${DEFAULT_ACCOUNT_DATE}`,
+        `SELL stock=AAPL qty=1 price=15.00 acquired=2000-01-02 term=SHORT cash=+15.00 sim=${DEFAULT_ACCOUNT_DATE}`,
+        `SELL stock=AAPL qty=1 price=15.00 acquired=${DEFAULT_ACCOUNT_DATE} term=SHORT cash=+15.00 sim=${DEFAULT_ACCOUNT_DATE}`,
     ])
 }
 

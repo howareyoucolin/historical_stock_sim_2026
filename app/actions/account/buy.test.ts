@@ -114,7 +114,7 @@ async function testBuyStockInDefaultUserAccountSessionMissingPriceDate(): Promis
                     },
                 }),
             }),
-        /No price data found for AAPL on 2016-01-04/
+        new RegExp(`No price data found for AAPL on ${DEFAULT_ACCOUNT_DATE}`)
     )
 }
 

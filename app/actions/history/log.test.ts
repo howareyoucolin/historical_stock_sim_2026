@@ -93,7 +93,7 @@ async function testBuyAppendsHistoryEvent(): Promise<void> {
 
     const logContents = await fs.readFile(logFilePath, 'utf8')
 
-    assert.match(logContents, /BUY stock=AAPL qty=2 price=10.50 cash=-21.00 sim=2016-01-04/)
+    assert.match(logContents, new RegExp(`BUY stock=AAPL qty=2 price=10.50 cash=-21.00 sim=${DEFAULT_ACCOUNT_DATE}`))
 }
 
 // Verify a note is appended last as a JSON-quoted token so multi-word text stays on one line
