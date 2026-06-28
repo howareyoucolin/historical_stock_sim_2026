@@ -3,6 +3,7 @@
 import './style.css'
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks'
 import { setActiveTab, type ContentTab } from '../../../../store/uiSlice'
+import { writeTabToUrl } from '../tabUrl'
 
 // The content tabs in display order, paired with their labels.
 const TABS: Array<{ id: ContentTab; label: string }> = [
@@ -27,7 +28,10 @@ export function Tabs() {
                     role="tab"
                     aria-selected={activeTab === tab.id}
                     className={`contentTab ${activeTab === tab.id ? 'active' : ''}`}
-                    onClick={() => dispatch(setActiveTab(tab.id))}
+                    onClick={() => {
+                        dispatch(setActiveTab(tab.id))
+                        writeTabToUrl(tab.id)
+                    }}
                 >
                     {tab.label}
                 </button>
