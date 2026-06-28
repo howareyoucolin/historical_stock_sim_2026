@@ -1,4 +1,4 @@
-import { normalizeStockCode } from '../stock/download-data'
+import { normalizeStockCode } from '../stock/symbol'
 import { fetchCorporateActions } from '../stock/market-data-client'
 
 export type CorporateActionType = 'cash_buyout' | 'stock_swap' | 'equity_wipeout' | 'otc_continuation'

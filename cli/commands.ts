@@ -93,10 +93,6 @@ export function parseCommand(input: string): { command: string; args: string[] }
 
 // Build the CLI command runner so tests can replace side effects with focused stubs.
 export function createRunCommand({
-    downloadStockData,
-    buildStockData,
-    scrapeEps,
-    seedWatchlist,
     buyStockInDefaultUserAccount,
     sellStockInDefaultUserAccount,
     depositIntoDefaultUserAccount,
@@ -134,10 +130,6 @@ export function createRunCommand({
         buildReport,
     })
     const runStockCommand = createStockCommandHandler({
-        downloadStockData,
-        buildStockData,
-        scrapeEps,
-        seedWatchlist,
         fetchStockHistory,
         fetchStockInfo,
         fetchStockStatus,

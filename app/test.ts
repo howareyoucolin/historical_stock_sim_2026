@@ -12,15 +12,11 @@ import { runReadSimulationReportTests } from './actions/report/read.test'
 import { runCorporateActionDateAdvanceTests } from './actions/date/corporate-actions.test'
 import { runSetDateToSpecificDateActionTests } from './actions/date/set-to-specific-date.test'
 import { runSetDateToTomorrowActionTests } from './actions/date/set-to-tomorrow.test'
-import { runDownloadDataActionTests } from './actions/stock/download-data.test'
-import { runBuildDataActionTests } from './actions/stock/build-data.test'
 import { runStockHistoryActionTests } from './actions/stock/history.test'
 import { runStockInfoActionTests } from './actions/stock/info.test'
 import { runStockStatusActionTests } from './actions/stock/status.test'
 import { runStockListActionTests } from './actions/stock/list.test'
 import { runStockAnalysisActionTests } from './actions/stock/analysis.test'
-import { runScrapeEpsActionTests } from './actions/stock/scrape-eps.test'
-import { runSeedWatchlistActionTests } from './actions/stock/seed-watchlist.test'
 import { runSessionActionTests } from './actions/session.test'
 import { runTaxReportTests } from './components/AccountPanel/Content/Summary/TaxReport/taxReport.test'
 import { runCliCommandTests } from '../cli/commands.test'
@@ -45,15 +41,11 @@ interface TestSuite {
 }
 
 const TEST_SUITES: TestSuite[] = [
-    { label: 'Download stock data action tests', run: runDownloadDataActionTests },
-    { label: 'Build stock data action tests', run: runBuildDataActionTests },
     { label: 'Stock history action tests', run: runStockHistoryActionTests },
     { label: 'Stock info action tests', run: runStockInfoActionTests },
     { label: 'Stock status action tests', run: runStockStatusActionTests },
     { label: 'Stock list action tests', run: runStockListActionTests },
     { label: 'Stock analysis action tests', run: runStockAnalysisActionTests },
-    { label: 'Scrape stock EPS action tests', run: runScrapeEpsActionTests },
-    { label: 'Seed watchlist action tests', run: runSeedWatchlistActionTests },
     { label: 'User session store tests', run: runUserSessionStoreTests },
     { label: 'Account buy action tests', run: runBuyAccountActionTests },
     { label: 'Account sell action tests', run: runSellAccountActionTests },

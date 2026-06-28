@@ -1,5 +1,5 @@
 import { readDefaultUserAccountSession, type AccountSessionDependencies } from '../account/model'
-import { normalizeStockCode, validateStockCode } from './download-data'
+import { normalizeStockCode, validateStockCode } from './symbol'
 import { fetchStockData, type MarketDataEntry, type StockDataFetcher } from './market-data-client'
 
 type NullableNumber = number | null

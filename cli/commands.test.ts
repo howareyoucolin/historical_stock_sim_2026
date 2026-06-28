@@ -14,7 +14,6 @@ function testGetHelpText(): void {
     assert.match(getHelpText(), /date set <yyyy-mm-dd>/)
     assert.match(getHelpText(), /history show/)
     assert.match(getHelpText(), /report build/)
-    assert.match(getHelpText(), /stock download <code>/)
     assert.match(getHelpText(), /stock history <code>/)
     assert.match(getHelpText(), /stock info <code>/)
     assert.match(getHelpText(), /stock status <code>/)
@@ -476,114 +475,6 @@ async function testDateCommandUsage(): Promise<void> {
     assert.equal(badDateSetResult.output, 'Usage: date set <yyyy-mm-dd>')
 }
 
-// Verify stock download still routes through the dedicated stock command handler.
-async function testStockDownloadCommand(): Promise<void> {
-    let requestedStockCode = ''
-    const runCommand = createRunCommand({
-        downloadStockData: async (stockCode) => {
-            requestedStockCode = stockCode
-
-            return {
-                stockCode: 'AAPL',
-                source: 'Yahoo Finance',
-                range: { start: '2010-01-01', end: '2026-01-01' },
-                historyByDate: {},
-                rowCount: 42,
-                outputPath: 'market-data/AAPL/history.json',
-                skipped: false,
-            }
-        },
-    })
-    const result = await runCommand('stock download AAPL')
-
-    assert.equal(requestedStockCode, 'AAPL')
-    assert.equal(result.exitCode, 0)
-    assert.match(result.output, /Downloaded 42 rows for AAPL\./)
-}
-
-// Verify stock build routes through the dedicated stock command handler.
-async function testStockBuildCommand(): Promise<void> {
-    let requestedStockCode = ''
-    const runCommand = createRunCommand({
-        buildStockData: async (stockCode) => {
-            requestedStockCode = stockCode
-
-            return {
-                stockCode: 'AAPL',
-                sources: {
-                    priceHistory: { source: 'Yahoo Finance', file: 'history.json' },
-                    eps: { source: 'Macrotrends', file: 'eps.json' },
-                },
-                range: { start: '2010-01-04', end: '2026-01-01' },
-                fields: {},
-                historyByDate: {},
-                rowCount: 99,
-                outputPath: 'market-data/AAPL/data.json',
-                skipped: false,
-            }
-        },
-    })
-    const result = await runCommand('stock build AAPL')
-
-    assert.equal(requestedStockCode, 'AAPL')
-    assert.equal(result.exitCode, 0)
-    assert.match(result.output, /Built 99 rows for AAPL\./)
-}
-
-// Verify stock scrape-eps routes through the dedicated stock command handler.
-async function testStockScrapeEpsCommand(): Promise<void> {
-    let requestedStockCode = ''
-    const runCommand = createRunCommand({
-        scrapeEps: async (stockCode) => {
-            requestedStockCode = stockCode
-
-            return {
-                stockCode: 'AAPL',
-                metric: 'TTM Net EPS',
-                source: 'Macrotrends',
-                sourceUrl: 'https://www.macrotrends.net/stocks/charts/AAPL/apple/pe-ratio',
-                range: { start: '2006-12-31', end: '2026-03-31' },
-                epsByDate: {},
-                rowCount: 77,
-                outputPath: 'market-data/AAPL/eps.json',
-                skipped: false,
-            }
-        },
-    })
-    const result = await runCommand('stock scrape-eps AAPL')
-
-    assert.equal(requestedStockCode, 'AAPL')
-    assert.equal(result.exitCode, 0)
-    assert.match(result.output, /Scraped 77 EPS rows for AAPL\./)
-}
-
-// Verify stock seed runs the watchlist action and reports a per-step summary with a failure exit code.
-async function testStockSeedCommand(): Promise<void> {
-    let seedWasCalled = false
-    const runCommand = createRunCommand({
-        seedWatchlist: async () => {
-            seedWasCalled = true
-
-            return {
-                tickersFile: 'config/tickers.json',
-                tickers: ['AAPL', 'MSFT'],
-                results: [
-                    { stockCode: 'AAPL', download: 'ok', scrapeEps: 'skipped', build: 'ok' },
-                    { stockCode: 'MSFT', download: 'failed', scrapeEps: 'ok', build: 'ok' },
-                ],
-            }
-        },
-    })
-
-    const result = await runCommand('stock seed')
-
-    assert.equal(seedWasCalled, true)
-    assert.match(result.output, /Seeded 2 tickers from config\/tickers.json\./)
-    assert.match(result.output, /download\s+1 ok, 0 skipped, 1 failed/)
-    // A failed step surfaces a non-zero exit code.
-    assert.equal(result.exitCode, 1)
-}
-
 // Verify stock history routes through the dedicated stock command handler with the requested code.
 async function testStockHistoryCommand(): Promise<void> {
     let requestedStockCode = ''
@@ -712,24 +603,6 @@ async function testStockListCommandUsage(): Promise<void> {
 
     assert.equal(result.exitCode, 1)
     assert.equal(result.output, 'Usage: stock list')
-}
-
-// Verify each stock command reports a skip message when the action returns a skipped result.
-async function testStockCommandsReportSkips(): Promise<void> {
-    const runCommand = createRunCommand({
-        downloadStockData: async () => ({ skipped: true, stockCode: 'AAPL', outputPath: 'market-data/AAPL/history.json' }),
-        scrapeEps: async () => ({ skipped: true, stockCode: 'AAPL', outputPath: 'market-data/AAPL/eps.json' }),
-        buildStockData: async () => ({ skipped: true, stockCode: 'AAPL', outputPath: 'market-data/AAPL/data.json' }),
-    })
-
-    const downloadResult = await runCommand('stock download AAPL')
-    const scrapeResult = await runCommand('stock scrape-eps AAPL')
-    const buildResult = await runCommand('stock build AAPL')
-
-    assert.equal(downloadResult.exitCode, 0)
-    assert.equal(downloadResult.output, 'Skipped AAPL: market-data/AAPL/history.json already exists.')
-    assert.equal(scrapeResult.output, 'Skipped AAPL: market-data/AAPL/eps.json already exists.')
-    assert.equal(buildResult.output, 'Skipped AAPL: market-data/AAPL/data.json already exists.')
 }
 
 // Verify --json renders the command's structured data instead of the human output.
@@ -974,9 +847,6 @@ export async function runCliCommandTests(): Promise<void> {
     await testAccountSellInvalidQuantity()
     await testAccountCommandUsage()
     await testDateCommandUsage()
-    await testStockDownloadCommand()
-    await testStockScrapeEpsCommand()
-    await testStockBuildCommand()
     await testStockHistoryCommand()
     await testStockHistoryCommandUsage()
     await testStockInfoCommand()
@@ -985,8 +855,6 @@ export async function runCliCommandTests(): Promise<void> {
     await testStockStatusCommandUsage()
     await testStockListCommand()
     await testStockListCommandUsage()
-    await testStockSeedCommand()
-    await testStockCommandsReportSkips()
     await testJsonModeRendersData()
     await testJsonModeWrapsMessage()
     await testJsonModeOutputIsUncolored()

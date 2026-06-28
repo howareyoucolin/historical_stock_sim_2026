@@ -1,5 +1,0 @@
-{
-  "_note": "Fixed date window the market dataset covers (start = first trading day, end = last trading day). The dataset is frozen and not refreshed, so these are constants. Format: YYYY-MM-DD.",
-  "start": "2001-01-02",
-  "end": "2026-06-26"
-}

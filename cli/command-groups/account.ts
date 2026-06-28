@@ -5,7 +5,7 @@ import { depositIntoDefaultUserAccountSession } from '../../app/actions/account/
 import { initializeDefaultUserAccountSession } from '../../app/actions/account/init'
 import { fetchDefaultUserAccountSessionView, formatDefaultUserAccountSessionView } from '../../app/actions/account/show'
 import { getStockQuoteForAccountDate } from '../../app/actions/account/quote'
-import { normalizeStockCode } from '../../app/actions/stock/download-data'
+import { normalizeStockCode } from '../../app/actions/stock/symbol'
 import type { DefaultUserAccountSessionView } from '../../app/actions/account/view-model'
 import type { CommandResult } from '../command-types'
 

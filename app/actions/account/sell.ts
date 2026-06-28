@@ -1,4 +1,4 @@
-import { normalizeStockCode, validateStockCode } from '../stock/download-data'
+import { normalizeStockCode, validateStockCode } from '../stock/symbol'
 import { resolveCloseOnDate, type StockDataFetcher } from '../stock/price-lookup'
 import { fetchStockData } from '../stock/market-data-client'
 import { appendHistoryEvent } from '../history/log'

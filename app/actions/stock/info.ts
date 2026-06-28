@@ -1,4 +1,4 @@
-import { normalizeStockCode, validateStockCode } from './download-data'
+import { normalizeStockCode, validateStockCode } from './symbol'
 import { fetchStockInfo, type StockProfilePayload } from './market-data-client'
 
 export interface StockInfo {
