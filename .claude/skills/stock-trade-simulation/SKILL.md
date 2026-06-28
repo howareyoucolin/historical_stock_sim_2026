@@ -37,41 +37,55 @@ override the strategy to chase gains). The full command reference is in
 
 ## 1. Start a simulation (setup)
 
-When the user asks to start a new simulation:
+When the user asks to start a new simulation, **first ask these four questions up
+front** using the `AskUserQuestion` tool (a single prompt with all four). Do not
+trade until they are answered:
 
-1. **Ask for the strategy first, and confirm the run parameters.** Do not trade
-   until these are clear:
-   - The strategy itself: which stocks/sectors, entry and exit rules, position
-     sizing, risk limits, rebalance cadence.
-   - **End date / time horizon** — defaults to the last available trading day,
-     which is `2026-06-26` right now, unless the user specifies otherwise; the run
-     loop advances until this date is reached. This is the last day in the dataset
-     and the trading calendar, so advancing past it fails with no trading day
-     available — target `2026-06-26`.
-   - The contribution schedule, only if the user wants to change it: the default
-     is a recurring `2500` deposit on the first trading day of every month (see
-     below). Confirm a different amount, cadence, or a one-time-only deposit only
-     when the user asks.
-   Favor strategies expressed as mechanical rules over discretionary calls — they
-   are easier to execute faithfully and to audit.
-2. **Confirm setup overrides** (use these defaults unless the user says otherwise):
-   - Start date: `2001-01-02` (first trading day of the dataset)
-   - End date: the last available trading day, currently `2026-06-26`
-   - Initial cash deposit: `200000`
-   - Recurring contribution: `2500` deposited on the first trading day of every
-     month, for the whole run (not a one-time deposit). The first month's `2500`
-     is added alongside the initial deposit on the start day.
-3. **Refresh:** `account init` — empties the entire `user-sessions/` directory
-   (every session, log, and report) and writes a fresh default account, for a
-   clean run.
-4. **Set the start date** if it differs from the post-init default. If the chosen
-   start date is not a trading day, land on the closest *next* trading day before
-   depositing or trading (`date set <date>` steps forward to the next trading day).
-5. **Fund on that first trading day**, as two deposits so the audit trail is
-   explicit: `account deposit 200000`, then `account deposit 2500` (or the user's
-   amounts) — the second is the first month's recurring contribution. A batch
-   file is a good way to run setup in one shot. Then keep depositing `2500` on
-   the first trading day of every subsequent month during the run (see step 2).
+1. **Time range** — how long the run covers. Options: **5 years (default)**,
+   **10 years**, Other (a custom number of years).
+2. **Start date (YYYY-MM-DD)** — Options: **2016-01-01 (default)**, Other (any date
+   from `2001-01-02` onward).
+3. **Strategy** — offer these four common, fully mechanical options plus Other:
+   - **Large-cap buy & hold** — equal-weight the top-N S&P 500 names by market cap
+     as of the start date; never rebalance; deploy monthly contributions across them.
+   - **Momentum rotation** — each month, hold the top-N stocks by trailing 6-month
+     return; sell names that fall out of the top-N.
+   - **Low-P/E value** — hold the N cheapest stocks by P/E (positive earnings only);
+     rebalance quarterly.
+   - **Dividend income** — hold the top-N dividend payers; reinvest dividends;
+     rebalance quarterly.
+   - Other — the user describes their own entry/exit/sizing/rebalance rules.
+4. **Upload the report when done?** — **Yes** (after the final report, upload via
+   `upload-stock-report`, which will require the secret key — ask for it at that
+   point) or **No** (leave the run in the default session only). Remember this
+   answer for step 4 (End of simulation).
+
+**Derive the window from the answers:**
+- `start date` = the chosen start (default `2016-01-01`); if it is not a trading day,
+  the run lands on the next one.
+- `end date` = start + time range, **capped at the last available trading day
+  (`2026-06-26`)**. E.g. start `2016-01-01` + 5y → `2021-01-01`; + 10y → `2026-01-01`.
+  Never target past `2026-06-26`, or the final `date next` fails with no trading day.
+
+**Confirm the remaining defaults** (change only if the user asks):
+- Initial cash deposit: `200000`.
+- Recurring contribution: `2500` on the first trading day of every month for the
+  whole run (the first month's `2500` is added with the initial deposit on the start day).
+
+Then run setup:
+
+1. **Refresh:** `account init` — empties the entire `user-sessions/` directory (every
+   session, log, and report) and writes a fresh default account.
+2. **Set the start date:** `date set <start>` (steps forward to the next trading day
+   if the chosen date is closed).
+3. **Fund on that first trading day**, as two deposits so the trail is explicit:
+   `account deposit 200000`, then `account deposit 2500` (the first month's
+   contribution). A batch file is a good way to run setup in one shot. Then keep
+   depositing `2500` on the first trading day of every subsequent month during the run.
+
+If the user picks a strategy option, treat its description above as the rule set; if
+Other, get concrete entry/exit/sizing/rebalance rules before trading. Favor mechanical
+rules over discretionary calls — they are easier to execute faithfully and to audit.
 
 ## 2. Run the simulation (observe → decide → act → advance)
 
@@ -231,6 +245,10 @@ better than continuing to earn interest in cash.
   comparison with a parallel session if the user explicitly wants one.
 - **Deliver it:** output the full report inline in the chat. Mention that the run
   is left in the default session for UI investigation.
+- **Upload if the user opted in.** If they answered **Yes** to the upload question
+  at setup, upload now via `.claude/skills/upload-stock-report/SKILL.md` (ask for the
+  secret key at this point; production only). If they answered **No**, skip the
+  upload and leave the session as-is — do not ask for the key.
 
 ### Leave an improvement suggestion
 
@@ -281,9 +299,9 @@ run surfaced. This is the canonical convention reused by `stock-strategy-autopil
 - Always run on the default session; never reset the data at the end — except
   the post-upload `account init` performed by the upload skill once the report
   has been successfully uploaded.
-- Ask for and confirm the strategy before the first trade; the start date
-  defaults to `2001-01-02` and the end date to the last available trading day
-  (currently `2026-06-26`) unless the user specifies otherwise.
+- Ask the four setup questions (time range, start date, strategy, upload) before
+  the first trade. Defaults: 5-year range, start `2016-01-01`, derived end capped at
+  the last available trading day (`2026-06-26`).
 - Only run `report build` after the simulation reaches the final end date, unless
   the user explicitly asks for a report earlier.
 - After every completed run, leave exactly one `suggestions/` note covering an

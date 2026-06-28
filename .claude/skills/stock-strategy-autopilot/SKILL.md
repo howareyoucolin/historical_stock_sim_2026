@@ -1,170 +1,153 @@
 ---
 name: stock-strategy-autopilot
-description: Run stock-trade simulations on autopilot — automatically generate, run, and adjust mechanical strategy variants in a continuous loop until a stop condition is met or the user says stop. Use when the user wants an open-ended, self-driving batch of simulations rather than one named run ("auto-simulate", "keep running simulations", "explore strategies on autopilot", "sweep strategies", "try as many strategies as you can", "find me a good strategy"). Builds on stock-trade-simulation (per run), simulation-reporting (per report), and upload-stock-report (optional), and leaves an app/market-data suggestion after every run.
+description: Run stock-trade simulations on autopilot — fully autonomous, no prompts. It loops on its own, deriving improved mechanical strategy variants from the strategies already published on the production site and uploading every report back, to continuously grow the research archive. Use when the user wants a self-driving batch of simulations ("auto-simulate", "keep running simulations", "explore strategies on autopilot", "run the autopilot", "find me a good strategy"). Builds on stock-trade-simulation (per run) and simulation-reporting (per report); uploads each report automatically.
 ---
 
 # Stock Strategy Autopilot
 
-Drive an open-ended series of stock-trade simulations hands-free: pick a strategy
-variant, run it to the end date, report it, leave an app/market-data suggestion,
-record the result, then adjust into the next variant — and keep going until a stop
-condition fires or the user says stop. This skill is the **orchestration layer**;
-every individual run still follows `.claude/skills/stock-trade-simulation/SKILL.md`
-exactly, and reports follow `.claude/skills/simulation-reporting/SKILL.md`.
+Drive an open-ended, **fully autonomous** series of stock-trade simulations — it never
+prompts the user. Each iteration it picks its own run window and an improved strategy
+variant, runs it end to end, builds the report, uploads it to the production site,
+leaves an app/market-data suggestion, records the result, and loops. The goal is to
+continuously add research results to the prod archive at https://stock.369usa.com.
+
+This skill is the orchestration layer; each run still follows
+`.claude/skills/stock-trade-simulation/SKILL.md` and reports follow
+`.claude/skills/simulation-reporting/SKILL.md` — **except the autopilot does NOT ask
+the four setup questions**; it sets them itself (§1) and never pauses for input.
 
 ## Hard rules (inherited from stock-trade-simulation)
 
-Every per-run guardrail from `stock-trade-simulation` applies in full and is
-non-negotiable here:
+Every per-run guardrail from `stock-trade-simulation` applies in full:
 
-- **CLI only.** Never read source, query the market-data API/database directly, or
-  open `user-sessions/` files; interact only through `npm run cli -- ...` (its data
-  is already bounded to the simulated date).
-- **No hindsight.** Every variant is a mechanical rule decided from data observable
-  as of the sim date (trailing returns, P/E, market cap, dividends). Never pick or
-  avoid a ticker because of how it really performed. This includes "reverse
-  hindsight": do not engineer a deliberately bad control by naming tickers you know
-  cratered — make a control bad *by rule*, not by name.
-- **One run at a time on the default session.** All runs share the default session,
-  so they MUST be strictly sequential — never launch two simulations concurrently.
-  Each run starts with `account init` (a clean slate) per the simulation skill.
-- **Mechanical variants only.** Favor fully rule-based strategies so the loop can be
-  script-driven (see the simulation skill's "Scripted execution" section). A
-  discretionary idea is out of scope for the autopilot.
+- **CLI only for trading decisions.** Within a run, never read source, query the
+  market-data API/database directly, or open `user-sessions/` files — interact only
+  through `npm run cli -- ...` (its data is already bounded to the simulated date).
+  (Orchestration may read the public report archive at stock.369usa.com and read
+  `.env` for the upload key — those are not trading-data reads.)
+- **No hindsight.** Every variant is a mechanical rule decided from data observable as
+  of the sim date. Never pick/avoid a ticker by how it really performed (including no
+  "reverse hindsight" for deliberately bad controls — make those bad *by rule*).
+- **One run at a time on the default session** — strictly sequential, never concurrent.
+  Each run starts with `account init` (a clean slate).
+- **Mechanical variants only**, so each run can be script-driven.
 
-## 1. Confirm the run contract before starting
+## 1. Per-run configuration (autonomous — no prompts)
 
-Before the first run, pin down two things with the user (use sensible defaults and
-proceed if they delegate):
+The autopilot sets every parameter itself; it never asks the user. For each run:
 
-1. **Stop condition** — how the autopilot ends. Default to "run until I say stop,"
-   but surface progress after each run so the user can interject:
-   - **Manual** — keep going until the user says stop (default).
-   - **Count** — stop after N simulations.
-   - **Time / deadline** — stop at a wall-clock time. Implement as a between-runs
-     check: the in-flight run always finishes; no new run starts past the deadline.
-   - **Target metric** — stop once a variant clears a bar (e.g. beats the built-in
-     benchmark by X, annualized > Y, or max drawdown < Z at a given return).
-   - **Convergence** — stop after K consecutive variants fail to improve the best
-     risk-adjusted result.
-2. **Per-run setup + publishing** — confirm the run config (defaults: start
-   `2001-01-02`, `$200,000` + `$2,500`/mo, end `2026-06-26`) and whether to
-   **upload each report** via `upload-stock-report` (production only, requires the
-   secret key — ask once and reuse for the session only if the user clearly
-   authorizes unattended uploads).
+- **Time range:** randomly pick **5 or 10 years**.
+- **Start date:** pick a random date in `[2001-01-02, 2026-06-26 − range]` so the full
+  range fits and the run ends on or before the data boundary `2026-06-26`
+  (`end = start + range`). If the start lands on a non-trading day, the run begins on
+  the next one. (This guarantees a complete 5y/10y backtest — never a truncated window.)
+- **Funding:** initial `$200,000` + `$2,500` on the first trading day of each month.
+- **Strategy:** an *improved* variant derived from the published research (§3) — unless
+  the user explicitly named specific strategies to test, in which case run those.
+- **Upload:** always, automatically (§4) — no permission prompt.
+
+Vary randomness by run index/time so successive runs differ; never reuse a
+`(range, start, strategy)` combination already in the ledger.
 
 ## 2. Keep a sweep ledger
 
 Maintain a running ledger of variants tried so the search adapts and never repeats
-itself. Track per variant: the variant id/params, ending value, total &
-annualized return, **edge over the built-in benchmark**, max drawdown, after-tax
-result, and turnover (buy/sell counts). Store it as a local working file (e.g. in
-the scratchpad, or a gitignored file alongside `user-sessions/`) — it is your memory
-across iterations, not a deliverable.
+itself. Track per variant: id/params, the **run window (start + range)**, ending value,
+total & annualized return, **edge over the built-in benchmark**, max drawdown,
+after-tax result, and turnover. Store it as a local working file (scratchpad or a
+gitignored file) — your memory across iterations, not a deliverable.
 
-**Judge on relative, risk-adjusted performance, not the raw multiple.** The data
-universe is survivorship-biased (it over-represents names that became winners), so
-absolute returns are inflated and only comparisons are trustworthy. Rank variants by
-their edge over the benchmark and by drawdown/turnover-adjusted return.
+**Judge on relative, risk-adjusted performance, not the raw multiple.** The universe is
+survivorship-biased, so absolute returns are inflated and only comparisons are
+trustworthy. Rank by edge over the benchmark and drawdown/turnover-adjusted return.
 
 > **Benchmark.** `report build` emits a built-in **equal-weight S&P 500 index**
-> benchmark in `report.json` (`benchmark` block, `stockCode: "S&P 500 (EW)"`),
-> invested on the same DEPOSIT cashflow schedule. Read the benchmark's ending value
-> and annualized return straight from each report — do not recompute it with a
-> separate run.
+> benchmark in `report.json` (`benchmark` block, `stockCode: "S&P 500 (EW)"`) on the
+> same DEPOSIT schedule. Read its figures straight from each report; don't recompute.
 
-## 3. Generate and adjust variants
+## 3. Learn from published research, then improve
 
-Draw from a library of mechanical families and a set of parameter axes; explore
-broadly, then hill-climb on what works.
+Before designing a variant, **read the strategies already published on the production
+site**: fetch the archive at https://stock.369usa.com (the index lists past reports;
+open report pages to read each strategy's rules, run window, and result vs the
+benchmark). Use that to (a) avoid repeating a strategy/window already published, and
+(b) design an **improved** variant — adjust the rule or parameter that looks like it
+held a prior strategy back.
 
-**Families** (each fully rule-based): relative-strength momentum rotation;
-dual-momentum (momentum + cash guard); market-cap-weight top-N; equal-weight top-N;
-low-volatility / low-beta tilt; value tilt (low P/E); dividend tilt; sector- or
-segment-bucket allocations; quality (earnings/PE) screens; and deliberate
-negative-control anti-patterns for study (e.g. anti-momentum, high-P/E chase,
-single-name concentration) — clearly labeled as controls.
+Unless the user explicitly asks to test specific strategies, the autopilot's job is to
+iteratively improve on what is already published.
 
-**Parameter axes** to vary one at a time around a base: momentum lookback
-(e.g. 3/6/12 mo), holding count `top_k`, rebalance cadence
-(monthly/quarterly/annual), hysteresis buffer width, weighting (equal vs cap),
-universe market-cap floor, the cash/absolute-momentum guard threshold, and whether
-winners are trimmed vs let-run (tax turnover).
+Draw improvements from these mechanical families and axes:
 
-**Search method (explore / exploit):**
-- Start from a reasonable base variant; run it.
-- Make **controlled one-axis** changes off the current best (one parameter at a
-  time) so each result is attributable.
-- **Hill-climb:** keep changes that improve the risk-adjusted edge; discard the rest.
-- Periodically **inject a fresh family** to escape a local optimum (exploration).
-- Keep every variant traceable to observed data, and record its rule in the report's
-  strategy metadata.
+- **Families:** relative-strength momentum rotation; dual-momentum (momentum + cash
+  guard); market-cap-weight top-N; equal-weight top-N; low-volatility/low-beta tilt;
+  value tilt (low P/E); dividend tilt; sector- or segment-bucket allocations; quality
+  screens; and clearly-labeled negative controls (anti-momentum, high-P/E chase, etc.).
+- **Parameter axes** (vary one at a time around a base): momentum lookback (3/6/12 mo),
+  holding count `top_k`, rebalance cadence (monthly/quarterly/annual), hysteresis buffer
+  width, weighting (equal vs cap), universe market-cap floor, cash/absolute-momentum
+  guard threshold, and trim-winners vs let-run (tax turnover).
+- **Search method:** start from a strong published baseline; make controlled one-axis
+  changes so each result is attributable; hill-climb on the risk-adjusted edge; and
+  periodically inject a fresh family to escape a local optimum. Record each variant's
+  rule in the report's strategy metadata.
 
 ## 4. The autopilot loop (per iteration)
 
 Run strictly sequentially. For each iteration:
 
-1. **Pick the next variant** from §3 (skip anything already in the ledger).
-2. **Run it** end to end per `stock-trade-simulation`: `account init`, fund, drive
-   the clock with irregular 1–10 day `date next` hops, make the monthly
-   contribution, attach a data-grounded `--note` to every trade, and stop at the end
-   date. Script the run for mechanical variants.
+1. **Set run params (§1):** random range, random fitting start, improved strategy (§3).
+2. **Run it** end to end per `stock-trade-simulation`: `account init`,
+   `date set <start>`, fund, drive the clock with irregular 1–10 day `date next` hops,
+   make the monthly contribution, attach a data-grounded `--note` to every trade, and
+   stop at the derived end date. Script the run for mechanical variants.
 3. **Build the report** with `report build` per `simulation-reporting`, setting the
-   strategy name/version/summary and objective/constraint metadata for this variant.
-4. **Upload (if enabled)** via `upload-stock-report`. Reset the session only after a
-   confirmed successful upload, per that skill — but note the next iteration's
-   `account init` already resets it, so when uploading every run you need no separate
-   reset step.
+   strategy/objective metadata and the run window.
+4. **Upload automatically — no prompt.** Read `SECRET_KEY` from `simulator/.env` and
+   POST the five session files to `https://stock.369usa.com/insert.php?key=$SECRET_KEY`
+   using the multipart shape from `upload-stock-report`. On `ok:true`, the next
+   iteration's `account init` serves as the reset (no separate reset needed). If the
+   upload fails, log the exact response and continue — do **not** reset, so it can be
+   retried.
 5. **Record** the result in the ledger (§2).
-6. **Leave a suggestion** in `suggestions/` about an **app-system or market-data**
-   improvement observed during this run — see §5.
-7. **Check the stop condition.** If met (or the user said stop), go to §6. Otherwise
-   adjust to the next variant and loop. Surface a one-line progress update each
-   iteration (variant, edge over benchmark, best so far).
+6. **Leave a suggestion** in `suggestions/` (§5).
+7. **Loop.** Surface a one-line progress update (window, strategy, edge over benchmark,
+   best so far) and continue to the next iteration. Keep looping until the user
+   interrupts or says stop.
 
 ## 5. Leave a suggestion after every run
 
-After each simulation, write exactly one suggestion file to `suggestions/` (the
-folder is gitignored — contents not committed). The suggestion is **only** about
-improving the **app/system or the market data** — never a trading-strategy idea.
-
-Follow the convention defined in `stock-trade-simulation`
+After each simulation, write exactly one suggestion file to `suggestions/` (git-ignored).
+It is **only** about improving the **app/system or market data** — never a
+trading-strategy idea. Follow the convention in `stock-trade-simulation`
 (§"Leave an improvement suggestion"):
 
-- **Path:** `suggestions/<YYYY-MM-DD>-<short-slug>.md` (real-world date; if the name
-  exists, append `-2`, `-3`, …).
-- **Content:** a short markdown note with the category (`app-system` |
-  `market-data`), the simulation it came from (strategy + session id, and report id
-  if uploaded), the concrete observation that motivated it, the proposed
-  improvement, and a rough priority. Ground it in something you actually hit during
-  the run (a missing screen filter, the data end-date boundary, no liquidity/volume
-  field, survivorship bias in the universe, a CLI rough edge, etc.). If a run
-  surfaced nothing new, write a one-line note saying so rather than inventing a
-  duplicate.
+- **Path:** `suggestions/<YYYY-MM-DD>-<short-slug>.md` (real date; append `-2`, `-3`, … if taken).
+- **Content:** category (`app-system` | `market-data`), the source run (strategy +
+  session id + report id), the concrete observation, the proposed improvement, and a
+  rough priority. Ground it in something the run actually hit. If nothing new surfaced,
+  write a one-line note saying so.
 
 ## 6. Termination and summary
 
-When the stop condition fires or the user says stop:
+When the user stops it (or an external limit is hit):
 
-- **Finish the in-flight run cleanly** (build + report + suggestion); never abandon a
-  half-done simulation.
-- **Produce a leaderboard** of every variant tried: ranked by edge over the
-  benchmark and by risk-adjusted return, with the parameter that drove each result.
-  Call out the best variant and the clearest dead ends.
-- **Point to `suggestions/`** for the accumulated app/market-data improvement notes.
-- Leave the default session holding the last completed run for UI inspection (unless
-  the upload skill already reset it after a successful upload).
+- **Finish the in-flight run cleanly** (build + report + upload + suggestion); never
+  abandon a half-done simulation.
+- **Produce a leaderboard** of every variant tried, ranked by edge over the benchmark
+  and risk-adjusted return, with the run window and the parameter that drove each
+  result. Call out the best variant and the clearest dead ends.
+- **Point to `suggestions/`** for the accumulated app/market-data notes.
 
 ## Guardrails
 
-- One simulation at a time on the default session; never parallelize.
-- Every variant is mechanical and no-hindsight (no name-level reverse hindsight for
-  "bad" controls).
-- Judge variants on relative, risk-adjusted performance — absolute returns are
-  inflated by survivorship bias in the universe.
-- Each run leaves exactly one `suggestions/` note, app/market-data only — never a
-  strategy suggestion.
-- Honor the agreed stop condition; when none is set, keep going until told to stop
-  and check in after every run.
-- Build a report only at a run's true end date, and upload only with the user's
-  secret key per `upload-stock-report` (production only).
+- **Fully autonomous: never prompt the user** — no setup questions, no upload permission.
+- Per run: random **5 or 10-year** range + random start so the **full window fits ≤
+  `2026-06-26`** (`end = start + range`).
+- Improve on the strategies already published at stock.369usa.com unless the user named
+  specific strategies to test.
+- **Always upload** each report using `SECRET_KEY` from `simulator/.env`; never ask for
+  the key. Upload target is production only (`https://stock.369usa.com`).
+- One simulation at a time; mechanical and no-hindsight; judge on risk-adjusted edge.
+- Each run leaves exactly one `suggestions/` note (app/market-data only).
+- Build the report only at the run's true end date.
