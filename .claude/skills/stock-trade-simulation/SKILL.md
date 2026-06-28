@@ -42,12 +42,10 @@ When the user asks to start a new simulation:
    - The strategy itself: which stocks/sectors, entry and exit rules, position
      sizing, risk limits, rebalance cadence.
    - **End date / time horizon** — defaults to the last available trading day,
-     which is `2026-06-12` right now, unless the user specifies otherwise; the run
-     loop advances until this date is reached. Note the `end` in
-     `config/download-date-range.json` (`2026-06-15`) is the *exclusive* download
-     boundary, so the last trading day with data is the day before it
-     (`2026-06-12`) — target that, not the config value, or the final `date next`
-     will fail with no trading day available.
+     which is `2026-06-26` right now, unless the user specifies otherwise; the run
+     loop advances until this date is reached. This is the last day in the dataset
+     and the trading calendar, so advancing past it fails with no trading day
+     available — target `2026-06-26`.
    - The contribution schedule, only if the user wants to change it: the default
      is a recurring `2500` deposit on the first trading day of every month (see
      below). Confirm a different amount, cadence, or a one-time-only deposit only
@@ -55,9 +53,8 @@ When the user asks to start a new simulation:
    Favor strategies expressed as mechanical rules over discretionary calls — they
    are easier to execute faithfully and to audit.
 2. **Confirm setup overrides** (use these defaults unless the user says otherwise):
-   - Start date: `2016-01-04`
-   - End date: the last available trading day, currently `2026-06-12` (the day
-     before the exclusive `2026-06-15` download boundary)
+   - Start date: `2001-01-02` (first trading day of the dataset)
+   - End date: the last available trading day, currently `2026-06-26`
    - Initial cash deposit: `200000`
    - Recurring contribution: `2500` deposited on the first trading day of every
      month, for the whole run (not a one-time deposit). The first month's `2500`
@@ -220,21 +217,14 @@ better than continuing to earn interest in cash.
   received; final cash/holdings and total return (`account show`, `values show`);
   and what worked or didn't.
 - **Benchmarks — reuse, don't recompute.** `report build` already emits a
-  built-in S&P 500 (SPY) benchmark in `report.json` (`benchmark` block), invested
-  on the **same DEPOSIT cashflow schedule** with dividends reinvested. Use that as
-  the VOO / index comparison — do **not** spin up a separate `--session=voo` run
-  to recompute it. For the **default run config** (start `2016-01-04`, end
-  `2026-06-12` at the data boundary, `$200,000` initial + `$2,500`/month =
-  `$515,000` contributed) the reference terminal values are:
-  - **VOO / S&P 500 ≈ `$1,627,832`** (built-in SPY benchmark ≈ `$1,620,924`,
-    ~15.4% annualized) — equivalent, so cite the built-in figure.
-  - **Static Top-15 (Jan-2016 leaders) buy-and-hold ≈ `$2,024,722`.**
-
-  These cached numbers are valid **only for the default cashflow schedule above**.
-  If the user changes the start/end dates, initial deposit, or contribution
-  cadence, the built-in SPY benchmark auto-adjusts (just read it from
-  `report.json`); recompute the static buy-and-hold figure with a parallel
-  session only when needed.
+  built-in **equal-weight S&P 500 index** benchmark in `report.json` (`benchmark`
+  block, `stockCode: "S&P 500 (EW)"`), invested on the **same DEPOSIT cashflow
+  schedule** with dividends reinvested. Use that as the index comparison — do
+  **not** spin up a separate `--session` run to recompute it. The benchmark
+  auto-adjusts to whatever start/end dates, initial deposit, and contribution
+  cadence the run used, so always **read the figures straight from `report.json`**
+  rather than relying on any cached numbers. Only recompute a static buy-and-hold
+  comparison with a parallel session if the user explicitly wants one.
 - **Deliver it:** output the full report inline in the chat. Mention that the run
   is left in the default session for UI investigation.
 
@@ -287,10 +277,9 @@ run surfaced. This is the canonical convention reused by `auto-strategy-sweep`.
 - Always run on the default session; never reset the data at the end — except
   the post-upload `account init` performed by the upload skill once the report
   has been successfully uploaded.
-- Ask for and confirm the strategy before the first trade; the end date
-  defaults to the last available trading day (currently `2026-06-12`, the day
-  before the exclusive `2026-06-15` download boundary) unless the user specifies
-  one.
+- Ask for and confirm the strategy before the first trade; the start date
+  defaults to `2001-01-02` and the end date to the last available trading day
+  (currently `2026-06-26`) unless the user specifies otherwise.
 - Only run `report build` after the simulation reaches the final end date, unless
   the user explicitly asks for a report earlier.
 - After every completed run, leave exactly one `suggestions/` note covering an

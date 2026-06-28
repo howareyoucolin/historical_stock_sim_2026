@@ -93,7 +93,7 @@ These can appear anywhere in a command:
 | `account sell <code> all` | Sell the entire position in `<code>`. |
 | `account sell <code> --percent=<p>` | Sell `floor(owned × p/100)` shares. |
 | `account deposit <cash>` | Add `<cash>` (negative withdraws). Accepts `--note=<text>` to annotate the DEPOSIT history row (e.g. a recurring contribution). |
-| `account init` | Reset the (active session's) account to defaults (`date` `2016-01-04`, `cash` `0`, no positions) and wipe its history + value logs. |
+| `account init` | Reset the (active session's) account to defaults (`date` `2001-01-02`, `cash` `0`, no positions) and wipe its history + value logs. |
 
 Buy/sell extras (any order):
 

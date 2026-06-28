@@ -48,7 +48,7 @@ proceed if they delegate):
    - **Convergence** — stop after K consecutive variants fail to improve the best
      risk-adjusted result.
 2. **Per-run setup + publishing** — confirm the run config (defaults: start
-   `2016-01-04`, `$200,000` + `$2,500`/mo, end `2026-06-12`) and whether to
+   `2001-01-02`, `$200,000` + `$2,500`/mo, end `2026-06-26`) and whether to
    **upload each report** (`upload-stock-report`, which requires the secret key —
    ask once and reuse for the session only if the user clearly authorizes
    unattended uploads).
