@@ -1,4 +1,4 @@
-import { readDailyValues, type DailyValueSnapshot, type ValuesLogDependencies } from './values-log'
+import { readDailyValues, trimLeadingZeroValues, type DailyValueSnapshot, type ValuesLogDependencies } from './values-log'
 
 // A performance rollup over the recorded daily total-value series, so an agent can judge how its
 // trading is doing at a glance without re-deriving figures from the raw log.
@@ -16,7 +16,8 @@ export interface ValuesSummary {
 // Build the daily-value series plus a first/last/high/low and total-return rollup. An empty log
 // yields a summary with null figures so callers can render a friendly placeholder.
 export async function buildValuesSummary(dependencies: ValuesLogDependencies = {}): Promise<ValuesSummary> {
-    const snapshots = await readDailyValues(dependencies)
+    // Trim the leading unfunded (zero-value) period so figures start at the first funded day.
+    const snapshots = trimLeadingZeroValues(await readDailyValues(dependencies))
 
     if (snapshots.length === 0) {
         return { snapshots, count: 0, first: null, last: null, change: null, changePercent: null, high: null, low: null }

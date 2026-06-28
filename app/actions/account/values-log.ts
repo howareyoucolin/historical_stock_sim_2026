@@ -105,6 +105,16 @@ export async function readDailyValues({
     )
 }
 
+// Drop the leading unfunded period (total value 0 before the first deposit) so the value series and
+// graph begin when the portfolio first holds value. Setting a sim start date well after the account's
+// default date walks the clock forward and records zero-value days; those leading zeros are noise.
+// Interior zeros (e.g. a portfolio wiped out mid-run) are kept. An all-zero series collapses to empty.
+export function trimLeadingZeroValues(snapshots: DailyValueSnapshot[]): DailyValueSnapshot[] {
+    const firstFunded = snapshots.findIndex((snapshot) => snapshot.value !== 0)
+
+    return firstFunded === -1 ? [] : snapshots.slice(firstFunded)
+}
+
 // Delete the values log so a fresh account starts with an empty value history; a missing file is fine.
 export async function clearValueLog({
     cwd = process.cwd,
