@@ -1,8 +1,0 @@
-{
-  "stockCode": "DIA",
-  "metric": "TTM Net EPS",
-  "source": "Macrotrends",
-  "sourceUrl": "https://www.macrotrends.net/stocks/charts/DIA/spdr-dow-jones-industrial-average-etf/pe-ratio",
-  "range": null,
-  "epsByDate": {}
-}

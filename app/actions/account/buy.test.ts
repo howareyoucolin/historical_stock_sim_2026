@@ -3,30 +3,13 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-import { DATA_DIRECTORY_NAME, END_DATE, HISTORY_FILE_NAME, START_DATE } from '../stock/download-data'
+import { stockDataFetcher } from '../../test-helpers/market-data'
 import { buyStockInDefaultUserAccountSession } from './buy'
 import { DEFAULT_ACCOUNT_DATE, readDefaultUserAccountSession, writeDefaultUserAccountSession } from './model'
 
-// Build a temporary repo root so buy action tests can mutate isolated account and market data files.
+// Build a temporary repo root so buy action tests can mutate isolated account files.
 async function createTempRepoRoot(): Promise<string> {
     return fs.mkdtemp(path.join(os.tmpdir(), 'stocksimulate2026-'))
-}
-
-// Write a local stock history file that mirrors the saved market-data structure used by the buy action.
-async function writeLocalStockHistory(
-    tempRepoRoot: string,
-    stockCode: string,
-    historyByDate: Record<string, { close: number | null; isPayoutDate: boolean; dividendPerShare: number }>
-): Promise<void> {
-    const outputDirectory = path.join(tempRepoRoot, DATA_DIRECTORY_NAME, stockCode)
-    const outputPath = path.join(outputDirectory, HISTORY_FILE_NAME)
-
-    await fs.mkdir(outputDirectory, { recursive: true })
-    await fs.writeFile(
-        outputPath,
-        `${JSON.stringify({ stockCode, source: 'Yahoo Finance', range: { start: START_DATE, end: END_DATE }, historyByDate }, null, 2)}\n`,
-        'utf8'
-    )
 }
 
 // Verify buy rejects invalid share quantities before mutating the shared account session.
@@ -72,21 +55,15 @@ async function testBuyStockInDefaultUserAccountSession(): Promise<void> {
             cwd: () => tempRepoRoot,
         }
     )
-    await writeLocalStockHistory(tempRepoRoot, 'AAPL', {
-        [DEFAULT_ACCOUNT_DATE]: {
-            close: 10.5,
-            isPayoutDate: false,
-            dividendPerShare: 0,
-        },
-        '2016-01-05': {
-            close: 12,
-            isPayoutDate: false,
-            dividendPerShare: 0,
-        },
-    })
 
     const result = await buyStockInDefaultUserAccountSession('aapl', 3, {
         cwd: () => tempRepoRoot,
+        getStockData: stockDataFetcher({
+            AAPL: {
+                [DEFAULT_ACCOUNT_DATE]: { close: 10.5 },
+                '2016-01-05': { close: 12 },
+            },
+        }),
     })
     const savedAccount = await readDefaultUserAccountSession({ cwd: () => tempRepoRoot })
 
@@ -112,7 +89,7 @@ async function testBuyStockInDefaultUserAccountSession(): Promise<void> {
     assert.deepEqual(savedAccount, result.account)
 }
 
-// Verify buy fails when the downloaded local history does not include the account's current simulation date.
+// Verify buy fails when the fetched market data does not include the account's current simulation date.
 async function testBuyStockInDefaultUserAccountSessionMissingPriceDate(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
 
@@ -126,18 +103,16 @@ async function testBuyStockInDefaultUserAccountSessionMissingPriceDate(): Promis
             cwd: () => tempRepoRoot,
         }
     )
-    await writeLocalStockHistory(tempRepoRoot, 'AAPL', {
-        '2016-01-05': {
-            close: 12,
-            isPayoutDate: false,
-            dividendPerShare: 0,
-        },
-    })
 
     await assert.rejects(
         () =>
             buyStockInDefaultUserAccountSession('AAPL', 1, {
                 cwd: () => tempRepoRoot,
+                getStockData: stockDataFetcher({
+                    AAPL: {
+                        '2016-01-05': { close: 12 },
+                    },
+                }),
             }),
         /No price data found for AAPL on 2016-01-04/
     )
@@ -157,18 +132,16 @@ async function testBuyStockInDefaultUserAccountSessionInsufficientCash(): Promis
             cwd: () => tempRepoRoot,
         }
     )
-    await writeLocalStockHistory(tempRepoRoot, 'AAPL', {
-        [DEFAULT_ACCOUNT_DATE]: {
-            close: 10.5,
-            isPayoutDate: false,
-            dividendPerShare: 0,
-        },
-    })
 
     await assert.rejects(
         () =>
             buyStockInDefaultUserAccountSession('AAPL', 1, {
                 cwd: () => tempRepoRoot,
+                getStockData: stockDataFetcher({
+                    AAPL: {
+                        [DEFAULT_ACCOUNT_DATE]: { close: 10.5 },
+                    },
+                }),
             }),
         /Not enough cash/
     )

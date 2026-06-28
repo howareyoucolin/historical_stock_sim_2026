@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 
 import { buildSimulationReport } from './build'
+import { makeStockData } from '../../test-helpers/market-data'
 
 // Verify report build composes a compact JSON artifact from the current account, values, and history state.
 async function testBuildSimulationReport(): Promise<void> {
@@ -92,13 +93,10 @@ async function testBuildSimulationReport(): Promise<void> {
                 '2026-06-20T14:04:00.000Z INTEREST cash=+12.00 sim=2018-02-01',
             ],
             readAccountMeta: async () => ({ date: '2020-12-31', updated_at: '2026-06-20T14:05:00.000Z' }),
-            readMarketDataFile: async () =>
-                JSON.stringify({
-                    stockCode: 'SPY',
-                    historyByDate: {
-                        '2016-01-04': { close: 100, isPayoutDate: false, dividendPerShare: 0, ttmEps: null, peRatio: null, sharesOutstanding: null, marketCap: null },
-                        '2020-12-31': { close: 200, isPayoutDate: false, dividendPerShare: 0, ttmEps: null, peRatio: null, sharesOutstanding: null, marketCap: null },
-                    },
+            getBenchmark: async () =>
+                makeStockData('S&P 500 (EW)', {
+                    '2016-01-04': { close: 100 },
+                    '2020-12-31': { close: 200 },
                 }),
             makeDirectory: async () => undefined,
             writeFile: async (filePath, data) => {
@@ -130,7 +128,11 @@ async function testBuildSimulationReport(): Promise<void> {
     assert.equal(result.report.portfolioSummary.annualizedReturnPct, -27.93)
     assert.equal(result.report.portfolioSummary.unrealizedGainLoss, 2652)
     assert.equal(result.report.portfolioSummary.unrealizedGainLossPct, 54.7)
-    assert.equal(result.report.benchmark.stockCode, 'SPY')
+    assert.equal(result.report.benchmark.stockCode, 'S&P 500 (EW)')
+    assert.equal(
+        result.report.benchmark.methodology,
+        'Same DEPOSIT cash-flow schedule invested into the equal-weight S&P 500 index using its daily index level.'
+    )
     assert.equal(result.report.benchmark.endingValue, 200000)
     assert.equal(result.report.taxes.shortTermTax, 38.4)
     assert.equal(result.report.taxes.longTermTax, 0)
@@ -227,13 +229,10 @@ async function testBuildSimulationReportReplacesProceduralNote(): Promise<void> 
                 '2026-06-20T14:02:00.000Z BUY stock=MSFT qty=20 price=72.00 cash=-1440.00 sim=2017-03-10',
             ],
             readAccountMeta: async () => ({ date: '2020-12-31', updated_at: '2026-06-20T14:05:00.000Z' }),
-            readMarketDataFile: async () =>
-                JSON.stringify({
-                    stockCode: 'SPY',
-                    historyByDate: {
-                        '2016-01-05': { close: 100, isPayoutDate: false, dividendPerShare: 0, ttmEps: null, peRatio: null, sharesOutstanding: null, marketCap: null },
-                        '2020-12-31': { close: 200, isPayoutDate: false, dividendPerShare: 0, ttmEps: null, peRatio: null, sharesOutstanding: null, marketCap: null },
-                    },
+            getBenchmark: async () =>
+                makeStockData('S&P 500 (EW)', {
+                    '2016-01-05': { close: 100 },
+                    '2020-12-31': { close: 200 },
                 }),
             makeDirectory: async () => undefined,
             writeFile: async () => undefined,

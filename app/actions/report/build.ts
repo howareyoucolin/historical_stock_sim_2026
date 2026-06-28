@@ -6,8 +6,7 @@ import { fetchDefaultUserAccountSessionView } from '../account/show'
 import { readDefaultUserAccountMeta, USER_SESSIONS_DIRECTORY_NAME, type AccountMeta } from '../account/model'
 import type { AccountStockTableRow, DefaultUserAccountSessionView } from '../account/view-model'
 import { readHistoryLogEntries } from '../history/log'
-import { DATA_DIRECTORY_NAME } from '../stock/download-data'
-import { DATA_FILE_NAME, type BuiltDataPayload } from '../stock/build-data'
+import { fetchBenchmark, type StockDataPayload } from '../stock/market-data-client'
 import { getActiveSession, reportFileName } from '../session'
 import { buildTaxReport } from '../../components/AccountPanel/Content/Summary/TaxReport/taxReport'
 
@@ -153,7 +152,7 @@ export interface BuildSimulationReportDependencies {
     fetchValuesSummary?: typeof buildValuesSummary
     readHistoryEntries?: typeof readHistoryLogEntries
     readAccountMeta?: typeof readDefaultUserAccountMeta
-    readMarketDataFile?: (path: string, encoding: BufferEncoding) => Promise<string>
+    getBenchmark?: () => Promise<StockDataPayload | null>
     writeFile?: (path: string, data: string, encoding: BufferEncoding) => Promise<unknown>
     makeDirectory?: (path: string, options?: { recursive?: boolean }) => Promise<unknown>
 }
@@ -284,30 +283,9 @@ function calculateAnnualizedReturnPct(cashFlows: InvestorCashFlow[], endingValue
     return Number((((low + high) / 2) * 100).toFixed(2))
 }
 
-async function readBenchmarkData(
-    stockCode: string,
-    cwd: () => string,
-    readMarketDataFile: (path: string, encoding: BufferEncoding) => Promise<string>
-): Promise<BuiltDataPayload | null> {
-    const filePath = path.join(cwd(), DATA_DIRECTORY_NAME, stockCode, DATA_FILE_NAME)
-
-    try {
-        return JSON.parse(await readMarketDataFile(filePath, 'utf8')) as BuiltDataPayload
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            return null
-        }
-
-        if (error instanceof SyntaxError) {
-            throw new Error(`Invalid benchmark market-data JSON for ${stockCode}: ${error.message}`)
-        }
-
-        throw error
-    }
-}
 
 function calculateBenchmarkEndingValue(
-    benchmarkData: BuiltDataPayload | null,
+    benchmarkData: StockDataPayload | null,
     cashFlows: InvestorCashFlow[],
     endDate: string
 ): number | null {
@@ -617,7 +595,7 @@ export async function buildSimulationReport(
         fetchValuesSummary = buildValuesSummary,
         readHistoryEntries = readHistoryLogEntries,
         readAccountMeta = readDefaultUserAccountMeta,
-        readMarketDataFile = fs.readFile,
+        getBenchmark = fetchBenchmark,
         writeFile = fs.writeFile,
         makeDirectory = fs.mkdir,
     }: BuildSimulationReportDependencies = {}
@@ -645,7 +623,7 @@ export async function buildSimulationReport(
     const startingValue = deriveStartingValue(valuesSummary)
     const investorCashFlows = buildInvestorCashFlows(historyEntries)
     const annualizedReturnPct = calculateAnnualizedReturnPct(investorCashFlows, endingValue, view.account.date)
-    const benchmarkData = await readBenchmarkData('SPY', cwd, readMarketDataFile)
+    const benchmarkData = await getBenchmark()
     const benchmarkEndingValue = calculateBenchmarkEndingValue(benchmarkData, investorCashFlows, view.account.date)
     const benchmarkAnnualizedReturnPct = benchmarkEndingValue === null
         ? null
@@ -695,10 +673,10 @@ export async function buildSimulationReport(
             unrealizedGainLossPct: Number(view.summary.percentGainLoss.toFixed(2)),
         },
         benchmark: {
-            stockCode: 'SPY',
+            stockCode: 'S&P 500 (EW)',
             endingValue: benchmarkEndingValue,
             annualizedReturnPct: benchmarkAnnualizedReturnPct,
-            methodology: 'Same DEPOSIT cash-flow schedule invested into SPY using local close prices with dividends reinvested on payout dates.',
+            methodology: 'Same DEPOSIT cash-flow schedule invested into the equal-weight S&P 500 index using its daily index level.',
         },
         portfolio: {
             openPositionCount: view.rows.length,

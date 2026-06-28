@@ -3,31 +3,14 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-import { DATA_DIRECTORY_NAME, END_DATE, HISTORY_FILE_NAME, START_DATE } from '../stock/download-data'
+import { stockDataFetcher } from '../../test-helpers/market-data'
 import { sellStockInDefaultUserAccountSession } from './sell'
 import { HISTORY_LOG_RELATIVE_PATH } from '../history/log'
 import { DEFAULT_ACCOUNT_DATE, readDefaultUserAccountSession, writeDefaultUserAccountSession } from './model'
 
-// Build a temporary repo root so sell action tests can mutate isolated account and market data files.
+// Build a temporary repo root so sell action tests can mutate isolated account files.
 async function createTempRepoRoot(): Promise<string> {
     return fs.mkdtemp(path.join(os.tmpdir(), 'stocksimulate2026-'))
-}
-
-// Write a local stock history file that mirrors the saved market-data structure used by the sell action.
-async function writeLocalStockHistory(
-    tempRepoRoot: string,
-    stockCode: string,
-    historyByDate: Record<string, { close: number | null; isPayoutDate: boolean; dividendPerShare: number }>
-): Promise<void> {
-    const outputDirectory = path.join(tempRepoRoot, DATA_DIRECTORY_NAME, stockCode)
-    const outputPath = path.join(outputDirectory, HISTORY_FILE_NAME)
-
-    await fs.mkdir(outputDirectory, { recursive: true })
-    await fs.writeFile(
-        outputPath,
-        `${JSON.stringify({ stockCode, source: 'Yahoo Finance', range: { start: START_DATE, end: END_DATE }, historyByDate }, null, 2)}\n`,
-        'utf8'
-    )
 }
 
 // Verify sell rejects invalid share quantities before mutating the shared account session.
@@ -56,11 +39,13 @@ async function testSellStockInDefaultUserAccountSession(): Promise<void> {
         },
         { cwd: () => tempRepoRoot }
     )
-    await writeLocalStockHistory(tempRepoRoot, 'AAPL', {
-        [DEFAULT_ACCOUNT_DATE]: { close: 15, isPayoutDate: false, dividendPerShare: 0 },
-    })
 
-    const result = await sellStockInDefaultUserAccountSession('aapl', 4, { cwd: () => tempRepoRoot })
+    const result = await sellStockInDefaultUserAccountSession('aapl', 4, {
+        cwd: () => tempRepoRoot,
+        getStockData: stockDataFetcher({
+            AAPL: { [DEFAULT_ACCOUNT_DATE]: { close: 15 } },
+        }),
+    })
     const savedAccount = await readDefaultUserAccountSession({ cwd: () => tempRepoRoot })
 
     assert.equal(result.stockCode, 'AAPL')
@@ -88,11 +73,13 @@ async function testSellStockInDefaultUserAccountSessionRemovesEmptyHolding(): Pr
         },
         { cwd: () => tempRepoRoot }
     )
-    await writeLocalStockHistory(tempRepoRoot, 'AAPL', {
-        [DEFAULT_ACCOUNT_DATE]: { close: 12, isPayoutDate: false, dividendPerShare: 0 },
-    })
 
-    const result = await sellStockInDefaultUserAccountSession('AAPL', 5, { cwd: () => tempRepoRoot })
+    const result = await sellStockInDefaultUserAccountSession('AAPL', 5, {
+        cwd: () => tempRepoRoot,
+        getStockData: stockDataFetcher({
+            AAPL: { [DEFAULT_ACCOUNT_DATE]: { close: 12 } },
+        }),
+    })
 
     assert.equal(result.account.cash, 60)
     assert.equal('AAPL' in result.account.positions, false)
@@ -118,7 +105,7 @@ async function testSellStockInDefaultUserAccountSessionInsufficientShares(): Pro
     await assert.rejects(() => sellStockInDefaultUserAccountSession('MSFT', 1, { cwd: () => tempRepoRoot }), /Not enough shares of MSFT/)
 }
 
-// Verify sell fails when the downloaded local history does not include the account's current simulation date.
+// Verify sell fails when the fetched market data does not include the account's current simulation date.
 async function testSellStockInDefaultUserAccountSessionMissingPriceDate(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
 
@@ -132,11 +119,17 @@ async function testSellStockInDefaultUserAccountSessionMissingPriceDate(): Promi
         },
         { cwd: () => tempRepoRoot }
     )
-    await writeLocalStockHistory(tempRepoRoot, 'AAPL', {
-        '2016-01-05': { close: 12, isPayoutDate: false, dividendPerShare: 0 },
-    })
 
-    await assert.rejects(() => sellStockInDefaultUserAccountSession('AAPL', 1, { cwd: () => tempRepoRoot }), /No price data found for AAPL on 2016-01-04/)
+    await assert.rejects(
+        () =>
+            sellStockInDefaultUserAccountSession('AAPL', 1, {
+                cwd: () => tempRepoRoot,
+                getStockData: stockDataFetcher({
+                    AAPL: { '2016-01-05': { close: 12 } },
+                }),
+            }),
+        /No price data found for AAPL on 2016-01-04/
+    )
 }
 
 // Verify a sale spanning multiple purchase batches records one history row per batch, each tagged
@@ -162,11 +155,13 @@ async function testSellStockRecordsPerBatchHistoryWithTerm(): Promise<void> {
         },
         { cwd: () => tempRepoRoot }
     )
-    await writeLocalStockHistory(tempRepoRoot, 'AAPL', {
-        [DEFAULT_ACCOUNT_DATE]: { close: 15, isPayoutDate: false, dividendPerShare: 0 },
-    })
 
-    const result = await sellStockInDefaultUserAccountSession('AAPL', 4, { cwd: () => tempRepoRoot })
+    const result = await sellStockInDefaultUserAccountSession('AAPL', 4, {
+        cwd: () => tempRepoRoot,
+        getStockData: stockDataFetcher({
+            AAPL: { [DEFAULT_ACCOUNT_DATE]: { close: 15 } },
+        }),
+    })
 
     assert.equal(result.quantity, 4)
     assert.equal(result.totalProceeds, 60)

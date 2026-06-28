@@ -1,25 +1,10 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-
 import { readDefaultUserAccountSession, type AccountSessionDependencies } from '../account/model'
-import { DATA_FILE_NAME } from './build-data'
-import { DATA_DIRECTORY_NAME, normalizeStockCode, validateStockCode } from './download-data'
+import { normalizeStockCode, validateStockCode } from './download-data'
+import { fetchStockData, type MarketDataEntry, type StockDataFetcher } from './market-data-client'
 
 type NullableNumber = number | null
 
-interface DataFileEntry {
-    close: NullableNumber
-    isPayoutDate: boolean
-    dividendPerShare: number
-    ttmEps: NullableNumber
-    peRatio: NullableNumber
-    sharesOutstanding?: NullableNumber
-    marketCap?: NullableNumber
-}
-
-interface StockDataFile {
-    historyByDate?: Record<string, DataFileEntry>
-}
+type DataFileEntry = MarketDataEntry
 
 export interface StockHistoryRow {
     date: string
@@ -33,32 +18,23 @@ export interface StockHistoryRow {
 }
 
 export interface StockHistoryDependencies extends AccountSessionDependencies {
-    readMarketDataFile?: (path: string, encoding: BufferEncoding) => Promise<string>
+    // Fetches a stock's daily series from the market-data API; injectable for tests.
+    getStockData?: StockDataFetcher
 }
 
-// Read and parse a stock's combined data.json, surfacing clear guidance when it has not been built.
+// Fetch a stock's combined daily series from the market-data API, surfacing clear guidance when the
+// symbol is unknown.
 async function readStockDataFile(
     stockCode: string,
-    {
-        cwd = process.cwd,
-        readMarketDataFile = fs.readFile,
-    }: StockHistoryDependencies
-): Promise<StockDataFile> {
-    const dataPath = path.join(cwd(), DATA_DIRECTORY_NAME, stockCode, DATA_FILE_NAME)
+    { getStockData = fetchStockData }: StockHistoryDependencies
+): Promise<{ historyByDate?: Record<string, DataFileEntry> }> {
+    const payload = await getStockData(stockCode)
 
-    try {
-        return JSON.parse(await readMarketDataFile(dataPath, 'utf8')) as StockDataFile
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            throw new Error(`No built data found for ${stockCode}. Run \`stock build ${stockCode}\` first.`)
-        }
-
-        if (error instanceof SyntaxError) {
-            throw new Error(`Invalid stock data JSON for ${stockCode}: ${error.message}`)
-        }
-
-        throw error
+    if (payload === null) {
+        throw new Error(`No market data found for ${stockCode}. It may not be a tradable symbol.`)
     }
+
+    return payload
 }
 
 // Collect every recorded day from the start of the data file up to and including the simulation

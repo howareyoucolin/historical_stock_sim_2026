@@ -3,10 +3,10 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME, START_DATE, END_DATE } from '../stock/download-data'
 import { buyStockInDefaultUserAccountSession } from '../account/buy'
 import { DEFAULT_ACCOUNT_DATE, writeDefaultUserAccountSession } from '../account/model'
 import { appendHistoryEvent, clearHistoryLog, readHistoryLogEntries, showHistoryLog, HISTORY_LOG_RELATIVE_PATH } from './log'
+import { stockDataFetcher } from '../../test-helpers/market-data'
 
 // Build a temporary repo root so history log tests can write to an isolated log file.
 async function createTempRepoRoot(): Promise<string> {
@@ -86,20 +86,10 @@ async function testBuyAppendsHistoryEvent(): Promise<void> {
         { cwd: () => tempRepoRoot }
     )
 
-    const stockDirectory = path.join(tempRepoRoot, DATA_DIRECTORY_NAME, 'AAPL')
-    await fs.mkdir(stockDirectory, { recursive: true })
-    await fs.writeFile(
-        path.join(stockDirectory, HISTORY_FILE_NAME),
-        `${JSON.stringify({
-            stockCode: 'AAPL',
-            source: 'Yahoo Finance',
-            range: { start: START_DATE, end: END_DATE },
-            historyByDate: { [DEFAULT_ACCOUNT_DATE]: { close: 10.5, isPayoutDate: false, dividendPerShare: 0 } },
-        })}\n`,
-        'utf8'
-    )
-
-    await buyStockInDefaultUserAccountSession('AAPL', 2, { cwd: () => tempRepoRoot })
+    await buyStockInDefaultUserAccountSession('AAPL', 2, {
+        cwd: () => tempRepoRoot,
+        getStockData: stockDataFetcher({ AAPL: { [DEFAULT_ACCOUNT_DATE]: { close: 10.5 } } }),
+    })
 
     const logContents = await fs.readFile(logFilePath, 'utf8')
 
@@ -132,20 +122,15 @@ async function testBuyForwardsNoteToHistory(): Promise<void> {
         { cwd: () => tempRepoRoot }
     )
 
-    const stockDirectory = path.join(tempRepoRoot, DATA_DIRECTORY_NAME, 'AAPL')
-    await fs.mkdir(stockDirectory, { recursive: true })
-    await fs.writeFile(
-        path.join(stockDirectory, HISTORY_FILE_NAME),
-        `${JSON.stringify({
-            stockCode: 'AAPL',
-            source: 'Yahoo Finance',
-            range: { start: START_DATE, end: END_DATE },
-            historyByDate: { [DEFAULT_ACCOUNT_DATE]: { close: 10.5, isPayoutDate: false, dividendPerShare: 0 } },
-        })}\n`,
-        'utf8'
+    await buyStockInDefaultUserAccountSession(
+        'AAPL',
+        2,
+        {
+            cwd: () => tempRepoRoot,
+            getStockData: stockDataFetcher({ AAPL: { [DEFAULT_ACCOUNT_DATE]: { close: 10.5 } } }),
+        },
+        'dca tranche'
     )
-
-    await buyStockInDefaultUserAccountSession('AAPL', 2, { cwd: () => tempRepoRoot }, 'dca tranche')
 
     const logContents = await fs.readFile(logFilePath, 'utf8')
 

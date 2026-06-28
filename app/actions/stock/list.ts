@@ -1,14 +1,10 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-
-import { DATA_FILE_NAME } from './build-data'
-import { DATA_DIRECTORY_NAME, pathExists } from './download-data'
 import { buildStockInfo } from './info'
+import { fetchStockCodes } from './market-data-client'
 
 export interface StockListDependencies {
     cwd?: () => string
-    readDirectory?: (path: string) => Promise<string[]>
-    fileExists?: (path: string) => Promise<boolean>
+    // Source of tradable stock codes; defaults to the market-data API. Injectable for tests.
+    listStockCodes?: () => Promise<string[]>
 }
 
 export interface StockListEntry {
@@ -19,32 +15,17 @@ export interface StockListEntry {
 // Number of stock codes shown per row in the listing grid.
 const COLUMNS_PER_ROW = 8
 
-// Collect every stock code the app can actually use: a market-data subfolder that has a built
-// data.json. Codes are returned alphabetically; a missing market-data directory yields none.
+// A tradable stock code uses only the characters the rest of the app accepts (see validateStockCode).
+// Filtering here keeps a single malformed symbol from the data source out of the listing instead of
+// failing the whole list.
+const VALID_STOCK_CODE = /^[A-Z0-9.-]+$/
+
+// Collect every stock code the app can actually trade (every symbol with price history in the
+// market-data API), returned alphabetically. Malformed symbols are skipped.
 export async function buildStockList({
-    cwd = process.cwd,
-    readDirectory = fs.readdir,
-    fileExists = pathExists,
+    listStockCodes = fetchStockCodes,
 }: StockListDependencies = {}): Promise<string[]> {
-    const marketDataPath = path.join(cwd(), DATA_DIRECTORY_NAME)
-
-    let entries: string[]
-
-    try {
-        entries = await readDirectory(marketDataPath)
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            return []
-        }
-
-        throw error
-    }
-
-    // Keep only entries that carry a built data.json; this also filters out stray files since a
-    // file has no `<name>/data.json` child.
-    const availability = await Promise.all(entries.map((entry) => fileExists(path.join(marketDataPath, entry, DATA_FILE_NAME))))
-
-    return entries.filter((_entry, index) => availability[index]).sort()
+    return (await listStockCodes()).filter((code) => VALID_STOCK_CODE.test(code)).sort()
 }
 
 // Resolve every available stock code plus its curated segment so the UI can filter long lists.

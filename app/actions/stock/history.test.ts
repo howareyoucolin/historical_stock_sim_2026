@@ -1,9 +1,8 @@
 import assert from 'node:assert/strict'
 import path from 'node:path'
 
-import { DATA_FILE_NAME } from './build-data'
-import { DATA_DIRECTORY_NAME } from './download-data'
 import { buildStockHistory, selectHistoryRowsThroughDate, showStockHistory } from './history'
+import { stockDataFetcher } from '../../test-helpers/market-data'
 import { DEFAULT_USER_SESSION_META_RELATIVE_PATH, DEFAULT_USER_SESSION_RELATIVE_PATH } from '../account/model'
 
 const DATA_ENTRY = { isPayoutDate: false, dividendPerShare: 0, ttmEps: 0.37, peRatio: 20.66 }
@@ -14,8 +13,9 @@ const HISTORY_BY_DATE = {
     '2010-01-06': { close: 7.53, ...DATA_ENTRY },
 }
 
-// Build a deps object whose readers return the account session and data file for the given fixtures.
-function createDependencies(accountDate: string, dataFile: unknown) {
+// Build a deps object whose account reader returns the pinned sim date and whose getStockData fake
+// serves AAPL's in-memory daily series. The account session still comes from files under cwd.
+function createDependencies(accountDate: string, historyByDate: typeof HISTORY_BY_DATE) {
     return {
         cwd: () => '/repo',
         readFile: async (filePath: string) => {
@@ -28,11 +28,7 @@ function createDependencies(accountDate: string, dataFile: unknown) {
 
             return JSON.stringify({ cash: 0, positions: {} })
         },
-        readMarketDataFile: async (filePath: string) => {
-            assert.equal(filePath, path.join('/repo', DATA_DIRECTORY_NAME, 'AAPL', DATA_FILE_NAME))
-
-            return JSON.stringify(dataFile)
-        },
+        getStockData: stockDataFetcher({ AAPL: historyByDate }),
     }
 }
 
@@ -57,7 +53,7 @@ function testSelectHistoryRowsIncludesCutoffDay(): void {
 
 // Verify the action reads the account date, loads the data file, and spans start-through-date.
 async function testBuildStockHistory(): Promise<void> {
-    const result = await buildStockHistory('aapl', createDependencies('2010-01-05', { historyByDate: HISTORY_BY_DATE }))
+    const result = await buildStockHistory('aapl', createDependencies('2010-01-05', HISTORY_BY_DATE))
 
     assert.equal(result.stockCode, 'AAPL')
     assert.equal(result.throughDate, '2010-01-05')
@@ -69,7 +65,7 @@ async function testBuildStockHistory(): Promise<void> {
 
 // Verify the rendered table carries the heading, header row, and one line per included day.
 async function testShowStockHistory(): Promise<void> {
-    const output = await showStockHistory('AAPL', createDependencies('2010-01-05', { historyByDate: HISTORY_BY_DATE }))
+    const output = await showStockHistory('AAPL', createDependencies('2010-01-05', HISTORY_BY_DATE))
 
     assert.match(output, /History for AAPL from 2010-01-04 to 2010-01-05 \(2 trading days\):/)
     assert.match(output, /date\s+\|\s+close\s+\|\s+ttm_eps\s+\|\s+pe_ratio\s+\|\s+dividend/)
@@ -80,24 +76,23 @@ async function testShowStockHistory(): Promise<void> {
 
 // Verify a friendly placeholder is returned when the account date precedes all recorded data.
 async function testShowStockHistoryBeforeData(): Promise<void> {
-    const output = await showStockHistory('AAPL', createDependencies('2009-01-01', { historyByDate: HISTORY_BY_DATE }))
+    const output = await showStockHistory('AAPL', createDependencies('2009-01-01', HISTORY_BY_DATE))
 
     assert.equal(output, 'No history for AAPL on or before 2009-01-01.')
 }
 
-// Verify a missing data.json points the user at the build command rather than surfacing a raw error.
-async function testShowStockHistoryMissingDataFile(): Promise<void> {
+// Verify an unknown symbol (no market data from the API) surfaces a clear "not tradable" error.
+async function testShowStockHistoryUnknownSymbol(): Promise<void> {
     const dependencies = {
         cwd: () => '/repo',
         readFile: async () => JSON.stringify({ date: '2010-01-05', cash: 0, positions: {} }),
-        readMarketDataFile: async () => {
-            const error = new Error('not found') as NodeJS.ErrnoException
-            error.code = 'ENOENT'
-            throw error
-        },
+        getStockData: stockDataFetcher({}),
     }
 
-    await assert.rejects(showStockHistory('AAPL', dependencies), /Run `stock build AAPL` first\./)
+    await assert.rejects(
+        showStockHistory('AAPL', dependencies),
+        /No market data found for AAPL\. It may not be a tradable symbol\./
+    )
 }
 
 // Run the focused action tests that protect the stock history view logic.
@@ -107,5 +102,5 @@ export async function runStockHistoryActionTests(): Promise<void> {
     await testBuildStockHistory()
     await testShowStockHistory()
     await testShowStockHistoryBeforeData()
-    await testShowStockHistoryMissingDataFile()
+    await testShowStockHistoryUnknownSymbol()
 }

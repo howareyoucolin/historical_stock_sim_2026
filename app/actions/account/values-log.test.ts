@@ -3,34 +3,14 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
 import { writeDefaultUserAccountSession } from './model'
 import { clearValueLog, readDailyValues, recordDailyValue, recordViewValueSnapshot, VALUES_LOG_RELATIVE_PATH } from './values-log'
 import { setDefaultUserAccountDateToSpecificDate } from '../date/set-to-specific-date'
-import { TRADING_CALENDAR_STOCK_CODE } from '../date/advance'
+import { stockDataFetcher } from '../../test-helpers/market-data'
 
 // Build a temporary repo root so value-log tests can write to an isolated user-sessions directory.
 async function createTempRepoRoot(): Promise<string> {
     return fs.mkdtemp(path.join(os.tmpdir(), 'stocksimulate2026-'))
-}
-
-// Write a stock's history.json with the given per-date entries (mirrors the saved market-data shape).
-async function writeStockHistory(
-    tempRepoRoot: string,
-    stockCode: string,
-    historyByDate: Record<string, { close: number; isPayoutDate: boolean; dividendPerShare: number }>
-): Promise<void> {
-    const outputDirectory = path.join(tempRepoRoot, DATA_DIRECTORY_NAME, stockCode)
-
-    await fs.mkdir(outputDirectory, { recursive: true })
-    await fs.writeFile(path.join(outputDirectory, HISTORY_FILE_NAME), `${JSON.stringify({ stockCode, historyByDate }, null, 2)}\n`, 'utf8')
-}
-
-// Write the reference trading calendar (SPY history) with the given set of market dates.
-async function writeTradingCalendar(tempRepoRoot: string, tradingDates: string[]): Promise<void> {
-    const historyByDate = Object.fromEntries(tradingDates.map((date) => [date, { close: 1, isPayoutDate: false, dividendPerShare: 0 }]))
-
-    await writeStockHistory(tempRepoRoot, TRADING_CALENDAR_STOCK_CODE, historyByDate)
 }
 
 // Verify recorded snapshots read back sorted by date, collapsing repeats to the last value written.
@@ -93,11 +73,6 @@ async function testAdvanceRecordsDailyValueSeries(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
     const cwd = () => tempRepoRoot
 
-    await writeTradingCalendar(tempRepoRoot, ['2018-03-12', '2018-03-19', '2018-03-26'])
-    await writeStockHistory(tempRepoRoot, 'AAPL', {
-        '2018-03-12': { close: 60, isPayoutDate: false, dividendPerShare: 0 },
-        '2018-03-26': { close: 62, isPayoutDate: false, dividendPerShare: 0 },
-    })
     await writeDefaultUserAccountSession(
         {
             date: '2018-03-09',
@@ -107,7 +82,17 @@ async function testAdvanceRecordsDailyValueSeries(): Promise<void> {
         { cwd }
     )
 
-    await setDefaultUserAccountDateToSpecificDate('2018-03-26', { cwd })
+    await setDefaultUserAccountDateToSpecificDate('2018-03-26', {
+        cwd,
+        getTradingCalendar: async () => ['2018-03-12', '2018-03-19', '2018-03-26'],
+        getStockData: stockDataFetcher({
+            AAPL: {
+                '2018-03-12': { close: 60 },
+                '2018-03-26': { close: 62 },
+            },
+        }),
+        getCorporateActions: async () => [],
+    })
 
     assert.deepEqual(await readDailyValues({ cwd }), [
         { date: '2018-03-12', value: 700 }, // 10 * 60 + 100 cash

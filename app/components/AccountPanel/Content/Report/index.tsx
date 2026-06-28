@@ -76,7 +76,7 @@ export function Report() {
         unrealizedGainLossPct: null,
     }
     const benchmark = safeReport.benchmark ?? {
-        stockCode: 'SPY',
+        stockCode: 'S&P 500 (EW)',
         endingValue: null,
         annualizedReturnPct: null,
         methodology: 'Benchmark data unavailable.',

@@ -1,7 +1,4 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-
-import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
+import { fetchStockData, fetchTradingCalendar, type StockDataFetcher } from '../stock/market-data-client'
 import { appendHistoryEvent } from '../history/log'
 import {
     readDefaultUserAccountSession,
@@ -20,9 +17,6 @@ import {
 } from '../account/corporate-actions'
 import { findNextTradingDate, normalizeSimulationDate } from './utils'
 
-// SPY trades every NYSE session, so its saved history doubles as the market trading calendar.
-export const TRADING_CALENDAR_STOCK_CODE = 'SPY'
-
 interface MarketHistoryEntry {
     close?: number | null
     isPayoutDate?: boolean
@@ -30,10 +24,6 @@ interface MarketHistoryEntry {
 }
 
 type HistoryByDate = Record<string, MarketHistoryEntry>
-
-interface StockHistoryPayload {
-    historyByDate?: HistoryByDate
-}
 
 export interface DividendPayout {
     stockCode: string
@@ -68,64 +58,27 @@ export interface AdvanceSimulationResult {
 }
 
 export interface AdvanceSimulationDependencies extends AccountSessionDependencies {
-    readMarketDataFile?: (path: string, encoding: BufferEncoding) => Promise<string>
-}
-
-// Read the trading calendar (the set of real market days) from the reference stock's saved history.
-async function readTradingCalendar(cwd: () => string, readMarketDataFile: (path: string, encoding: BufferEncoding) => Promise<string>): Promise<string[]> {
-    const historyFilePath = path.join(cwd(), DATA_DIRECTORY_NAME, TRADING_CALENDAR_STOCK_CODE, HISTORY_FILE_NAME)
-
-    try {
-        const payload = JSON.parse(await readMarketDataFile(historyFilePath, 'utf8')) as StockHistoryPayload
-
-        return Object.keys(payload.historyByDate ?? {})
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            throw new Error(`No trading calendar found. Run \`stock download ${TRADING_CALENDAR_STOCK_CODE}\` first.`)
-        }
-
-        if (error instanceof SyntaxError) {
-            throw new Error(`Invalid trading calendar JSON for ${TRADING_CALENDAR_STOCK_CODE}: ${error.message}`)
-        }
-
-        throw error
-    }
+    // Fetches a stock's daily series from the market-data API; injectable for tests.
+    getStockData?: StockDataFetcher
+    // Fetches the trading calendar (real market days); injectable for tests.
+    getTradingCalendar?: () => Promise<string[]>
+    // Fetches the raw corporate-action rows; injectable for tests.
+    getCorporateActions?: () => Promise<unknown[]>
 }
 
 // Expose the sorted trading calendar so the UI can restrict date pickers to real market days.
 export async function getTradingCalendarDates({
-    cwd = process.cwd,
-    readMarketDataFile = fs.readFile,
+    getTradingCalendar = fetchTradingCalendar,
 }: AdvanceSimulationDependencies = {}): Promise<string[]> {
-    const dates = await readTradingCalendar(cwd, readMarketDataFile)
-
-    return dates.sort()
+    return (await getTradingCalendar()).slice().sort()
 }
 
-// Read a held stock's daily history for dividend lookups; a missing file simply yields no
-// dividends so a gap in local data never blocks advancing the simulation date.
-async function readStockHistoryMap(
-    stockCode: string,
-    cwd: () => string,
-    readMarketDataFile: (path: string, encoding: BufferEncoding) => Promise<string>
-): Promise<HistoryByDate> {
-    const historyFilePath = path.join(cwd(), DATA_DIRECTORY_NAME, stockCode, HISTORY_FILE_NAME)
+// Fetch a held stock's daily history for dividend lookups; an unknown symbol simply yields no
+// dividends so a gap in data never blocks advancing the simulation date.
+async function readStockHistoryMap(stockCode: string, getStockData: StockDataFetcher): Promise<HistoryByDate> {
+    const payload = await getStockData(stockCode)
 
-    try {
-        const payload = JSON.parse(await readMarketDataFile(historyFilePath, 'utf8')) as StockHistoryPayload
-
-        return payload.historyByDate ?? {}
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            return {}
-        }
-
-        if (error instanceof SyntaxError) {
-            throw new Error(`Invalid stock history JSON for ${stockCode}: ${error.message}`)
-        }
-
-        throw error
-    }
+    return payload?.historyByDate ?? {}
 }
 
 // Clone the held lots so date advancement can mutate positions without touching the loaded account object.
@@ -172,11 +125,10 @@ function appendConvertedLots(
 async function ensureHistoryByStock(
     stockCode: string,
     historyByStock: Record<string, HistoryByDate>,
-    cwd: () => string,
-    readMarketDataFile: (path: string, encoding: BufferEncoding) => Promise<string>
+    getStockData: StockDataFetcher
 ): Promise<HistoryByDate> {
     if (!historyByStock[stockCode]) {
-        historyByStock[stockCode] = await readStockHistoryMap(stockCode, cwd, readMarketDataFile)
+        historyByStock[stockCode] = await readStockHistoryMap(stockCode, getStockData)
     }
 
     return historyByStock[stockCode]
@@ -231,7 +183,9 @@ export async function advanceSimulationDate(
         makeDirectory,
         readFile,
         writeFile,
-        readMarketDataFile = fs.readFile,
+        getStockData = fetchStockData,
+        getTradingCalendar = fetchTradingCalendar,
+        getCorporateActions,
     }: AdvanceSimulationDependencies = {}
 ): Promise<AdvanceSimulationResult> {
     const sessionDependencies: AccountSessionDependencies = { cwd, makeDirectory, readFile, writeFile }
@@ -252,13 +206,13 @@ export async function advanceSimulationDate(
         }
     }
 
-    const calendar = await readTradingCalendar(cwd, readMarketDataFile)
-    const corporateActions = await readCorporateActions({ cwd, readConfigFile: readMarketDataFile })
+    const calendar = (await getTradingCalendar()).slice().sort()
+    const corporateActions = await readCorporateActions(getCorporateActions ? { getCorporateActions } : {})
 
     const positionsByStock = clonePositionsByStock(account.positions)
     const historyByStock: Record<string, HistoryByDate> = {}
     for (const stockCode of Object.keys(positionsByStock)) {
-        historyByStock[stockCode] = await readStockHistoryMap(stockCode, cwd, readMarketDataFile)
+        historyByStock[stockCode] = await readStockHistoryMap(stockCode, getStockData)
     }
 
     let date = account.date
@@ -364,7 +318,7 @@ export async function advanceSimulationDate(
                     delete positionsByStock[action.stockCode]
                     delete lastCloseByStock[action.stockCode]
                     appendConvertedLots(positionsByStock, action.acquirerStockCode, convertedLots)
-                    await ensureHistoryByStock(action.acquirerStockCode, historyByStock, cwd, readMarketDataFile)
+                    await ensureHistoryByStock(action.acquirerStockCode, historyByStock, getStockData)
 
                     const acquirerClose = historyByStock[action.acquirerStockCode]?.[date]?.close
                     if (typeof acquirerClose === 'number') {

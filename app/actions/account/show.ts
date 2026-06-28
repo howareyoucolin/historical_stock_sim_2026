@@ -1,22 +1,16 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-
 import type { AccountStockLotRow, AccountStockTableRow, AccountStockTableSummary, DefaultUserAccountSessionView } from './view-model'
-import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME } from '../stock/download-data'
-import { DATA_FILE_NAME } from '../stock/build-data'
+import { fetchStockData, type MarketDataEntry, type StockDataFetcher } from '../stock/market-data-client'
 import { readDefaultUserAccountSession, type AccountPosition, type AccountSessionDependencies, type AccountState, DEFAULT_USER_SESSION_RELATIVE_PATH } from './model'
 
-interface StockMarketEntry {
-    close?: number | null
-    peRatio?: number | null
-}
+type StockMarketEntry = MarketDataEntry
 
 interface StockMarketPayload {
     historyByDate?: Record<string, StockMarketEntry>
 }
 
 interface ShowAccountSessionDependencies extends AccountSessionDependencies {
-    readMarketDataFile?: (path: string, encoding: BufferEncoding) => Promise<string>
+    // Fetches a stock's daily series from the market-data API; injectable for tests.
+    getStockData?: StockDataFetcher
 }
 
 // Read the shared default user account session JSON for callers that need the raw account object.
@@ -26,35 +20,18 @@ export async function fetchDefaultUserAccountSession(
     return readDefaultUserAccountSession(dependencies)
 }
 
-// Read a stock's saved market data, preferring the combined data file (which carries
-// the PE ratio) and falling back to the raw price history for stocks that have been
-// downloaded but not yet built.
+// Fetch a stock's daily series from the market-data API (which carries the PE ratio used below).
 async function readLocalStockMarketData(
     stockCode: string,
-    {
-        cwd = process.cwd,
-        readMarketDataFile = fs.readFile,
-    }: ShowAccountSessionDependencies
+    { getStockData = fetchStockData }: ShowAccountSessionDependencies
 ): Promise<StockMarketPayload> {
-    const stockDirectory = path.join(cwd(), DATA_DIRECTORY_NAME, stockCode)
+    const payload = await getStockData(stockCode)
 
-    for (const fileName of [DATA_FILE_NAME, HISTORY_FILE_NAME]) {
-        try {
-            return JSON.parse(await readMarketDataFile(path.join(stockDirectory, fileName), 'utf8')) as StockMarketPayload
-        } catch (error) {
-            if (error instanceof SyntaxError) {
-                throw new Error(`Invalid stock data JSON for ${stockCode}: ${error.message}`)
-            }
-
-            // A missing combined data file just means we fall back to price history;
-            // any other error (or a missing history file too) is surfaced below.
-            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
-                throw error
-            }
-        }
+    if (payload === null) {
+        throw new Error(`No market data found for ${stockCode}. It may not be a tradable symbol.`)
     }
 
-    throw new Error(`No local data found for ${stockCode}. Run \`stock download ${stockCode}\` first.`)
+    return payload
 }
 
 // Look up the saved closing price and PE ratio for a stock on the account's current simulation date.

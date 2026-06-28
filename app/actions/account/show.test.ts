@@ -3,8 +3,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-import { DATA_DIRECTORY_NAME, END_DATE, HISTORY_FILE_NAME, START_DATE } from '../stock/download-data'
-import { DATA_FILE_NAME } from '../stock/build-data'
+import { stockDataFetcher } from '../../test-helpers/market-data'
 import { createDefaultAccountState, DEFAULT_USER_SESSION_RELATIVE_PATH, readDefaultUserAccountSession, writeDefaultUserAccountSession } from './model'
 import { buildDefaultUserAccountSessionView, fetchDefaultUserAccountSession, showDefaultUserAccountSession } from './show'
 
@@ -13,35 +12,6 @@ const DEFAULT_ACCOUNT_STATE = createDefaultAccountState()
 // Build a temporary repo root so show action tests can read an isolated session file.
 async function createTempRepoRoot(): Promise<string> {
     return fs.mkdtemp(path.join(os.tmpdir(), 'stocksimulate2026-'))
-}
-
-// Write a local stock history file that mirrors the saved market-data structure used by account actions.
-async function writeLocalStockHistory(
-    tempRepoRoot: string,
-    stockCode: string,
-    historyByDate: Record<string, { close: number | null; isPayoutDate: boolean; dividendPerShare: number }>
-): Promise<void> {
-    const outputDirectory = path.join(tempRepoRoot, DATA_DIRECTORY_NAME, stockCode)
-    const outputPath = path.join(outputDirectory, HISTORY_FILE_NAME)
-
-    await fs.mkdir(outputDirectory, { recursive: true })
-    await fs.writeFile(
-        outputPath,
-        `${JSON.stringify({ stockCode, source: 'Yahoo Finance', range: { start: START_DATE, end: END_DATE }, historyByDate }, null, 2)}\n`,
-        'utf8'
-    )
-}
-
-// Write a combined data file (data.json) carrying close prices and PE ratios, matching `stock build` output.
-async function writeLocalStockData(
-    tempRepoRoot: string,
-    stockCode: string,
-    historyByDate: Record<string, { close: number | null; isPayoutDate: boolean; dividendPerShare: number; ttmEps: number | null; peRatio: number | null }>
-): Promise<void> {
-    const outputDirectory = path.join(tempRepoRoot, DATA_DIRECTORY_NAME, stockCode)
-
-    await fs.mkdir(outputDirectory, { recursive: true })
-    await fs.writeFile(path.join(outputDirectory, DATA_FILE_NAME), `${JSON.stringify({ stockCode, historyByDate }, null, 2)}\n`, 'utf8')
 }
 
 // Verify the fetch action returns the existing shared session JSON without changing its contents.
@@ -119,23 +89,13 @@ async function testShowDefaultUserAccountSession(): Promise<void> {
             cwd: () => tempRepoRoot,
         }
     )
-    await writeLocalStockHistory(tempRepoRoot, 'AAPL', {
-        '2018-03-10': {
-            close: 150,
-            isPayoutDate: false,
-            dividendPerShare: 0,
-        },
-    })
-    await writeLocalStockHistory(tempRepoRoot, 'MSFT', {
-        '2018-03-10': {
-            close: 40,
-            isPayoutDate: false,
-            dividendPerShare: 0,
-        },
-    })
 
     const output = await showDefaultUserAccountSession({
         cwd: () => tempRepoRoot,
+        getStockData: stockDataFetcher({
+            AAPL: { '2018-03-10': { close: 150 } },
+            MSFT: { '2018-03-10': { close: 40 } },
+        }),
     })
 
     assert.equal(
@@ -153,7 +113,7 @@ async function testShowDefaultUserAccountSession(): Promise<void> {
     )
 }
 
-// Verify the show action renders the PE ratio from the combined data file, with a dash when EPS is unavailable (e.g. ETFs).
+// Verify the show action renders the PE ratio from the fetched market data, with a dash when EPS is unavailable (e.g. ETFs).
 async function testShowDefaultUserAccountSessionIncludesPeRatio(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
 
@@ -168,14 +128,14 @@ async function testShowDefaultUserAccountSessionIncludesPeRatio(): Promise<void>
         },
         { cwd: () => tempRepoRoot }
     )
-    await writeLocalStockData(tempRepoRoot, 'AAPL', {
-        '2018-03-10': { close: 150, isPayoutDate: false, dividendPerShare: 0, ttmEps: 8.14, peRatio: 18.42 },
-    })
-    await writeLocalStockData(tempRepoRoot, 'SPY', {
-        '2018-03-10': { close: 270, isPayoutDate: false, dividendPerShare: 0, ttmEps: null, peRatio: null },
-    })
 
-    const output = await showDefaultUserAccountSession({ cwd: () => tempRepoRoot })
+    const output = await showDefaultUserAccountSession({
+        cwd: () => tempRepoRoot,
+        getStockData: stockDataFetcher({
+            AAPL: { '2018-03-10': { close: 150, ttmEps: 8.14, peRatio: 18.42 } },
+            SPY: { '2018-03-10': { close: 270, ttmEps: null, peRatio: null } },
+        }),
+    })
 
     assert.equal(
         output,
@@ -196,15 +156,6 @@ async function testShowDefaultUserAccountSessionIncludesPeRatio(): Promise<void>
 async function testBuildViewComputesDayChangeAndGroup(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
 
-    await writeLocalStockData(tempRepoRoot, 'AAPL', {
-        '2018-03-09': { close: 140, isPayoutDate: false, dividendPerShare: 0, ttmEps: 8, peRatio: 17.5 },
-        '2018-03-10': { close: 150, isPayoutDate: false, dividendPerShare: 0, ttmEps: 8, peRatio: 18.75 },
-    })
-    await writeLocalStockData(tempRepoRoot, 'MSFT', {
-        '2018-03-09': { close: 42, isPayoutDate: false, dividendPerShare: 0, ttmEps: 3, peRatio: 14 },
-        '2018-03-10': { close: 40, isPayoutDate: false, dividendPerShare: 0, ttmEps: 3, peRatio: 13.3 },
-    })
-
     const view = await buildDefaultUserAccountSessionView(
         {
             date: '2018-03-10',
@@ -214,7 +165,19 @@ async function testBuildViewComputesDayChangeAndGroup(): Promise<void> {
                 MSFT: [{ quantity: 4, cost_per_share: 40, purchase_date: '2018-03-05' }],
             },
         },
-        { cwd: () => tempRepoRoot }
+        {
+            cwd: () => tempRepoRoot,
+            getStockData: stockDataFetcher({
+                AAPL: {
+                    '2018-03-09': { close: 140, ttmEps: 8, peRatio: 17.5 },
+                    '2018-03-10': { close: 150, ttmEps: 8, peRatio: 18.75 },
+                },
+                MSFT: {
+                    '2018-03-09': { close: 42, ttmEps: 3, peRatio: 14 },
+                    '2018-03-10': { close: 40, ttmEps: 3, peRatio: 13.3 },
+                },
+            }),
+        }
     )
 
     const [aapl, msft] = view.rows
@@ -232,10 +195,6 @@ async function testBuildViewComputesDayChangeAndGroup(): Promise<void> {
 async function testBuildViewBreaksDownLots(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
 
-    await writeLocalStockData(tempRepoRoot, 'AAPL', {
-        '2018-03-10': { close: 150, isPayoutDate: false, dividendPerShare: 0, ttmEps: 8, peRatio: 18.75 },
-    })
-
     const view = await buildDefaultUserAccountSessionView(
         {
             date: '2018-03-10',
@@ -247,7 +206,12 @@ async function testBuildViewBreaksDownLots(): Promise<void> {
                 ],
             },
         },
-        { cwd: () => tempRepoRoot }
+        {
+            cwd: () => tempRepoRoot,
+            getStockData: stockDataFetcher({
+                AAPL: { '2018-03-10': { close: 150, ttmEps: 8, peRatio: 18.75 } },
+            }),
+        }
     )
 
     const [aapl] = view.rows

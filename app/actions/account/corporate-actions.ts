@@ -1,9 +1,5 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-
 import { normalizeStockCode } from '../stock/download-data'
-
-export const CORPORATE_ACTIONS_RELATIVE_PATH = 'config/corporate-actions.json'
+import { fetchCorporateActions } from '../stock/market-data-client'
 
 export type CorporateActionType = 'cash_buyout' | 'stock_swap' | 'equity_wipeout' | 'otc_continuation'
 
@@ -40,13 +36,9 @@ export type CorporateAction =
     | EquityWipeoutCorporateAction
     | OtcContinuationCorporateAction
 
-interface CorporateActionsPayload {
-    actions?: unknown[]
-}
-
 export interface CorporateActionDependencies {
-    cwd?: () => string
-    readConfigFile?: (path: string, encoding: BufferEncoding) => Promise<string>
+    // Fetches the raw corporate-action rows from the market-data API; injectable for tests.
+    getCorporateActions?: () => Promise<unknown[]>
 }
 
 // Reject malformed corporate-action rows early so simulation code can assume a valid shape.
@@ -103,28 +95,13 @@ function parseCorporateAction(entry: unknown, index: number): CorporateAction {
     }
 }
 
-// Read the repo's corporate-action config, returning an empty list when no delisting model exists yet.
+// Fetch the corporate-action model from the market-data API, validating each row into a typed action.
 export async function readCorporateActions({
-    cwd = process.cwd,
-    readConfigFile = fs.readFile,
+    getCorporateActions = fetchCorporateActions,
 }: CorporateActionDependencies = {}): Promise<CorporateAction[]> {
-    const configPath = path.join(cwd(), CORPORATE_ACTIONS_RELATIVE_PATH)
+    const actions = await getCorporateActions()
 
-    try {
-        const payload = JSON.parse(await readConfigFile(configPath, 'utf8')) as CorporateActionsPayload
-
-        return (payload.actions ?? []).map(parseCorporateAction)
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            return []
-        }
-
-        if (error instanceof SyntaxError) {
-            throw new Error(`Invalid corporate actions JSON: ${error.message}`)
-        }
-
-        throw error
-    }
+    return actions.map(parseCorporateAction)
 }
 
 // Keep only the corporate actions scheduled exactly on the simulation date being stepped onto.

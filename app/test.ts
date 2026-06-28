@@ -32,6 +32,13 @@ const WHITE = '\u001b[37m'
 const RESET = '\u001b[0m'
 const SUMMARY_SEPARATOR = '-------------------------------------------'
 
+// Fail loudly if any test reaches the real market-data API instead of injecting a fake. Without this
+// guard an un-injected dependency silently hits the live PHP API under Node 18+ (where fetch exists)
+// and the test "passes" by accident, while breaking under older Node or when the API is down.
+globalThis.fetch = (() => {
+    throw new Error('A test reached the network via fetch(). Inject a fake (e.g. getStockData / getTradingCalendar / getCorporateActions) instead of hitting the market-data API.')
+}) as typeof fetch
+
 interface TestSuite {
     label: string
     run: () => Promise<void>

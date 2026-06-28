@@ -1,15 +1,11 @@
-import fs from 'node:fs/promises'
-import path from 'node:path'
-
-import { DATA_DIRECTORY_NAME, HISTORY_FILE_NAME, normalizeStockCode, validateStockCode } from '../stock/download-data'
+import { normalizeStockCode, validateStockCode } from '../stock/download-data'
+import { resolveCloseOnDate, type StockDataFetcher } from '../stock/price-lookup'
+import { fetchStockData } from '../stock/market-data-client'
 import { readDefaultUserAccountSession, type AccountSessionDependencies } from './model'
 
-interface StockHistoryPayload {
-    historyByDate?: Record<string, { close?: number | null }>
-}
-
 export interface AccountDateQuoteDependencies extends AccountSessionDependencies {
-    readMarketDataFile?: (path: string, encoding: BufferEncoding) => Promise<string>
+    // Fetches a stock's daily series from the market-data API; injectable for tests.
+    getStockData?: StockDataFetcher
 }
 
 // The closing price a trade would execute at: the stock's close on the account's current simulation
@@ -21,44 +17,18 @@ export interface AccountDateQuote {
 }
 
 // Resolve the close price for a stock on the account's current simulation date, throwing the same
-// clear errors as buy/sell when the stock is not downloaded or the date is not a trading day.
+// clear errors as buy/sell when the stock is unknown or the date is not a trading day.
 export async function getStockQuoteForAccountDate(
     stockCode: string,
     dependencies: AccountDateQuoteDependencies = {}
 ): Promise<AccountDateQuote> {
-    const { cwd = process.cwd, readMarketDataFile = fs.readFile } = dependencies
+    const { getStockData = fetchStockData } = dependencies
     const normalizedStockCode = normalizeStockCode(stockCode)
 
     validateStockCode(normalizedStockCode)
 
     const account = await readDefaultUserAccountSession(dependencies)
-    const historyFilePath = path.join(cwd(), DATA_DIRECTORY_NAME, normalizedStockCode, HISTORY_FILE_NAME)
+    const close = await resolveCloseOnDate(normalizedStockCode, account.date, getStockData)
 
-    let payload: StockHistoryPayload
-
-    try {
-        payload = JSON.parse(await readMarketDataFile(historyFilePath, 'utf8')) as StockHistoryPayload
-    } catch (error) {
-        if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
-            throw new Error(`No local history file found for ${normalizedStockCode}. Run \`stock download ${normalizedStockCode}\` first.`)
-        }
-
-        if (error instanceof SyntaxError) {
-            throw new Error(`Invalid stock history JSON for ${normalizedStockCode}: ${error.message}`)
-        }
-
-        throw error
-    }
-
-    const entry = payload.historyByDate?.[account.date]
-
-    if (!entry) {
-        throw new Error(`No price data found for ${normalizedStockCode} on ${account.date}.`)
-    }
-
-    if (entry.close === null || entry.close === undefined) {
-        throw new Error(`Closing price for ${normalizedStockCode} on ${account.date} is unavailable.`)
-    }
-
-    return { stockCode: normalizedStockCode, date: account.date, close: entry.close }
+    return { stockCode: normalizedStockCode, date: account.date, close }
 }
