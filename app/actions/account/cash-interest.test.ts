@@ -6,8 +6,11 @@ import { accrueInterestOverGap, annualRateForYear, DAYS_PER_YEAR, SPAXX_ANNUAL_R
 function testAnnualRateForYear(): void {
     assert.equal(annualRateForYear(2016), SPAXX_ANNUAL_RATES[2016])
     assert.equal(annualRateForYear(2023), SPAXX_ANNUAL_RATES[2023])
+    // Early years now covered directly by the table (back to the 2001 dataset start).
+    assert.equal(annualRateForYear(2001), SPAXX_ANNUAL_RATES[2001])
+    assert.equal(annualRateForYear(2008), SPAXX_ANNUAL_RATES[2008])
     // Years before/after the table clamp to the nearest known year rather than returning zero.
-    assert.equal(annualRateForYear(2010), SPAXX_ANNUAL_RATES[2016])
+    assert.equal(annualRateForYear(2000), SPAXX_ANNUAL_RATES[2001])
     assert.equal(annualRateForYear(2030), SPAXX_ANNUAL_RATES[2026])
 }
 

@@ -5,6 +5,21 @@ import { addDaysToSimulationDate } from '../date/utils'
 // kept here as a single editable table. Interest accrues daily on the cash balance and is paid out
 // on the first trading day of each month (see the date-advance action), where it then compounds.
 export const SPAXX_ANNUAL_RATES: Record<number, number> = {
+    2001: 0.039,
+    2002: 0.014,
+    2003: 0.009,
+    2004: 0.01,
+    2005: 0.028,
+    2006: 0.047,
+    2007: 0.047,
+    2008: 0.018,
+    2009: 0.0025,
+    2010: 0.0002,
+    2011: 0.0001,
+    2012: 0.0001,
+    2013: 0.0001,
+    2014: 0.0001,
+    2015: 0.0001,
     2016: 0.0005,
     2017: 0.005,
     2018: 0.015,
