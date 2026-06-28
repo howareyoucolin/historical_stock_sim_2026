@@ -625,11 +625,10 @@ async function testStockInfoCommand(): Promise<void> {
 
             return {
                 stockCode: 'AAPL',
-                companyName: 'Apple',
-                segment: 'Consumer Technology',
+                companyName: 'Apple Inc.',
+                segment: 'Information Technology',
+                industry: 'Technology Hardware, Storage & Peripherals',
                 summary: 'Consumer-facing technology platforms, devices, and digital ecosystems.',
-                listingStatus: 'Active public company',
-                dataNote: null,
             }
         },
     })
@@ -639,7 +638,8 @@ async function testStockInfoCommand(): Promise<void> {
     assert.equal(requestedStockCode, 'AAPL')
     assert.equal(result.exitCode, 0)
     assert.match(result.output, /AAPL info:/)
-    assert.match(result.output, /company: Apple/)
+    assert.match(result.output, /company:\s+Apple Inc\./)
+    assert.match(result.output, /industry: Technology Hardware/)
 }
 
 // Verify stock info without a code reports its usage line and a non-zero exit code.

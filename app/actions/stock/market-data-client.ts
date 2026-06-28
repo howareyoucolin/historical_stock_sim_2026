@@ -76,6 +76,29 @@ export async function fetchStockCodes(): Promise<string[]> {
     return payload?.stocks ?? []
 }
 
+// One stock's static profile (classification metadata) from the database. Non-time-series data,
+// so no hindsight risk — this is the v2 source for company/segment info.
+export interface StockProfilePayload {
+    stockCode: string
+    companyName: string | null
+    sector: string | null
+    industry: string | null
+    description: string | null
+}
+
+// Fetch a stock's static profile, or null when the symbol is unknown.
+export async function fetchStockInfo(stockCode: string): Promise<StockProfilePayload | null> {
+    return fetchApi<StockProfilePayload>(`/api/stock-info.php?symbol=${encodeURIComponent(stockCode)}`)
+}
+
+// Fetch every stock code paired with its segment (DB sector), in one call — used for the listing /
+// segment filter without an N+1 of per-stock profile lookups.
+export async function fetchStockEntries(): Promise<Array<{ code: string; segment: string }>> {
+    const payload = await fetchApi<{ entries?: Array<{ code: string; sector: string | null }> }>(`/api/stocks.php`)
+
+    return (payload?.entries ?? []).map((entry) => ({ code: entry.code, segment: entry.sector ?? 'Unclassified' }))
+}
+
 // Fetch the NYSE trading calendar (ascending list of real market days).
 export async function fetchTradingCalendar(): Promise<string[]> {
     const payload = await fetchApi<{ dates?: string[] }>(`/api/calendar.php`)

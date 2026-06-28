@@ -41,15 +41,23 @@ async function testShowStockListEmpty(): Promise<void> {
     assert.equal(output, 'No stocks available. Run `stock seed` to download the watchlist.')
 }
 
-// Verify list entries include the stock code and a curated fallback-safe segment for filtering.
+// Verify list entries pair each (valid, sorted) code with its segment (DB sector) from the bulk fetch.
 async function testBuildStockListEntries(): Promise<void> {
-    const entries = await buildStockListEntries(createDependencies(['MSFT', 'AAPL', 'TSLA']))
+    const entries = await buildStockListEntries({
+        listStockEntries: async () => [
+            { code: 'MSFT', segment: 'Information Technology' },
+            { code: 'AAPL', segment: 'Information Technology' },
+            { code: 'BRK B', segment: 'Financials' },
+            { code: 'TSLA', segment: 'Consumer Discretionary' },
+        ],
+    })
 
-    assert.deepEqual(
-        entries.map((entry) => entry.code),
-        ['AAPL', 'MSFT', 'TSLA'],
-    )
-    assert.equal(entries[0].segment, 'Consumer Technology')
+    // Malformed code (BRK B) skipped; rest sorted alphabetically with their segments.
+    assert.deepEqual(entries, [
+        { code: 'AAPL', segment: 'Information Technology' },
+        { code: 'MSFT', segment: 'Information Technology' },
+        { code: 'TSLA', segment: 'Consumer Discretionary' },
+    ])
 }
 
 // Run the focused action tests that protect the stock listing logic.

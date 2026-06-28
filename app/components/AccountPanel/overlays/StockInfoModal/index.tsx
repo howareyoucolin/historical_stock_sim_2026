@@ -109,7 +109,7 @@ export function StockInfoModal() {
                                 <h4 className="stockInfoModalName">{stockInfo.companyName}</h4>
                                 <div className="stockInfoModalMeta">
                                     <span>{stockInfo.segment}</span>
-                                    <span>{stockInfo.listingStatus}</span>
+                                    <span>{stockInfo.industry}</span>
                                 </div>
                             </div>
                             <div className={`stockInfoModalPriceBlock ${dayTone}`}>
@@ -125,7 +125,6 @@ export function StockInfoModal() {
 
                         <section className="stockInfoModalProfile">
                             <p className="stockInfoModalSummary">{stockInfo.summary}</p>
-                            {stockInfo.dataNote && <p className="stockInfoModalNote">Data note: {stockInfo.dataNote}</p>}
                         </section>
 
                         <dl className="stockInfoModalStats">

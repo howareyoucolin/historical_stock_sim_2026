@@ -1,64 +1,68 @@
-import { STOCK_PROFILES, type StockProfile } from './info-data'
 import { normalizeStockCode, validateStockCode } from './download-data'
+import { fetchStockInfo, type StockProfilePayload } from './market-data-client'
 
 export interface StockInfo {
     stockCode: string
     companyName: string
     segment: string
+    industry: string
     summary: string
-    listingStatus: string
-    dataNote: string | null
 }
 
-// Build a safe fallback profile so newly added tickers remain queryable even before curation catches up.
+// Source of a stock's static profile; defaults to the market-data API but is injectable for tests.
+export type StockInfoFetcher = (stockCode: string) => Promise<StockProfilePayload | null>
+
+export interface StockInfoDependencies {
+    getStockInfo?: StockInfoFetcher
+}
+
+// Build a safe fallback profile so an unknown ticker stays queryable rather than throwing.
 function buildFallbackProfile(stockCode: string): StockInfo {
     return {
         stockCode,
         companyName: stockCode,
         segment: 'Unclassified',
-        summary: 'No curated profile is stored for this ticker yet.',
-        listingStatus: 'Unknown / not yet curated',
-        dataNote: null,
+        industry: 'Unclassified',
+        summary: 'No profile is available for this ticker.',
     }
 }
 
-// Normalize one curated profile record into the CLI-facing stock-info shape.
-function normalizeProfile(stockCode: string, profile: StockProfile): StockInfo {
+// Map a DB profile payload into the CLI-facing stock-info shape (segment == DB sector).
+function normalizeProfile(stockCode: string, profile: StockProfilePayload): StockInfo {
     return {
         stockCode,
-        companyName: profile.companyName,
-        segment: profile.segment,
-        summary: profile.summary,
-        listingStatus: profile.listingStatus ?? 'Active public company',
-        dataNote: profile.dataNote ?? null,
+        companyName: profile.companyName ?? stockCode,
+        segment: profile.sector ?? 'Unclassified',
+        industry: profile.industry ?? 'Unclassified',
+        summary: profile.description ?? '',
     }
 }
 
-// Resolve the curated profile for one ticker, falling back to a clearly labeled placeholder when absent.
-export async function buildStockInfo(stockCode: string): Promise<StockInfo> {
+// Resolve a ticker's static profile from the database, falling back to a placeholder when unknown.
+// This is classification metadata (company/sector/industry), not time-series data, so it carries no
+// hindsight risk and needs no simulation-date cap.
+export async function buildStockInfo(stockCode: string, { getStockInfo = fetchStockInfo }: StockInfoDependencies = {}): Promise<StockInfo> {
     const normalizedStockCode = normalizeStockCode(stockCode)
 
     validateStockCode(normalizedStockCode)
 
-    const profile = STOCK_PROFILES[normalizedStockCode]
+    const profile = await getStockInfo(normalizedStockCode)
 
     return profile ? normalizeProfile(normalizedStockCode, profile) : buildFallbackProfile(normalizedStockCode)
 }
 
-// Format one stock profile into a compact CLI block that adds simulation context beyond price data.
+// Format one stock profile into a compact CLI block that adds context beyond price data.
 export function formatStockInfo(stockInfo: StockInfo): string {
     return [
         `${stockInfo.stockCode} info:`,
-        `  company: ${stockInfo.companyName}`,
-        `  segment: ${stockInfo.segment}`,
-        `  listing_status: ${stockInfo.listingStatus}`,
-        `  summary: ${stockInfo.summary}`,
-        `  data_note: ${stockInfo.dataNote ?? '-'}`,
+        `  company:  ${stockInfo.companyName}`,
+        `  segment:  ${stockInfo.segment}`,
+        `  industry: ${stockInfo.industry}`,
+        `  summary:  ${stockInfo.summary || '-'}`,
     ].join('\n')
 }
 
 // Build the CLI-friendly stock-profile block for one ticker.
-export async function showStockInfo(stockCode: string): Promise<string> {
-    return formatStockInfo(await buildStockInfo(stockCode))
+export async function showStockInfo(stockCode: string, dependencies: StockInfoDependencies = {}): Promise<string> {
+    return formatStockInfo(await buildStockInfo(stockCode, dependencies))
 }
-

@@ -158,7 +158,7 @@ export function StockChart() {
                     <h2 className="stockChartCompanyName">{stockInfo.companyName}</h2>
                     <div className="stockChartMeta">
                         <span>{stockInfo.segment}</span>
-                        <span>{stockInfo.listingStatus}</span>
+                        <span>{stockInfo.industry}</span>
                     </div>
                     <span className="stockChartPrice">{money(analysis.close)} <span className="stockChartCurrency">USD</span></span>
                 </div>
@@ -174,7 +174,6 @@ export function StockChart() {
 
             <section className="stockChartProfile" aria-label="Company profile">
                 <p className="stockChartSummary">{stockInfo.summary}</p>
-                {stockInfo.dataNote && <p className="stockChartDataNote">Data note: {stockInfo.dataNote}</p>}
             </section>
 
             <div className="stockChartRanges" role="tablist" aria-label="Chart range">

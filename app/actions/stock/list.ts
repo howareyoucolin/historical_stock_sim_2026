@@ -1,10 +1,11 @@
-import { buildStockInfo } from './info'
-import { fetchStockCodes } from './market-data-client'
+import { fetchStockCodes, fetchStockEntries } from './market-data-client'
 
 export interface StockListDependencies {
     cwd?: () => string
     // Source of tradable stock codes; defaults to the market-data API. Injectable for tests.
     listStockCodes?: () => Promise<string[]>
+    // Source of code+segment pairs (DB sector) in one call; injectable for tests.
+    listStockEntries?: () => Promise<Array<{ code: string; segment: string }>>
 }
 
 export interface StockListEntry {
@@ -28,11 +29,13 @@ export async function buildStockList({
     return (await listStockCodes()).filter((code) => VALID_STOCK_CODE.test(code)).sort()
 }
 
-// Resolve every available stock code plus its curated segment so the UI can filter long lists.
-export async function buildStockListEntries(dependencies: StockListDependencies = {}): Promise<StockListEntry[]> {
-    const codes = await buildStockList(dependencies)
-
-    return Promise.all(codes.map(async (code) => ({ code, segment: (await buildStockInfo(code)).segment })))
+// Resolve every available stock code plus its segment (DB sector) so the UI can filter long lists.
+// Segments come from one bulk call rather than a per-stock profile lookup. Malformed codes are skipped.
+export async function buildStockListEntries({ listStockEntries = fetchStockEntries }: StockListDependencies = {}): Promise<StockListEntry[]> {
+    return (await listStockEntries())
+        .filter((entry) => VALID_STOCK_CODE.test(entry.code))
+        .sort((left, right) => left.code.localeCompare(right.code))
+        .map((entry) => ({ code: entry.code, segment: entry.segment }))
 }
 
 // Lay the stock codes out in a left-aligned grid so a long list stays scannable in the terminal.
