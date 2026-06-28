@@ -171,6 +171,15 @@ export function Summary() {
                     <span className="summaryChangeAmount">{signedMoney(change)} ({signedPercent(changePercent)})</span>
                     <span className="summaryRange">{first.date} → {last.date}</span>
                 </div>
+
+                {/* Stale-view refresh chip, centered in the header (aligned with Total Value) so it
+                    never covers or blocks the chart, which stays interactive until refreshed. */}
+                {isStale && (
+                    <div className="summaryStaleBadge">
+                        <span className="summaryStaleHint">Showing {syncedDate} · now {currentDate}</span>
+                        <button type="button" className="summaryRefreshButton" onClick={refreshGraph}>Refresh view</button>
+                    </div>
+                )}
             </header>
 
             <div
@@ -194,8 +203,10 @@ export function Summary() {
                     <path className={`chartArea ${trendTone}`} d={areaPath} />
                     <path className={`chartLine ${trendTone}`} d={linePath} />
 
-                    {/* Hover marker: a vertical guide and a dot pinned to the day under the pointer. */}
-                    {active && !isStale && (
+                    {/* Hover marker: a vertical guide and a dot pinned to the day under the pointer.
+                        Stays interactive even when the view is stale so the outdated graph can still
+                        be explored before refreshing. */}
+                    {active && (
                         <g className="chartMarker">
                             <line className="chartMarkerLine" x1={active.x} y1={PAD.top} x2={active.x} y2={plotBottom} />
                             <circle className={`chartMarkerDot ${trendTone}`} cx={active.x} cy={active.y} r={4} />
@@ -212,7 +223,7 @@ export function Summary() {
                 <span className="chartXLabel" style={{ left: `${points[0].x}px`, top: `${plotBottom + 14}px` }}>{first.date}</span>
                 <span className="chartXLabel end" style={{ left: `${points[points.length - 1].x}px`, top: `${plotBottom + 14}px` }}>{last.date}</span>
 
-                {active && !isStale && (
+                {active && (
                     <div className="chartTooltip" style={{ left: `${active.x}px`, top: `${active.y}px` }}>
                         <span className="chartTooltipDate">{active.snapshot.date}</span>
                         <span className="chartTooltipValue">{money(active.snapshot.value)}</span>
@@ -222,14 +233,6 @@ export function Summary() {
                     </div>
                 )}
 
-                {/* The graph is left untouched while the date moves; an overlay invites a manual refresh
-                    so rapidly stepping the date never triggers a reload on every press. */}
-                {isStale && (
-                    <div className="summaryStaleOverlay">
-                        <p className="summaryStaleText">Showing {syncedDate}. The simulation is now at {currentDate}.</p>
-                        <button type="button" className="summaryRefreshButton" onClick={refreshGraph}>Refresh view</button>
-                    </div>
-                )}
             </div>
 
             <TaxReport />

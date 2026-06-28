@@ -15,6 +15,7 @@
 }
 
 .summaryHeader {
+    position: relative;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -66,21 +67,33 @@
     cursor: crosshair;
 }
 
-/* ---- Stale-data refresh overlay ---- */
-.summaryStaleOverlay {
+/* ---- Stale-data refresh badge (non-blocking, corner-pinned) ----
+   A compact pill in the chart's top-right corner. It does not cover the plot, so the outdated
+   graph stays fully hover-interactive until the user chooses to refresh. */
+.summaryStaleBadge {
     position: absolute;
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    margin: auto 0;
+    height: fit-content;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 18px;
-    text-align: center;
-    background: rgba(255, 250, 244, 0.72);
-    backdrop-filter: blur(2px);
-    border-radius: 10px;
+    gap: 8px;
+    padding: 5px 6px 5px 12px;
+    background: rgba(255, 250, 244, 0.92);
+    border: 1px solid rgba(60, 64, 67, 0.12);
+    border-radius: 999px;
+    box-shadow: 0 1px 4px rgba(60, 64, 67, 0.12);
     z-index: 3;
+}
+
+.summaryStaleHint {
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--muted);
+    white-space: nowrap;
 }
 
 .summaryStaleText {
@@ -105,4 +118,18 @@
 
 .summaryRefreshButton:hover {
     background: var(--accent-strong);
+}
+
+/* The badge variant of the button is smaller and pill-shaped to fit the corner chip. */
+.summaryStaleBadge .summaryRefreshButton {
+    font-size: 0.76rem;
+    padding: 5px 12px;
+    border-radius: 999px;
+}
+
+/* On narrow charts, drop the text hint and keep just the refresh button. */
+@media (max-width: 420px) {
+    .summaryStaleHint {
+        display: none;
+    }
 }
