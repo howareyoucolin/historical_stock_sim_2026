@@ -19,6 +19,11 @@ function stat(value: number | null): string {
     return value === null ? '—' : money(value)
 }
 
+// Label for a fundamental (EPS/P/E) that has no value in the market data as of the simulation date.
+// The dataset only begins carrying these figures partway through its range, so before then the
+// honest answer is "not reported yet" — never a fabricated or future-sourced number.
+const NOT_REPORTED = 'Not reported yet'
+
 // Render a read-only stock snapshot modal for a clicked holding using the same analysis payload as
 // the Analysis tab, without changing the trade form or the Analysis tab selection.
 export function StockInfoModal() {
@@ -138,11 +143,11 @@ export function StockInfoModal() {
                             </div>
                             <div>
                                 <dt>P/E ratio</dt>
-                                <dd>{analysis.peRatio === null ? '—' : analysis.peRatio.toFixed(2)}</dd>
+                                <dd>{analysis.peRatio === null ? NOT_REPORTED : analysis.peRatio.toFixed(2)}</dd>
                             </div>
                             <div>
                                 <dt>TTM EPS</dt>
-                                <dd>{stat(analysis.ttmEps)}</dd>
+                                <dd>{analysis.ttmEps === null ? NOT_REPORTED : money(analysis.ttmEps)}</dd>
                             </div>
                             <div>
                                 <dt>52-wk high</dt>
@@ -154,7 +159,7 @@ export function StockInfoModal() {
                             </div>
                             <div>
                                 <dt>Last dividend</dt>
-                                <dd>{analysis.lastDividendPerShare === null ? '—' : `${money(analysis.lastDividendPerShare)} (${analysis.lastDividendDate})`}</dd>
+                                <dd>{analysis.lastDividendPerShare === null ? `None as of ${analysis.asOfDate}` : `${money(analysis.lastDividendPerShare)} (${analysis.lastDividendDate})`}</dd>
                             </div>
                         </dl>
                     </div>
