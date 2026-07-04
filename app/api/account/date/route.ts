@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { applyActiveSessionFromPointer } from '../../../actions/session-management'
+
 import { DEFAULT_USER_SESSION_RELATIVE_PATH } from '../../../actions/account/model'
 import { advanceSimulationDate, getTradingCalendarDates } from '../../../actions/date/advance'
 import { buildDefaultUserAccountSessionView } from '../../../actions/account/show'
@@ -13,6 +15,9 @@ interface DateRequestBody {
 
 // Return the trading calendar so the UI can offer only real market days for fast-forwarding.
 export async function GET(): Promise<Response> {
+    // Operate on the session the UI has switched to (persisted pointer).
+    await applyActiveSessionFromPointer()
+
     const tradingDates = await getTradingCalendarDates()
 
     return NextResponse.json({ tradingDates })
@@ -20,6 +25,9 @@ export async function GET(): Promise<Response> {
 
 // Advance the simulation date to the next trading day or forward to a chosen target date.
 export async function POST(request: Request): Promise<Response> {
+    // Operate on the session the UI has switched to (persisted pointer).
+    await applyActiveSessionFromPointer()
+
     let body: DateRequestBody
 
     try {

@@ -2,11 +2,12 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { USER_SESSIONS_DIRECTORY_NAME } from './model'
-import { valuesLogFileName } from '../session'
+import { DEFAULT_SESSION_NAME, valuesLogFileName } from '../session'
 import type { DefaultUserAccountSessionView } from './view-model'
 
 export const VALUES_LOG_FILE_NAME = 'values.log'
-export const VALUES_LOG_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${VALUES_LOG_FILE_NAME}`
+// Default session's values log path (each session keeps its own log inside its folder).
+export const VALUES_LOG_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${DEFAULT_SESSION_NAME}/${VALUES_LOG_FILE_NAME}`
 
 // Repo-relative path of the values log for the currently active session (session-aware).
 function sessionValuesLogRelativePath(): string {

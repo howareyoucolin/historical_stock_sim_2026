@@ -47,7 +47,7 @@ async function testAccountInitCommand(): Promise<void> {
 
     assert.equal(initializerWasCalled, true)
     assert.equal(result.exitCode, 0)
-    assert.equal(result.output, 'Reset account in user-sessions/account.json.')
+    assert.equal(result.output, 'Reset account in user-sessions/default/account.json.')
 }
 
 // Verify account show fetches the holdings view, renders the table, and carries the view as data.
@@ -94,7 +94,7 @@ async function testAccountDepositCommand(): Promise<void> {
 
     assert.equal(capturedCashDelta, -25.5)
     assert.equal(result.exitCode, 0)
-    assert.equal(result.output, 'Updated account cash by -25.50 in user-sessions/account.json.')
+    assert.equal(result.output, 'Updated account cash by -25.50 in user-sessions/default/account.json.')
 }
 
 // Verify account deposit forwards a --note to the session updater and echoes it on the JSON payload.
@@ -504,7 +504,7 @@ async function testStockHistoryCommandUsage(): Promise<void> {
     const result = await runCommand('stock history')
 
     assert.equal(result.exitCode, 1)
-    assert.equal(result.output, 'Usage: stock history <code>')
+    assert.equal(result.output, 'Usage: stock history <code> [--last=<n>] [--since=<YYYY-MM-DD>]')
 }
 
 // Verify stock info routes through the dedicated stock command handler with the requested code.
@@ -556,6 +556,9 @@ async function testStockStatusCommand(): Promise<void> {
                 asOfDate: '2020-02-14',
                 row: { date: '2020-02-14', close: 81.24, ttmEps: 3.18, peRatio: 25.55, dividendPerShare: 0, isPayoutDate: false },
                 previousClose: 81.22,
+                high52w: 90,
+                low52w: 50,
+                pctFrom52wHigh: -9.73,
             }
         },
     })
@@ -792,6 +795,9 @@ async function testStockPriceCommand(): Promise<void> {
             asOfDate: '2020-02-14',
             row: { date: '2020-02-14', close: 81.24, ttmEps: 3.18, peRatio: 25.55, dividendPerShare: 0, isPayoutDate: false },
             previousClose: 80,
+            high52w: 90,
+            low52w: 50,
+            pctFrom52wHigh: -9.73,
         }),
     })
 
@@ -811,6 +817,9 @@ async function testStockCompareCommand(): Promise<void> {
             asOfDate: '2020-02-14',
             row: { date: '2020-02-14', close: byCode[stockCode], ttmEps: 3, peRatio: 27, dividendPerShare: 0, isPayoutDate: false },
             previousClose: 80,
+            high52w: 200,
+            low52w: 50,
+            pctFrom52wHigh: -20,
         }),
     })
 
@@ -822,12 +831,83 @@ async function testStockCompareCommand(): Promise<void> {
     assert.match(result.output, /MSFT/)
 }
 
+// Verify `account cash` reports cash + per-code share counts from the raw session, without valuing
+// holdings (it must not call the market-data-backed account view at all).
+async function testAccountCashCommand(): Promise<void> {
+    let viewWasCalled = false
+    const runCommand = createRunCommand({
+        fetchAccountView: async () => {
+            viewWasCalled = true
+            throw new Error('account cash must not build the valued view')
+        },
+        fetchAccountState: async () => ({
+            date: '2020-02-14',
+            cash: 1234.5,
+            positions: { AAPL: [{ quantity: 3, cost_per_share: 200, purchase_date: '2019-01-02' }, { quantity: 2, cost_per_share: 210, purchase_date: '2019-06-01' }] },
+        }),
+    })
+
+    const result = await runCommand('account cash --json')
+
+    assert.equal(viewWasCalled, false)
+    assert.equal(result.exitCode, 0)
+    assert.deepEqual(result.data, { date: '2020-02-14', cash: 1234.5, positions: { AAPL: 5 } })
+}
+
+// Verify `stock screen --min-drawdown` keeps only names far enough below their 52-week high.
+async function testStockScreenDrawdownFilter(): Promise<void> {
+    const byCode: Record<string, number> = { DEEP: -40, SHALLOW: -10 }
+    const runCommand = createRunCommand({
+        fetchStockList: async () => ['DEEP', 'SHALLOW'],
+        fetchStockStatus: async (stockCode) => ({
+            stockCode,
+            simDate: '2020-02-14',
+            asOfDate: '2020-02-14',
+            row: { date: '2020-02-14', close: 60, ttmEps: 3, peRatio: 20, dividendPerShare: 0, isPayoutDate: false },
+            previousClose: 60,
+            high52w: 100,
+            low52w: 40,
+            pctFrom52wHigh: byCode[stockCode],
+        }),
+    })
+
+    const result = await runCommand('stock screen --min-drawdown=30 --json')
+
+    assert.equal(result.exitCode, 0)
+    const codes = (result.data as { rows: Array<{ stockCode: string }> }).rows.map((row) => row.stockCode)
+    assert.deepEqual(codes, ['DEEP'])
+}
+
+// Verify `stock history --last=N` returns only the trailing N rows of the sim-date-bounded series.
+async function testStockHistoryLastWindow(): Promise<void> {
+    const runCommand = createRunCommand({
+        fetchStockHistory: async () => ({
+            stockCode: 'AAPL',
+            throughDate: '2020-01-05',
+            rows: [
+                { date: '2020-01-01', close: 1, ttmEps: null, peRatio: null, dividendPerShare: 0, isPayoutDate: false },
+                { date: '2020-01-02', close: 2, ttmEps: null, peRatio: null, dividendPerShare: 0, isPayoutDate: false },
+                { date: '2020-01-03', close: 3, ttmEps: null, peRatio: null, dividendPerShare: 0, isPayoutDate: false },
+            ],
+        }),
+    })
+
+    const result = await runCommand('stock history AAPL --last=2 --json')
+
+    assert.equal(result.exitCode, 0)
+    const dates = (result.data as { rows: Array<{ date: string }> }).rows.map((row) => row.date)
+    assert.deepEqual(dates, ['2020-01-02', '2020-01-03'])
+}
+
 // Run the focused tests that protect CLI account command wiring.
 export async function runCliCommandTests(): Promise<void> {
     testGetHelpText()
     testTokenizeCommand()
     await testAccountInitCommand()
     await testAccountShowCommand()
+    await testAccountCashCommand()
+    await testStockScreenDrawdownFilter()
+    await testStockHistoryLastWindow()
     await testAccountBuyCommand()
     await testAccountBuyCommandWithNote()
     await testAccountSellCommand()

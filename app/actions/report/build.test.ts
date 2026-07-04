@@ -106,8 +106,8 @@ async function testBuildSimulationReport(): Promise<void> {
         }
     )
 
-    assert.equal(result.outputPath, 'user-sessions/report.json')
-    assert.equal(capturedPath, '/repo/user-sessions/report.json')
+    assert.equal(result.outputPath, 'user-sessions/default/report.json')
+    assert.equal(capturedPath, '/repo/user-sessions/default/report.json')
     assert.match(capturedContents, /"sessionId": "default"/)
     assert.equal(result.report.strategy.name, 'Quality Pullback Rotation')
     assert.equal(result.report.thesis.summary, 'Quality technology businesses should keep compounding faster than the broader market.')

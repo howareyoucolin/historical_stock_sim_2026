@@ -6,7 +6,7 @@ import { toggleSidebar } from '../../../store/uiSlice'
 import { TradeBox } from './TradeBox'
 import { TimeTravel } from './TimeTravel'
 import { SidebarMeta } from './SidebarMeta'
-import { ResetControl } from './ResetControl'
+import { SessionsControl } from './SessionsControl'
 import { PollStatus } from './PollStatus'
 
 // Render the collapsible trading sidebar: brand, trade box, time-travel controls, account meta,
@@ -42,7 +42,7 @@ export function Sidebar() {
 
                     {/* Footer pinned to the bottom: reset on the left, refresh status on the right. */}
                     <div className="sidebarFooter">
-                        <ResetControl />
+                        <SessionsControl />
                         <PollStatus />
                     </div>
                 </div>

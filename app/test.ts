@@ -18,6 +18,7 @@ import { runStockStatusActionTests } from './actions/stock/status.test'
 import { runStockListActionTests } from './actions/stock/list.test'
 import { runStockAnalysisActionTests } from './actions/stock/analysis.test'
 import { runSessionActionTests } from './actions/session.test'
+import { runSessionManagementTests } from './actions/session-management.test'
 import { runTaxReportTests } from './components/AccountPanel/Content/Summary/TaxReport/taxReport.test'
 import { runCliCommandTests } from '../cli/commands.test'
 import { runCliOutputTests } from '../cli/output.test'
@@ -61,6 +62,7 @@ const TEST_SUITES: TestSuite[] = [
     { label: 'Date next action tests', run: runSetDateToTomorrowActionTests },
     { label: 'Date set action tests', run: runSetDateToSpecificDateActionTests },
     { label: 'Session action tests', run: runSessionActionTests },
+    { label: 'Session management tests', run: runSessionManagementTests },
     { label: 'Tax report tests', run: runTaxReportTests },
     { label: 'CLI command tests', run: runCliCommandTests },
     { label: 'CLI output tests', run: runCliOutputTests },

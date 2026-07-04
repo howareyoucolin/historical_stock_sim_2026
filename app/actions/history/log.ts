@@ -2,7 +2,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { USER_SESSIONS_DIRECTORY_NAME } from '../account/model'
-import { historyLogFileName } from '../session'
+import { DEFAULT_SESSION_NAME, historyLogFileName } from '../session'
 
 // Repo-relative path of the history log for the currently active session (session-aware).
 function sessionLogRelativePath(): string {
@@ -10,7 +10,8 @@ function sessionLogRelativePath(): string {
 }
 
 export const HISTORY_LOG_FILE_NAME = 'history.log'
-export const HISTORY_LOG_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${HISTORY_LOG_FILE_NAME}`
+// Default session's history log path (each session keeps its own log inside its folder).
+export const HISTORY_LOG_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${DEFAULT_SESSION_NAME}/${HISTORY_LOG_FILE_NAME}`
 
 export type HistoryEventType = 'BUY' | 'SELL' | 'DIVIDEND' | 'DEPOSIT' | 'INTEREST' | 'CORPORATE_ACTION'
 

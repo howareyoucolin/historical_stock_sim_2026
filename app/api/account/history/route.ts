@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { applyActiveSessionFromPointer } from '../../../actions/session-management'
+
 import { readHistoryLogEntries } from '../../../actions/history/log'
 
 export const runtime = 'nodejs'
@@ -9,6 +11,9 @@ export const dynamic = 'force-dynamic'
 
 // Return the recorded account history (buys, sells, dividends, deposits) for the browser history tab.
 export async function GET(): Promise<Response> {
+    // Operate on the session the UI has switched to (persisted pointer).
+    await applyActiveSessionFromPointer()
+
     const entries = await readHistoryLogEntries()
 
     return NextResponse.json({ entries })

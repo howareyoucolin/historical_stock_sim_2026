@@ -3,7 +3,7 @@ import { buyStockInDefaultUserAccountSession } from '../../app/actions/account/b
 import { sellStockInDefaultUserAccountSession } from '../../app/actions/account/sell'
 import { depositIntoDefaultUserAccountSession } from '../../app/actions/account/deposit'
 import { initializeDefaultUserAccountSession } from '../../app/actions/account/init'
-import { fetchDefaultUserAccountSessionView, formatDefaultUserAccountSessionView } from '../../app/actions/account/show'
+import { fetchDefaultUserAccountSession, fetchDefaultUserAccountSessionView, formatDefaultUserAccountSessionView } from '../../app/actions/account/show'
 import { getStockQuoteForAccountDate } from '../../app/actions/account/quote'
 import { normalizeStockCode } from '../../app/actions/stock/symbol'
 import type { DefaultUserAccountSessionView } from '../../app/actions/account/view-model'
@@ -12,6 +12,7 @@ import type { CommandResult } from '../command-types'
 export interface AccountCommandDependencies {
     initializeDefaultUserAccount?: () => Promise<{ date: string; cash: number }>
     fetchAccountView?: typeof fetchDefaultUserAccountSessionView
+    fetchAccountState?: typeof fetchDefaultUserAccountSession
     depositIntoDefaultUserAccount?: (valueCash: number, note?: string) => Promise<{ date: string; cash: number }>
     buyStockInDefaultUserAccount?: typeof buyStockInDefaultUserAccountSession
     sellStockInDefaultUserAccount?: typeof sellStockInDefaultUserAccountSession
@@ -22,8 +23,9 @@ export const ACCOUNT_HELP_LINES = [
     '  account buy <code> <qty> Buy shares (also: --amount=<$>, max, --note=<text>, --dry-run)',
     '  account sell <code> <qty> Sell shares (also: all, --percent=<pct>, --note=<text>, --dry-run)',
     '  account deposit <cash> Add cash to the shared account session file (also: --note=<text>)',
-    '  account init           Reset the shared account session file',
+    '  account init           Reset the session (default: clean slate; named: only that session)',
     '  account show           Show the tracked stock table for the shared account',
+    '  account cash           Show just cash + share counts (fast; no per-holding valuation)',
 ]
 
 const BUY_USAGE = 'Usage: account buy <stock_code> <quantity|--amount=<dollars>|max> [--note=<text>] [--dry-run]'
@@ -99,6 +101,7 @@ function failure(label: string, error: unknown): CommandResult {
 export function createAccountCommandHandler({
     initializeDefaultUserAccount = initializeDefaultUserAccountSession,
     fetchAccountView = fetchDefaultUserAccountSessionView,
+    fetchAccountState = fetchDefaultUserAccountSession,
     depositIntoDefaultUserAccount = (valueCash: number, note?: string) =>
         depositIntoDefaultUserAccountSession(valueCash, {}, note),
     buyStockInDefaultUserAccount = buyStockInDefaultUserAccountSession,
@@ -129,6 +132,33 @@ export function createAccountCommandHandler({
             return { output: formatDefaultUserAccountSessionView(view), data: view, shouldExit: false, exitCode: 0 }
         } catch (error) {
             return failure('Account show failed', error)
+        }
+    }
+
+    // Run `account cash`: return just the sim date, cash, and per-code share counts straight from the
+    // session file, WITHOUT valuing each holding (which would fetch a full price series per position).
+    // This is the fast read for scripted drivers that only need cash + share counts each step.
+    async function runCash(): Promise<CommandResult> {
+        try {
+            const account = await fetchAccountState()
+            const positions: Record<string, number> = {}
+            for (const [stockCode, lots] of Object.entries(account.positions)) {
+                const quantity = lots.reduce((total, lot) => total + lot.quantity, 0)
+                if (quantity > 0) {
+                    positions[stockCode] = quantity
+                }
+            }
+
+            const holdingsText = Object.keys(positions).length === 0 ? 'none' : Object.entries(positions).map(([code, qty]) => `${code}:${qty}`).join(' ')
+
+            return {
+                output: `Date: ${account.date} | Cash: ${formatCurrency(account.cash)} | Positions: ${holdingsText}`,
+                data: { date: account.date, cash: account.cash, positions },
+                shouldExit: false,
+                exitCode: 0,
+            }
+        } catch (error) {
+            return failure('Account cash failed', error)
         }
     }
 
@@ -369,6 +399,8 @@ export function createAccountCommandHandler({
                 return args.length === 1 ? runInit() : { output: 'Usage: account init', shouldExit: false, exitCode: 1 }
             case 'show':
                 return args.length === 1 ? runShow() : { output: 'Usage: account show', shouldExit: false, exitCode: 1 }
+            case 'cash':
+                return args.length === 1 ? runCash() : { output: 'Usage: account cash', shouldExit: false, exitCode: 1 }
             case 'deposit':
                 return runDeposit(args.slice(1))
             case 'buy':

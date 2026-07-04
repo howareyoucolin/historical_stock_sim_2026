@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { applyActiveSessionFromPointer } from '../../../actions/session-management'
+
 import { buildStockAnalysis } from '../../../actions/stock/analysis'
 import { buildStockInfo } from '../../../actions/stock/info'
 
@@ -10,6 +12,9 @@ export const dynamic = 'force-dynamic'
 
 // Return a single stock's analysis snapshot (price series plus figures) as of the simulation date.
 export async function GET(request: Request): Promise<Response> {
+    // Operate on the session the UI has switched to (persisted pointer).
+    await applyActiveSessionFromPointer()
+
     const code = new URL(request.url).searchParams.get('code')
 
     if (!code) {

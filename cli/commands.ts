@@ -4,6 +4,7 @@ import { createHistoryCommandHandler, type HistoryCommandDependencies, HISTORY_H
 import { createReportCommandHandler, type ReportCommandDependencies, REPORT_HELP_LINES } from './command-groups/report'
 import { createStockCommandHandler, type StockCommandDependencies, STOCK_HELP_LINES } from './command-groups/stock'
 import { createValuesCommandHandler, type ValuesCommandDependencies, VALUES_HELP_LINES } from './command-groups/values'
+import { createSessionCommandHandler, type SessionCommandDependencies, SESSION_HELP_LINES } from './command-groups/session'
 import { setActiveSession } from '../app/actions/session'
 import type { CommandResult } from './command-types'
 
@@ -12,7 +13,8 @@ type CommandDependencies = AccountCommandDependencies &
     HistoryCommandDependencies &
     ReportCommandDependencies &
     StockCommandDependencies &
-    ValuesCommandDependencies
+    ValuesCommandDependencies &
+    SessionCommandDependencies
 
 export type { CommandResult } from './command-types'
 
@@ -32,6 +34,7 @@ export function getHelpText(): string {
         ...REPORT_HELP_LINES,
         ...STOCK_HELP_LINES,
         ...VALUES_HELP_LINES,
+        ...SESSION_HELP_LINES,
         '  exit                   Leave the CLI',
         '  quit                   Leave the CLI',
     ].join('\n')
@@ -98,6 +101,7 @@ export function createRunCommand({
     depositIntoDefaultUserAccount,
     initializeDefaultUserAccount,
     fetchAccountView,
+    fetchAccountState,
     quoteStockForAccountDate,
     advanceOneTradingDay,
     advanceToSpecificDate,
@@ -109,6 +113,11 @@ export function createRunCommand({
     fetchStockStatus,
     fetchStockList,
     fetchValuesSummary,
+    listSessions,
+    createSession,
+    switchSession,
+    deleteSession,
+    readActiveSessionName,
 }: CommandDependencies = {}) {
     const runAccountCommand = createAccountCommandHandler({
         buyStockInDefaultUserAccount,
@@ -116,6 +125,7 @@ export function createRunCommand({
         initializeDefaultUserAccount,
         depositIntoDefaultUserAccount,
         fetchAccountView,
+        fetchAccountState,
         quoteStockForAccountDate,
     })
     const runDateCommand = createDateCommandHandler({
@@ -138,6 +148,13 @@ export function createRunCommand({
     const runValuesCommand = createValuesCommandHandler({
         fetchValuesSummary,
     })
+    const runSessionCommand = createSessionCommandHandler({
+        listSessions,
+        createSession,
+        switchSession,
+        deleteSession,
+        readActiveSessionName,
+    })
 
     // Dispatch a parsed command (with the global --json flag already stripped) to its handler.
     async function dispatch(command: string, args: string[]): Promise<CommandResult> {
@@ -156,6 +173,8 @@ export function createRunCommand({
                 return runStockCommand(args)
             case 'values':
                 return runValuesCommand(args)
+            case 'session':
+                return runSessionCommand(args)
             case 'exit':
             case 'quit':
                 return { output: 'Leaving StockSimulate2026 CLI.', shouldExit: true, exitCode: 0 }

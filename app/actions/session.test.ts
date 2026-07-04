@@ -14,17 +14,17 @@ async function createTempRepoRoot(): Promise<string> {
 // Verify the file-name resolvers reflect the active session and fall back to the defaults.
 function testSessionFileNames(): void {
     setActiveSession(null)
-    assert.equal(accountDataFileName(), 'account.json')
-    assert.equal(accountMetaFileName(), 'meta.json')
-    assert.equal(historyLogFileName(), 'history.log')
-    assert.equal(valuesLogFileName(), 'values.log')
+    assert.equal(accountDataFileName(), 'default/account.json')
+    assert.equal(accountMetaFileName(), 'default/meta.json')
+    assert.equal(historyLogFileName(), 'default/history.log')
+    assert.equal(valuesLogFileName(), 'default/values.log')
 
     setActiveSession('alpha')
     assert.equal(getActiveSession(), 'alpha')
-    assert.equal(accountDataFileName(), 'alpha.account.json')
-    assert.equal(accountMetaFileName(), 'alpha.meta.json')
-    assert.equal(historyLogFileName(), 'alpha.history.log')
-    assert.equal(valuesLogFileName(), 'alpha.values.log')
+    assert.equal(accountDataFileName(), 'alpha/account.json')
+    assert.equal(accountMetaFileName(), 'alpha/meta.json')
+    assert.equal(historyLogFileName(), 'alpha/history.log')
+    assert.equal(valuesLogFileName(), 'alpha/values.log')
 
     // Blank names collapse back to the default session.
     setActiveSession('   ')
@@ -39,10 +39,10 @@ async function testSessionIsolatesAccountFile(): Promise<void> {
         setActiveSession('alpha')
         await writeDefaultUserAccountSession({ date: '2020-02-14', cash: 4242, positions: {} }, { cwd: () => tempRepoRoot })
 
-        // The named session's data file exists; the default session's does not.
-        const alphaRaw = await fs.readFile(path.join(tempRepoRoot, 'user-sessions', 'alpha.account.json'), 'utf8')
+        // The named session's data file exists in its folder; the default session's does not.
+        const alphaRaw = await fs.readFile(path.join(tempRepoRoot, 'user-sessions', 'alpha', 'account.json'), 'utf8')
         assert.match(alphaRaw, /4242/)
-        await assert.rejects(fs.readFile(path.join(tempRepoRoot, 'user-sessions', 'account.json'), 'utf8'))
+        await assert.rejects(fs.readFile(path.join(tempRepoRoot, 'user-sessions', 'default', 'account.json'), 'utf8'))
 
         const alphaAccount = await readDefaultUserAccountSession({ cwd: () => tempRepoRoot })
         assert.equal(alphaAccount.cash, 4242)

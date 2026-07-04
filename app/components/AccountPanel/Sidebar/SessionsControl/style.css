@@ -1,0 +1,52 @@
+/* Sessions control: a small "current session" label stacked above the icon + text button,
+   pinned bottom-left in the sidebar footer. */
+.sessionsControlWrap {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+}
+
+.sessionsControlLabel {
+    font-size: 0.68rem;
+    color: var(--muted, #999);
+    letter-spacing: 0.02em;
+    max-width: 160px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sessionsControlCurrent {
+    font-weight: 600;
+    color: var(--text, inherit);
+}
+
+.sessionsControl {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: inherit;
+    font-weight: 500;
+    font-size: 0.76rem;
+    border-radius: 8px;
+    cursor: pointer;
+    padding: 5px 12px;
+    background: transparent;
+    border: 1px solid var(--border-strong);
+    color: var(--muted);
+}
+
+.sessionsControl:hover {
+    border-color: var(--accent, #5a8cff);
+    color: var(--text, inherit);
+}
+
+.sessionsControlIcon {
+    font-size: 0.95rem;
+    line-height: 1;
+}
+
+.sessionsControlText {
+    white-space: nowrap;
+}

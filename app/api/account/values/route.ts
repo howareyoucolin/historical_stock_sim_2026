@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { applyActiveSessionFromPointer } from '../../../actions/session-management'
+
 import { readDailyValues, trimLeadingZeroValues } from '../../../actions/account/values-log'
 
 export const runtime = 'nodejs'
@@ -10,6 +12,9 @@ export const dynamic = 'force-dynamic'
 // Return the recorded daily total-value series (cash + holdings) for the summary graph, trimming the
 // leading unfunded (zero-value) period so the graph starts when the portfolio first holds value.
 export async function GET(): Promise<Response> {
+    // Operate on the session the UI has switched to (persisted pointer).
+    await applyActiveSessionFromPointer()
+
     const snapshots = trimLeadingZeroValues(await readDailyValues())
 
     return NextResponse.json({ snapshots })

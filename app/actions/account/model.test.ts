@@ -28,8 +28,8 @@ async function readSessionFile(tempRepoRoot: string, relativePath: string): Prom
 
 // Verify the default user session paths point at the account data file and the metadata file.
 function testGetDefaultUserSessionFilePath(): void {
-    assert.equal(path.join('/repo', DEFAULT_USER_SESSION_RELATIVE_PATH), '/repo/user-sessions/account.json')
-    assert.equal(path.join('/repo', DEFAULT_USER_SESSION_META_RELATIVE_PATH), '/repo/user-sessions/meta.json')
+    assert.equal(path.join('/repo', DEFAULT_USER_SESSION_RELATIVE_PATH), '/repo/user-sessions/default/account.json')
+    assert.equal(path.join('/repo', DEFAULT_USER_SESSION_META_RELATIVE_PATH), '/repo/user-sessions/default/meta.json')
 }
 
 // Verify reading the shared session creates the split data and metadata files when both are missing.

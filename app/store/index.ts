@@ -4,6 +4,7 @@ import accountReducer from './accountSlice'
 import uiReducer from './uiSlice'
 import formReducer from './formSlice'
 import analysisReducer from './analysisSlice'
+import sessionReducer from './sessionSlice'
 
 // Compose the app's slices into the single shared store that replaces local component state.
 export const store = configureStore({
@@ -12,6 +13,7 @@ export const store = configureStore({
         ui: uiReducer,
         form: formReducer,
         analysis: analysisReducer,
+        session: sessionReducer,
     },
 })
 

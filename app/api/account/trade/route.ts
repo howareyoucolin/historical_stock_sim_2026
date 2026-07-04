@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { applyActiveSessionFromPointer } from '../../../actions/session-management'
+
 import { DEFAULT_USER_SESSION_RELATIVE_PATH } from '../../../actions/account/model'
 import { buyStockInDefaultUserAccountSession } from '../../../actions/account/buy'
 import { sellStockInDefaultUserAccountSession } from '../../../actions/account/sell'
@@ -16,6 +18,9 @@ interface TradeRequestBody {
 
 // Execute a buy or sell against the shared account and return the refreshed holdings view.
 export async function POST(request: Request): Promise<Response> {
+    // Operate on the session the UI has switched to (persisted pointer).
+    await applyActiveSessionFromPointer()
+
     let body: TradeRequestBody
 
     try {

@@ -2,26 +2,43 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 
 import { createDefaultAccountState, DEFAULT_ACCOUNT_DATE, normalizeAccountState, type AccountData, type AccountMeta, type AccountState } from './state'
-import { accountDataFileName, accountMetaFileName, legacyAccountSessionFileName, USER_SESSIONS_DIRECTORY_NAME } from '../session'
+import {
+    accountDataFileName,
+    accountMetaFileName,
+    DEFAULT_SESSION_NAME,
+    legacyAccountSessionFileName,
+    legacyFlatAccountDataFileName,
+    legacyFlatAccountMetaFileName,
+    USER_SESSIONS_DIRECTORY_NAME,
+} from '../session'
 
 export { createDefaultAccountState, DEFAULT_ACCOUNT_DATE, normalizeAccountState, type AccountData, type AccountMeta, type AccountPosition, type AccountState } from './state'
 
 export { USER_SESSIONS_DIRECTORY_NAME } from '../session'
 
-// The account state is persisted across two files: account.json (cash + positions) and meta.json
-// (sim date + updated_at). The relative paths below are session-aware and resolved per call.
+// The account state is persisted across two files inside each session folder: account.json (cash +
+// positions) and meta.json (sim date + updated_at). Paths below are session-aware, resolved per call.
 export const DEFAULT_USER_SESSION_FILE_NAME = 'account.json'
-export const DEFAULT_USER_SESSION_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${DEFAULT_USER_SESSION_FILE_NAME}`
+export const DEFAULT_USER_SESSION_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${DEFAULT_SESSION_NAME}/${DEFAULT_USER_SESSION_FILE_NAME}`
 export const DEFAULT_USER_SESSION_META_FILE_NAME = 'meta.json'
-export const DEFAULT_USER_SESSION_META_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${DEFAULT_USER_SESSION_META_FILE_NAME}`
+export const DEFAULT_USER_SESSION_META_RELATIVE_PATH = `${USER_SESSIONS_DIRECTORY_NAME}/${DEFAULT_SESSION_NAME}/${DEFAULT_USER_SESSION_META_FILE_NAME}`
 
-// Repo-relative paths of the active session's data, metadata, and legacy single files (session-aware).
+// Repo-relative paths of the active session's data/metadata (current folder layout).
 function accountDataRelativePath(): string {
     return `${USER_SESSIONS_DIRECTORY_NAME}/${accountDataFileName()}`
 }
 
 function accountMetaRelativePath(): string {
     return `${USER_SESSIONS_DIRECTORY_NAME}/${accountMetaFileName()}`
+}
+
+// Legacy pre-folder paths, only consulted to migrate an existing session into its folder on read.
+function legacyFlatAccountDataRelativePath(): string {
+    return `${USER_SESSIONS_DIRECTORY_NAME}/${legacyFlatAccountDataFileName()}`
+}
+
+function legacyFlatAccountMetaRelativePath(): string {
+    return `${USER_SESSIONS_DIRECTORY_NAME}/${legacyFlatAccountMetaFileName()}`
 }
 
 function legacyAccountRelativePath(): string {
@@ -70,6 +87,17 @@ export async function readDefaultUserAccountSession({
         return normalizeAccountState({ date: meta?.date, cash: data?.cash, positions: data?.positions, accruedInterest: data?.accruedInterest })
     }
 
+    // Migrate an older on-disk layout into the session folder: first the flat split files
+    // (bare / <name>.account.json + .meta.json), then the oldest pre-split single file.
+    const flatData = await readJsonSessionFile<Partial<AccountData>>(path.join(cwd(), legacyFlatAccountDataRelativePath()), readFile)
+    const flatMeta = await readJsonSessionFile<Partial<AccountMeta>>(path.join(cwd(), legacyFlatAccountMetaRelativePath()), readFile)
+
+    if (flatData !== null || flatMeta !== null) {
+        const migrated = normalizeAccountState({ date: flatMeta?.date, cash: flatData?.cash, positions: flatData?.positions, accruedInterest: flatData?.accruedInterest })
+
+        return writeDefaultUserAccountSession(migrated, { cwd, makeDirectory, writeFile, now })
+    }
+
     const legacyAccount = await readJsonSessionFile<Partial<AccountState>>(path.join(cwd(), legacyAccountRelativePath()), readFile)
     const account = legacyAccount !== null ? normalizeAccountState(legacyAccount) : createDefaultAccountState()
 
@@ -98,7 +126,8 @@ export async function writeDefaultUserAccountSession(
 ): Promise<AccountState> {
     const sessionDirectory = path.join(cwd(), USER_SESSIONS_DIRECTORY_NAME)
 
-    await makeDirectory(sessionDirectory, { recursive: true })
+    // Create the per-session folder (dirname of the data file), e.g. user-sessions/<name>/.
+    await makeDirectory(path.dirname(path.join(sessionDirectory, accountDataFileName())), { recursive: true })
 
     const data: AccountData = { cash: account.cash, positions: account.positions }
 

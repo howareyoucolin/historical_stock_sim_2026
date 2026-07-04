@@ -1,0 +1,230 @@
+/* Session management modal. Reuses the shared .modalOverlay/.modalCard chrome from globals.css;
+   class names below are unique to this component (App Router global CSS is unscoped). */
+.sessionModalCard {
+    width: min(520px, 92vw);
+    text-align: left;
+}
+
+.sessionModalHead {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.sessionModalHead h3 {
+    margin: 0;
+}
+
+.sessionModalClose {
+    background: transparent;
+    border: none;
+    color: var(--muted, #999);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 6px;
+}
+
+.sessionModalClose:hover {
+    color: var(--text, inherit);
+}
+
+.sessionModalNew {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.sessionModalInput {
+    flex: 1;
+    min-width: 0;
+    padding: 8px 10px;
+    font: inherit;
+    font-size: 0.9rem;
+    border: 1px solid var(--border-strong, #333);
+    border-radius: 8px;
+    background: var(--input-bg, rgba(127, 127, 127, 0.08));
+    color: inherit;
+}
+
+.sessionModalStart {
+    flex: 0 0 auto;
+    padding: 8px 14px;
+    font: inherit;
+    font-size: 0.85rem;
+    border: 1px solid var(--border-strong, #333);
+    border-radius: 8px;
+    background: var(--accent, rgba(90, 140, 255, 0.2));
+    color: inherit;
+    cursor: pointer;
+}
+
+.sessionModalStart:hover:not(:disabled) {
+    background: var(--accent-strong, rgba(90, 140, 255, 0.32));
+}
+
+.sessionModalError {
+    margin: 0 0 10px;
+    font-size: 0.82rem;
+    color: var(--neg, #e5534b);
+}
+
+.sessionModalList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 264px; /* stable height so pagination doesn't jump the modal */
+}
+
+.sessionModalRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--border, #2a2a2a);
+    border-radius: 8px;
+}
+
+.sessionModalRowActive {
+    border-color: var(--accent, #5a8cff);
+}
+
+.sessionModalInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    overflow: hidden;
+}
+
+.sessionModalName {
+    font-weight: 600;
+    font-size: 0.9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sessionModalMeta {
+    font-size: 0.72rem;
+    opacity: 0.6;
+}
+
+.sessionModalRowActions {
+    display: flex;
+    gap: 6px;
+    flex: 0 0 auto;
+}
+
+.sessionModalLoad,
+.sessionModalDelete {
+    padding: 5px 12px;
+    font: inherit;
+    font-size: 0.78rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong, #333);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.sessionModalLoad:hover:not(:disabled) {
+    border-color: var(--accent, #5a8cff);
+}
+
+.sessionModalDelete:hover:not(:disabled) {
+    border-color: var(--neg, #e5534b);
+    color: var(--neg, #e5534b);
+}
+
+.sessionModalLoad:disabled,
+.sessionModalDelete:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.sessionModalPager {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.sessionModalPager button {
+    padding: 4px 10px;
+    font: inherit;
+    font-size: 0.78rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong, #333);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.sessionModalPager button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.sessionModalPageInfo {
+    font-size: 0.78rem;
+    opacity: 0.7;
+}
+
+.sessionModalFooter {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border, #2a2a2a);
+}
+
+.sessionModalReset {
+    padding: 6px 12px;
+    font: inherit;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-strong, #333);
+    background: transparent;
+    color: var(--muted, #999);
+    cursor: pointer;
+}
+
+.sessionModalReset:hover:not(:disabled) {
+    border-color: var(--neg, #e5534b);
+    color: var(--neg, #e5534b);
+}
+
+.sessionModalConfirm {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    font-size: 0.82rem;
+}
+
+.sessionModalCancel,
+.sessionModalResetConfirm {
+    padding: 5px 12px;
+    font: inherit;
+    font-size: 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-strong, #333);
+    background: transparent;
+    color: inherit;
+    cursor: pointer;
+}
+
+.sessionModalResetConfirm {
+    border-color: var(--neg, #e5534b);
+    color: var(--neg, #e5534b);
+}
+
+.sessionModalResetConfirm:disabled,
+.sessionModalCancel:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

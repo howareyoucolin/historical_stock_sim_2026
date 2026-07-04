@@ -12,13 +12,13 @@ export interface StockCommandDependencies {
 }
 
 export const STOCK_HELP_LINES = [
-    '  stock history <code>     Show the daily series from its start through the account date',
+    '  stock history <code>     Daily series through the account date (also: --last=<n>, --since=<date>)',
     '  stock info <code>        Show the stock profile (company, segment, industry)',
-    '  stock status <code>      Show the stock data for the account simulation date',
+    '  stock status <code>      Show the stock data for the account simulation date (incl. 52w high/low)',
     '  stock price <code>       Show just the close and day change for the account date',
     '  stock list               List every available stock code',
     '  stock compare <codes...> Compare several stocks side by side on the account date',
-    '  stock screen [filters]   Screen all stocks (--max-pe, --min-pe, --max-price, --min-price, --min-cap, --max-cap (billions), --dividends, --limit)',
+    '  stock screen [filters]   Screen all stocks (--max-pe, --min-pe, --max-price, --min-price, --min-cap, --max-cap (billions), --min-drawdown, --max-drawdown (% below 52w high), --dividends, --limit)',
 ]
 
 // Format a number that may be unavailable, falling back to a dash.
@@ -36,6 +36,7 @@ interface ComparisonRow {
     peRatio: number | null
     ttmEps: number | null
     isPayoutDate: boolean
+    pctFrom52wHigh: number | null
 }
 
 // Flatten a status snapshot into a comparison row, computing the day change percent.
@@ -52,16 +53,18 @@ function toComparisonRow(status: StockStatus): ComparisonRow {
         peRatio: status.row?.peRatio ?? null,
         ttmEps: status.row?.ttmEps ?? null,
         isPayoutDate: status.row?.isPayoutDate ?? false,
+        pctFrom52wHigh: status.pctFrom52wHigh,
     }
 }
 
 // Render comparison rows as an aligned plain-text table.
 function formatComparisonTable(rows: ComparisonRow[]): string {
-    const header = ['stock', 'close', 'change%', 'market_cap', 'pe_ratio', 'ttm_eps', 'dividend']
+    const header = ['stock', 'close', 'change%', 'from_high%', 'market_cap', 'pe_ratio', 'ttm_eps', 'dividend']
     const dataRows = rows.map((row) => [
         row.stockCode,
         formatNumber(row.close),
         row.changePercent === null ? '-' : `${row.changePercent >= 0 ? '+' : ''}${row.changePercent.toFixed(2)}%`,
+        row.pctFrom52wHigh === null ? '-' : `${row.pctFrom52wHigh >= 0 ? '+' : ''}${row.pctFrom52wHigh.toFixed(1)}%`,
         formatMarketCap(row.marketCap),
         formatNumber(row.peRatio),
         formatNumber(row.ttmEps),
@@ -80,16 +83,48 @@ export function createStockCommandHandler({
     fetchStockStatus = buildStockStatus,
     fetchStockList = buildStockList,
 }: StockCommandDependencies = {}) {
-    // Run `stock history <code>` and print the saved data series through the account's date.
+    // Run `stock history <code> [--last=N] [--since=YYYY-MM-DD]` and print the saved data series
+    // through the account's date. The optional window trims the (always sim-date-bounded) series to
+    // its trailing N rows and/or rows on-or-after a date, so rolling calcs avoid the full payload.
     async function runHistory(args: string[]): Promise<CommandResult> {
-        if (args.length !== 1) {
-            return { output: 'Usage: stock history <code>', shouldExit: false, exitCode: 1 }
+        let code: string | undefined
+        let last: number | undefined
+        let since: string | undefined
+
+        for (const arg of args) {
+            if (arg.startsWith('--last=')) {
+                last = Number(arg.slice('--last='.length))
+                if (!Number.isInteger(last) || last <= 0) {
+                    return { output: '--last must be a positive integer.', shouldExit: false, exitCode: 1 }
+                }
+            } else if (arg.startsWith('--since=')) {
+                since = arg.slice('--since='.length)
+            } else if (arg.startsWith('--')) {
+                return { output: `Unknown flag: ${arg}`, shouldExit: false, exitCode: 1 }
+            } else if (code === undefined) {
+                code = arg
+            } else {
+                return { output: 'Usage: stock history <code> [--last=<n>] [--since=<YYYY-MM-DD>]', shouldExit: false, exitCode: 1 }
+            }
+        }
+
+        if (code === undefined) {
+            return { output: 'Usage: stock history <code> [--last=<n>] [--since=<YYYY-MM-DD>]', shouldExit: false, exitCode: 1 }
         }
 
         try {
-            const result = await fetchStockHistory(args[0])
+            const result = await fetchStockHistory(code)
+            // Apply the window (since first, then trailing N) without touching the sim-date bound above.
+            let rows = result.rows
+            if (since !== undefined) {
+                rows = rows.filter((row) => row.date >= (since as string))
+            }
+            if (last !== undefined && rows.length > last) {
+                rows = rows.slice(rows.length - last)
+            }
+            const windowed = { ...result, rows }
 
-            return { output: formatStockHistory(result), data: result, shouldExit: false, exitCode: 0 }
+            return { output: formatStockHistory(windowed), data: windowed, shouldExit: false, exitCode: 0 }
         } catch (error) {
             const message = error instanceof Error ? error.message : String(error)
 
@@ -202,7 +237,7 @@ export function createStockCommandHandler({
 
     // Run `stock screen [filters]` over every available stock, keeping those that pass the filters.
     async function runScreen(args: string[]): Promise<CommandResult> {
-        const filters: { maxPe?: number; minPe?: number; maxPrice?: number; minPrice?: number; minCap?: number; maxCap?: number; dividends?: boolean; limit?: number } = {}
+        const filters: { maxPe?: number; minPe?: number; maxPrice?: number; minPrice?: number; minCap?: number; maxCap?: number; minDrawdown?: number; maxDrawdown?: number; dividends?: boolean; limit?: number } = {}
 
         for (const arg of args) {
             if (arg === '--dividends') {
@@ -220,6 +255,11 @@ export function createStockCommandHandler({
                 filters.minCap = Number(arg.slice('--min-cap='.length)) * 1_000
             } else if (arg.startsWith('--max-cap=')) {
                 filters.maxCap = Number(arg.slice('--max-cap='.length)) * 1_000
+            } else if (arg.startsWith('--min-drawdown=')) {
+                // Drawdown filters are a POSITIVE percent below the 52-week high (e.g. 30 = at least 30% off).
+                filters.minDrawdown = Number(arg.slice('--min-drawdown='.length))
+            } else if (arg.startsWith('--max-drawdown=')) {
+                filters.maxDrawdown = Number(arg.slice('--max-drawdown='.length))
             } else if (arg.startsWith('--limit=')) {
                 filters.limit = Number(arg.slice('--limit='.length))
             } else {
@@ -231,12 +271,25 @@ export function createStockCommandHandler({
             const codes = await fetchStockList()
             let rows: ComparisonRow[] = []
 
-            // Build each stock's snapshot; skip any that have no priced sim-date data rather than failing.
-            for (const code of codes) {
-                try {
-                    rows.push(toComparisonRow(await fetchStockStatus(code)))
-                } catch {
-                    continue
+            // Build each stock's snapshot in bounded-concurrency batches (each snapshot is its own
+            // market-data fetch, so fetching serially over ~1000 codes is the screen's main cost).
+            // Skip any stock with no priced sim-date data rather than failing the whole screen.
+            const SCREEN_CONCURRENCY = 16
+            for (let start = 0; start < codes.length; start += SCREEN_CONCURRENCY) {
+                const batch = codes.slice(start, start + SCREEN_CONCURRENCY)
+                const settled = await Promise.all(
+                    batch.map(async (code) => {
+                        try {
+                            return toComparisonRow(await fetchStockStatus(code))
+                        } catch {
+                            return null
+                        }
+                    })
+                )
+                for (const row of settled) {
+                    if (row !== null) {
+                        rows.push(row)
+                    }
                 }
             }
 
@@ -259,6 +312,20 @@ export function createStockCommandHandler({
                 }
                 if (filters.dividends && !row.isPayoutDate) {
                     return false
+                }
+                // Drawdown filters (percent below the 52-week high). Only keep names with a known
+                // 52w high; `drop` is positive when below the high.
+                if (filters.minDrawdown !== undefined || filters.maxDrawdown !== undefined) {
+                    if (row.pctFrom52wHigh === null) {
+                        return false
+                    }
+                    const drop = -row.pctFrom52wHigh
+                    if (filters.minDrawdown !== undefined && drop < filters.minDrawdown) {
+                        return false
+                    }
+                    if (filters.maxDrawdown !== undefined && drop > filters.maxDrawdown) {
+                        return false
+                    }
                 }
                 // PE filters only keep stocks that actually have a PE ratio.
                 if (filters.maxPe !== undefined && (row.peRatio === null || row.peRatio > filters.maxPe)) {

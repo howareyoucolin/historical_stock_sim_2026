@@ -1,6 +1,6 @@
 ---
 name: upload-stock-report
-description: Upload the completed simulation session files to the report website. Use when the user asks to upload, publish, send, sync, or submit `user-sessions/report.json` together with the companion session files to the stock report server. Always ask the user for the secret key before attempting the upload.
+description: Upload the completed simulation session files to the report website. Use when the user asks to upload, publish, send, sync, or submit `user-sessions/default/report.json` together with the companion session files to the stock report server. Always ask the user for the secret key before attempting the upload.
 ---
 
 # Upload Stock Report
@@ -14,7 +14,7 @@ Use this skill when the task is to send the current session artifacts from
 - Sending the companion session artifacts that belong with the report
 - Reusing the project's current upload contract
 
-The report website currently expects these five files from `user-sessions/`:
+The report website currently expects these five files from `user-sessions/default/`:
 
 - `account.json`
 - `history.log`
@@ -58,11 +58,11 @@ Uploads always go to the production report website (and only there):
 
 With these multipart form fields:
 
-- `report_json_file=@simulator/user-sessions/report.json`
-- `account_json_file=@simulator/user-sessions/account.json`
-- `history_log_file=@simulator/user-sessions/history.log`
-- `meta_json_file=@simulator/user-sessions/meta.json`
-- `values_log_file=@simulator/user-sessions/values.log`
+- `report_json_file=@simulator/user-sessions/default/report.json`
+- `account_json_file=@simulator/user-sessions/default/account.json`
+- `history_log_file=@simulator/user-sessions/default/history.log`
+- `meta_json_file=@simulator/user-sessions/default/meta.json`
+- `values_log_file=@simulator/user-sessions/default/values.log`
 
 ## Suggested command pattern
 
@@ -70,11 +70,11 @@ From the repo root, a typical upload command is:
 
 ```bash
 curl -X POST 'https://stock.369usa.com/insert.php?key=<SECRET>' \
-  -F 'report_json_file=@simulator/user-sessions/report.json' \
-  -F 'account_json_file=@simulator/user-sessions/account.json' \
-  -F 'history_log_file=@simulator/user-sessions/history.log' \
-  -F 'meta_json_file=@simulator/user-sessions/meta.json' \
-  -F 'values_log_file=@simulator/user-sessions/values.log'
+  -F 'report_json_file=@simulator/user-sessions/default/report.json' \
+  -F 'account_json_file=@simulator/user-sessions/default/account.json' \
+  -F 'history_log_file=@simulator/user-sessions/default/history.log' \
+  -F 'meta_json_file=@simulator/user-sessions/default/meta.json' \
+  -F 'values_log_file=@simulator/user-sessions/default/values.log'
 ```
 
 ## Guardrails

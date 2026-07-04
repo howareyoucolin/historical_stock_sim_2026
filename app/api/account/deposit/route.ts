@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { applyActiveSessionFromPointer } from '../../../actions/session-management'
+
 import { DEFAULT_USER_SESSION_RELATIVE_PATH } from '../../../actions/account/model'
 import { depositIntoDefaultUserAccountSession } from '../../../actions/account/deposit'
 import { buildDefaultUserAccountSessionView } from '../../../actions/account/show'
@@ -13,6 +15,9 @@ interface DepositRequestBody {
 
 // Add cash to the shared account and return the refreshed holdings view.
 export async function POST(request: Request): Promise<Response> {
+    // Operate on the session the UI has switched to (persisted pointer).
+    await applyActiveSessionFromPointer()
+
     let body: DepositRequestBody
 
     try {

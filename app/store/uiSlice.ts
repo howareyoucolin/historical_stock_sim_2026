@@ -16,6 +16,7 @@ export type PollStatus = 'polling' | 'updating' | 'updated' | 'nochange' | 'paus
 interface UiSliceState {
     isSidebarCollapsed: boolean
     isResetModalOpen: boolean
+    isSessionModalOpen: boolean
     isDepositModalOpen: boolean
     isStockInfoModalOpen: boolean
     stockInfoModalCode: string | null
@@ -30,6 +31,7 @@ interface UiSliceState {
 const initialState: UiSliceState = {
     isSidebarCollapsed: false,
     isResetModalOpen: false,
+    isSessionModalOpen: false,
     isDepositModalOpen: false,
     isStockInfoModalOpen: false,
     stockInfoModalCode: null,
@@ -56,6 +58,12 @@ const uiSlice = createSlice({
         },
         closeResetModal(state) {
             state.isResetModalOpen = false
+        },
+        openSessionModal(state) {
+            state.isSessionModalOpen = true
+        },
+        closeSessionModal(state) {
+            state.isSessionModalOpen = false
         },
         openDepositModal(state) {
             state.isDepositModalOpen = true
@@ -94,6 +102,8 @@ export const {
     toggleSidebar,
     openResetModal,
     closeResetModal,
+    openSessionModal,
+    closeSessionModal,
     openDepositModal,
     closeDepositModal,
     openStockInfoModal,
