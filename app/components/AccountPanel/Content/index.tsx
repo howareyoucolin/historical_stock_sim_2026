@@ -18,6 +18,8 @@ import { Analysis } from './Analysis'
 export function Content() {
     const dispatch = useAppDispatch()
     const activeTab = useAppSelector((state) => state.ui.activeTab)
+    const switching = useAppSelector((state) => state.session.switching)
+    const switchingTo = useAppSelector((state) => state.session.switchingTo)
 
     // On first load, restore the tab from the URL (so a refresh stays on the same tab); if the URL
     // has no tab yet, seed it with the current default so the address bar reflects the view.
@@ -37,11 +39,22 @@ export function Content() {
         <main className="content">
             <Tabs />
 
-            {activeTab === 'summary' && <Summary />}
-            {activeTab === 'positions' && <Positions />}
-            {activeTab === 'histories' && <Histories />}
-            {activeTab === 'report' && <Report />}
-            {activeTab === 'analysis' && <Analysis />}
+            {switching ? (
+                // While switching sessions, hide the previous session's panels and show a loading
+                // state, so only the newly loaded session's positions appear once it clears.
+                <div className="contentLoading" role="status" aria-live="polite">
+                    <div className="contentLoadingSpinner" aria-hidden="true" />
+                    <p className="contentLoadingText">Loading session {switchingTo ? `"${switchingTo}"` : ''}…</p>
+                </div>
+            ) : (
+                <>
+                    {activeTab === 'summary' && <Summary />}
+                    {activeTab === 'positions' && <Positions />}
+                    {activeTab === 'histories' && <Histories />}
+                    {activeTab === 'report' && <Report />}
+                    {activeTab === 'analysis' && <Analysis />}
+                </>
+            )}
         </main>
     )
 }

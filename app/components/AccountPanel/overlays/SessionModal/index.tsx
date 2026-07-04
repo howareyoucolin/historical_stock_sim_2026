@@ -93,10 +93,7 @@ export function SessionModal() {
                     {pageSessions.map((session) => (
                         <li key={session.name} className={`sessionModalRow ${session.active ? 'sessionModalRowActive' : ''}`}>
                             <div className="sessionModalInfo">
-                                <span className="sessionModalName">
-                                    {session.active ? '● ' : '○ '}
-                                    {session.name}
-                                </span>
+                                <span className="sessionModalName">{session.name}</span>
                                 <span className="sessionModalMeta">sim {session.date ?? '-'}</span>
                             </div>
                             <div className="sessionModalRowActions">

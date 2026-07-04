@@ -14,12 +14,18 @@ interface SessionSliceState {
     active: string
     // Last session-management error (e.g. duplicate name), shown inline and cleared on success.
     error: string | null
+    // True while switching/loading a session, so the content area shows a loading state and hides the
+    // previous session's data until the new one is ready. Carries the target name for the label.
+    switching: boolean
+    switchingTo: string | null
 }
 
 const initialState: SessionSliceState = {
     sessions: [],
     active: 'default',
     error: null,
+    switching: false,
+    switchingTo: null,
 }
 
 const sessionSlice = createSlice({
@@ -35,8 +41,12 @@ const sessionSlice = createSlice({
         setSessionError(state, action: PayloadAction<string | null>) {
             state.error = action.payload
         },
+        setSessionSwitching(state, action: PayloadAction<{ switching: boolean; to?: string | null }>) {
+            state.switching = action.payload.switching
+            state.switchingTo = action.payload.switching ? action.payload.to ?? null : null
+        },
     },
 })
 
-export const { setSessions, setSessionError } = sessionSlice.actions
+export const { setSessions, setSessionError, setSessionSwitching } = sessionSlice.actions
 export default sessionSlice.reducer
