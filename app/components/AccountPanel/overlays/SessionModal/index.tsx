@@ -23,6 +23,8 @@ export function SessionModal() {
     const [newName, setNewName] = useState('')
     const [page, setPage] = useState(0)
     const [confirmReset, setConfirmReset] = useState(false)
+    // Name of the session pending a delete confirmation (null = none), so a misclick can't delete.
+    const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
     // Refresh the session list each time the modal opens, and reset transient UI state.
     useEffect(() => {
@@ -30,6 +32,7 @@ export function SessionModal() {
             void dispatch(loadSessions())
             setPage(0)
             setConfirmReset(false)
+            setConfirmDelete(null)
             dispatch(setSessionError(null))
         }
     }, [isOpen, dispatch])
@@ -96,25 +99,46 @@ export function SessionModal() {
                                 <span className="sessionModalName">{session.name}</span>
                                 <span className="sessionModalMeta">sim {session.date ?? '-'}</span>
                             </div>
-                            <div className="sessionModalRowActions">
-                                <button
-                                    type="button"
-                                    className="sessionModalLoad"
-                                    disabled={session.active || isBusy}
-                                    onClick={() => void dispatch(switchSession(session.name))}
-                                >
-                                    {session.active ? 'Active' : 'Load'}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="sessionModalDelete"
-                                    disabled={session.name === 'default' || isBusy}
-                                    title={session.name === 'default' ? 'The default session cannot be deleted' : `Delete ${session.name}`}
-                                    onClick={() => void dispatch(deleteSession(session.name))}
-                                >
-                                    Delete
-                                </button>
-                            </div>
+                            {confirmDelete === session.name ? (
+                                // Inline confirmation so a misclick can't delete a session.
+                                <div className="sessionModalRowActions sessionModalConfirmDelete">
+                                    <span className="sessionModalConfirmText">Delete?</span>
+                                    <button
+                                        type="button"
+                                        className="sessionModalDeleteConfirm"
+                                        disabled={isBusy}
+                                        onClick={() => {
+                                            setConfirmDelete(null)
+                                            void dispatch(deleteSession(session.name))
+                                        }}
+                                    >
+                                        Yes, delete
+                                    </button>
+                                    <button type="button" className="sessionModalCancel" disabled={isBusy} onClick={() => setConfirmDelete(null)}>
+                                        Cancel
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="sessionModalRowActions">
+                                    <button
+                                        type="button"
+                                        className="sessionModalLoad"
+                                        disabled={session.active || isBusy}
+                                        onClick={() => void dispatch(switchSession(session.name))}
+                                    >
+                                        {session.active ? 'Active' : 'Load'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        className="sessionModalDelete"
+                                        disabled={session.name === 'default' || isBusy}
+                                        title={session.name === 'default' ? 'The default session cannot be deleted' : `Delete ${session.name}`}
+                                        onClick={() => setConfirmDelete(session.name)}
+                                    >
+                                        Delete
+                                    </button>
+                                </div>
+                            )}
                         </li>
                     ))}
                 </ul>

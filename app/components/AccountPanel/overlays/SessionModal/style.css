@@ -228,3 +228,29 @@
     opacity: 0.5;
     cursor: not-allowed;
 }
+
+/* Inline delete confirmation (per row) so a misclick can't delete a session. */
+.sessionModalConfirmDelete {
+    align-items: center;
+}
+
+.sessionModalConfirmText {
+    font-size: 0.8rem;
+    opacity: 0.85;
+}
+
+.sessionModalDeleteConfirm {
+    padding: 5px 12px;
+    font: inherit;
+    font-size: 0.78rem;
+    border-radius: 6px;
+    border: 1px solid var(--neg, #e5534b);
+    background: transparent;
+    color: var(--neg, #e5534b);
+    cursor: pointer;
+}
+
+.sessionModalDeleteConfirm:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}

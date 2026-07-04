@@ -70,7 +70,7 @@ window is capped at the data boundary `2026-06-26`).
 
 - **default 5-year windows** (5 runs): `2001-07 → 2006-06`, `2006-07 → 2011-06`,
   `2011-07 → 2016-06`, `2016-07 → 2021-06`, `2021-07 → 2026-06`.
-- **default 10-year windows** (2 runs): `2001-07 → 2011-06`, `2016-07 → 2026-06`.
+- **default 10-year windows** (2 runs): `2006-07 → 2016-06`, `2016-07 → 2026-06`.
 
 Funding and all other per-run settings above still apply. Honor the data-availability
 rule (§3): only use fundamentals-driven strategies for windows starting after the data
