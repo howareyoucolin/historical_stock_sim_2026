@@ -11,12 +11,22 @@ produces **no git changes** until an administrator promotes it. Also check
 `unapproved/` (and its INDEX) before writing something new.
 
 > **Cardinal rule:** every tool that loads dated data MUST cap results at the current
-> simulation date (see `approved/db.py`). Never return rows dated after it.
+> simulation date. Never return rows dated after it.
+>
+> Two sanctioned data paths satisfy this: **(a) data-access tools** read the DB through
+> `approved/db.py`, which hard-caps every read at the sim date; **(b) CLI run-drivers**
+> (`cli_shell` and the backtesters below) go only through `npm run cli`, whose stock/account
+> data is already bounded to the simulated date — they never touch the DB directly. Both
+> honor no-look-ahead; pick (a) for indicators/screens, (b) for driving trade simulations.
 
 | Tool | Purpose | Inputs | Outputs | Location | Status |
 |------|---------|--------|---------|----------|--------|
 | `db` | Date-safe DB access layer. `simulation_date()` + `fetch()` that hard-caps every read at the sim date (clamps any `as_of` to `min(as_of, sim_date)`). The foundation all data-access tools build on. | table, columns, where/params, `as_of` (optional) | list of dict rows, all dated ≤ sim date | `approved/db.py` | Approved |
 | `price_loader` | Load a stock's daily price history (close/adj_close/volume), capped at the sim date. The canonical Agent → Price Loader → Database path. | `symbol`, `--as-of` (optional), `--limit`, `--json` | daily bars (oldest-first), JSON or table | `approved/price_loader.py` | Approved |
+| `cli_shell` | Persistent `npm run cli` interactive-shell driver (Python). Launches the CLI once and does request/response, so the tsx startup cost is paid once, not per command. The shared CLI-only access path the run drivers below build on (honors the sim-date bound; no DB access). | `Shell(session=...)`, `.cmd()`, `.js()` | parsed CLI output (dict/list/str) | `approved/cli_shell.py` | Approved |
+| `build_price_panel` | Build a local price/fundamentals panel once by pulling `stock history` (a sim-date-bounded stock command) for every code with reader sessions parked at the data boundary. One panel serves every rolling window; the backtesters slice `date <= checkpoint` for look-ahead-free walk-forward. CLI-only (via `cli_shell`), not the DB. | `--boundary`, `--workers`, `--out`, `--limit` | JSON `{code:{d,c,e,p,m}}` panel | `approved/build_price_panel.py` | Approved |
+| `dip_backtest` | Mechanical "Buy the Dip" backtester: walks a rolling window forward (as-of slicing = no look-ahead) and executes real trades on a session via the CLI, then `report build`. Quality gate is fundamental (EPS>0 & cap≥floor) where data exists, else a price/longevity proxy; equal-weight top-N of names 30–50% below their 52-wk high; monthly contributions; `band` or `hold`-winners exit. | `--start`, `--years`, `--panel`, `--session`, `--gate`, `--cap-floor`, `--top-n`, `--dip-min/max`, `--exit-mode`, `--sizing`, `--hop-min/max`, `--strategy-version` | `report.json` on the session + ledger row + RESULT | `approved/dip_backtest.py` | Approved |
+| `index_topn` | Cap-weighted Top-N mega-cap "index fund" backtester: each month hold the N largest by market cap, weight proportionally to cap, drop names leaving the top-N; deploy monthly contributions toward cap weights; no trimming. Pre-cap era falls back to a flagged price proxy. CLI-executed, look-ahead-free. Reuses `dip_backtest`'s `Panel`/date helpers + `cli_shell`. | `--start`, `--years`, `--panel`, `--session`, `--top-n`, `--gate`, `--hop-min/max`, `--strategy-version` | `report.json` on the session + ledger row + RESULT | `approved/index_topn.py` | Approved |
 
 ## Adding a tool (checklist)
 
