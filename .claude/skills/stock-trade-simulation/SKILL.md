@@ -11,6 +11,14 @@ much as possible **within the rules of the strategy the user gives you** (do not
 override the strategy to chase gains). The full command reference is in
 `commands.md` at the repo root — read it first.
 
+## Environment
+
+- **Node 18+ is required** (the repo pins **Node 22** via `nvm` / `dev.sh`). On older
+  Node the CLI fails with `fetch is not defined`, because it reaches the market-data API
+  over `fetch`. If `npm run cli` errors that way, run `nvm use 22` first.
+- **Market-data API must be up.** The CLI reads prices from the PHP/MySQL stack on
+  `localhost:8700` (started by `dev.sh`); the browser UI is on `localhost:8600`.
+
 ## Hard rules (read before doing anything)
 
 - **CLI only.** Interact with the system *only* through CLI commands
@@ -31,7 +39,15 @@ override the strategy to chase gains). The full command reference is in
   decision *traceable to data you just observed* (see below), not to a ticker's
   reputation. When in doubt, prefer a mechanical, rule-based reading of the data.
 - **Default session.** Run on the default session (do NOT pass `--session`); the
-  user inspects results in the browser UI, which reads the default session.
+  user inspects results in the browser UI, which reads the active session (default
+  unless switched). Each session is its own folder `user-sessions/<name>/`; the default
+  session lives in `user-sessions/default/`. Note: passing `--session=default` creates a
+  *named* session literally called "default" — not the true default — so just omit
+  `--session` for the default session.
+- **Preserve prior runs.** To keep several runs side by side, put each in its own named
+  session (`--session=<name>`, or `session new <name>`) and switch between them in the UI's
+  session manager — rather than resetting/overwriting the default between runs. Reserve the
+  default session for a quick one-off you don't need to keep. Never reset a finished run.
 - **Prefer `--json`.** Run observe commands with `--json` so you parse state
   reliably.
 
@@ -74,8 +90,9 @@ trade until they are answered:
 
 Then run setup:
 
-1. **Refresh:** `account init` — empties the entire `user-sessions/` directory (every
-   session, log, and report) and writes a fresh default account.
+1. **Refresh:** `account init` — resets the **active session only** (clears its own
+   `user-sessions/<name>/` folder: account, meta, history log, value log, report) and
+   writes a fresh default account. Other sessions are left intact.
 2. **Set the start date:** `date set <start>` (steps forward to the next trading day
    if the chosen date is closed).
 3. **Fund on that first trading day**, as two deposits so the trail is explicit:
@@ -92,6 +109,15 @@ rules over discretionary calls — they are easier to execute faithfully and to 
 - **Observe** with the stock commands (`stock list`, `stock status`,
   `stock price`, `stock history`, `stock compare`, `stock screen`) and account
   commands (`account show`, `values show`, `history show`) — all with `--json`.
+  - **52-week high / drawdown:** `stock status`/`compare`/`screen` report `high52w`,
+    `low52w`, and `pctFrom52wHigh` (percent below the 52-week high). Screen for pullbacks
+    directly with `stock screen --min-drawdown=<pct> --max-drawdown=<pct>` (percent below
+    the high) instead of pulling each name's full history — one call for dip / fallen-winner
+    / mean-reversion signals.
+  - **Fast reads:** `account cash` returns just the sim date, cash, and per-code share
+    counts (no per-holding valuation) — use it in scripted loops where you only need cash +
+    positions. `stock history --last=<n>` / `--since=<date>` returns only a trailing window
+    so rolling calcs skip the full series.
 - **Decide from what you observed.** Base each trade on the figures you just read
   (price, P/E, trend, market cap, the strategy's rules) — never on outside
   knowledge. Market cap (shown by `stock status`/`compare`/`screen`, filterable
@@ -163,12 +189,12 @@ you act (sizing, timing around the one-year mark), not *whether* to follow it.
 Do **not** jump ahead with `date set` during the run — landing on a chosen future
 date implies you are planning around dates you should not know, breaking the
 unknown-future role-play. Instead advance only with `date next <n>`, and **vary
-`n` randomly between 1 and 10 trading days** on each hop — mimicking how a real
-person checks the market: sometimes daily, sometimes only every week or two.
-Fully observe at each check-in and trade if the strategy calls for it. (This also
-keeps a multi-year run to a few hundred steps instead of thousands.) Use batch
-files for multi-command *setup* sequences, but advance the clock in these
-irregular `date next` hops until the end condition is met.
+`n` randomly, defaulting to 15–30 trading days** per hop — mimicking a real investor
+who reviews the portfolio roughly every 2–3 weeks (and keeping a multi-year run to a
+few dozen steps, which runs fast). Use finer hops only if a strategy genuinely needs
+to react intra-month. Fully observe at each check-in and trade if the strategy calls
+for it. Use batch files for multi-command *setup* sequences, but advance the clock in
+these irregular `date next` hops until the end condition is met.
 
 #### Scripted execution for purely mechanical strategies
 
@@ -184,11 +210,23 @@ still honors every guardrail*:
   shortcut a decision.
 - **No future knowledge** — each decision uses only data the CLI returns as of
   the simulated date (`stock screen`/`status` figures), never post-date facts.
-- **Still pace and contribute** — vary the `date next` hop (1–10), make the
-  monthly contribution on the first observed trading day of each new month, and
-  attach a data-grounded `--note` to every trade just as a manual run would.
+- **Still pace and contribute** — vary the `date next` hop (default 15–30 trading
+  days), make the monthly contribution for each calendar month crossed (a hop may span
+  a month; deposit `monthly × months_elapsed` so a skipped month's cash is not lost),
+  and attach a data-grounded `--note` to every trade just as a manual run would.
 - **React to failures** — check each command's result; a non-zero exit (e.g. the
   data-boundary `date next`) must end the loop cleanly, not crash silently.
+
+**Save reusable drivers as tools.** When you write such a script and it is reusable
+(parameterized by window/strategy, not a one-off), **save it to `tools/unapproved/`** and
+record it in `tools/unapproved/INDEX.md`, per the repo's tools convention (see
+`.claude/CLAUDE.md` / `tools/README.md`). First check `tools/docs/TOOLS.md` and
+`tools/unapproved/INDEX.md` and **reuse** an existing tool rather than rewriting one. That
+folder is git-ignored, so saving a tool makes no git changes. The tool must obey the same
+guardrails as a manual run (CLI-only through `npm run cli`, no look-ahead, honor the
+sim-date bound). A good split is a small persistent-CLI-shell helper plus a strategy driver
+that takes the window and parameters as arguments, so the next run reuses it instead of
+starting from scratch.
 
 This is an execution convenience for mechanical rules, not license to bypass the
 role-play: a discretionary strategy should still be driven hop-by-hop.
@@ -216,12 +254,12 @@ better than continuing to earn interest in cash.
 
 ## 4. End of simulation
 
-- **Do not reset or clean up (until the report is uploaded).** Leave the account,
-  history, and value logs exactly as the run left them in the default session so
-  the user can investigate the details in the UI. The one exception is the
-  post-upload reset owned by `.claude/skills/upload-stock-report/SKILL.md`: once
-  the report has been **successfully uploaded**, that skill clears the session
-  (`account init`) for a clean next start. Never reset before a successful upload.
+- **Do not reset or clean up — preserve the run's data.** Leave the account, history,
+  value logs, and report exactly as the run left them in its session folder so they stay
+  inspectable in the UI and for later study. Do **not** reset after uploading (that
+  post-upload reset is retired now that each run keeps its own session). Start any *next*
+  run in a **new** session rather than clearing this one; only `account init` a session if
+  the user explicitly asks to discard it.
 - **Build the structured report only at the true end of the run.** Once the
   simulation reaches or passes the agreed end date, run `report build` to create
   `report.json` for the completed simulation. Do **not** build a report midway
@@ -296,9 +334,9 @@ run surfaced. This is the canonical convention reused by `stock-strategy-autopil
 - Maximize gain *within* the strategy's rules — don't override the strategy.
 - Account for tax (short- vs long-term gains, dividends, interest) and the
   interest earned on parked cash when deciding — optimize after-tax, not gross.
-- Always run on the default session; never reset the data at the end — except
-  the post-upload `account init` performed by the upload skill once the report
-  has been successfully uploaded.
+- Run on the default session for a single interactive run; **never reset the data at the
+  end** — preserve the run's session so it stays inspectable. Start a *next* run in a new
+  session rather than resetting; only `account init` a session if the user asks to discard it.
 - Ask the four setup questions (time range, start date, strategy, upload) before
   the first trade. Defaults: 5-year range, start `2016-01-01`, derived end capped at
   the last available trading day (`2026-06-26`).

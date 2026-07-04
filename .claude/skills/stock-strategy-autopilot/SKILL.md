@@ -18,7 +18,9 @@ the four setup questions**; it sets them itself (§1) and never pauses for input
 
 ## Hard rules (inherited from stock-trade-simulation)
 
-Every per-run guardrail from `stock-trade-simulation` applies in full:
+Every per-run guardrail from `stock-trade-simulation` applies in full (including its
+**Environment** note: the CLI needs **Node 18+**, repo-pinned to **Node 22** via `nvm` /
+`dev.sh`, and the market-data API on `localhost:8700`):
 
 - **CLI only for trading decisions.** Within a run, never read source, query the
   market-data API/database directly, or open `user-sessions/` files — interact only
@@ -28,8 +30,13 @@ Every per-run guardrail from `stock-trade-simulation` applies in full:
 - **No hindsight.** Every variant is a mechanical rule decided from data observable as
   of the sim date. Never pick/avoid a ticker by how it really performed (including no
   "reverse hindsight" for deliberately bad controls — make those bad *by rule*).
-- **One run at a time on the default session** — strictly sequential, never concurrent.
-  Each run starts with `account init` (a clean slate).
+- **One writer per session.** Never let two runs write the **same** session concurrently,
+  and keep the **default** session for single interactive runs. Distinct **named** sessions
+  may run in parallel, one OS process each — see §7.
+- **Preserve data — one new session per run.** Every run gets its own **new, uniquely-named**
+  session and is **kept afterward** (never reset a finished run). Do not reuse or `account
+  init` an existing session between runs; the accumulated per-run sessions are the local
+  archive that complements the uploaded reports. Only discard a session if the user asks.
 - **Mechanical variants only**, so each run can be script-driven.
 
 ## 1. Per-run configuration (autonomous — no prompts)
@@ -50,6 +57,25 @@ The autopilot sets every parameter itself; it never asks the user. For each run:
 
 Vary randomness by run index/time so successive runs differ; never reuse a
 `(range, start, strategy)` combination already in the ledger.
+
+### Named window sets ("default 5-year / 10-year windows")
+
+When the user asks to run over the **default 5-year windows** or **default 10-year
+windows**, do NOT pick a random single window. Instead run the **same strategy** across
+this fixed set of consecutive windows — sequentially, or (recommended) in parallel with one
+named session per window per §7 — uploading each report as it finishes (§4). This is a
+rolling backtest of one strategy across eras. Each window starts on the first trading day
+on/after its July 1 and ends on the last trading day on/before its June 30 (the final
+window is capped at the data boundary `2026-06-26`).
+
+- **default 5-year windows** (5 runs): `2001-07 → 2006-06`, `2006-07 → 2011-06`,
+  `2011-07 → 2016-06`, `2016-07 → 2021-06`, `2021-07 → 2026-06`.
+- **default 10-year windows** (2 runs): `2001-07 → 2011-06`, `2016-07 → 2026-06`.
+
+Funding and all other per-run settings above still apply. Honor the data-availability
+rule (§3): only use fundamentals-driven strategies for windows starting after the data
+exists (~2007 fundamentals, ~2010 dividends); for the `2001-07` start, use a price/
+momentum/risk-control strategy or a clearly-flagged proxy.
 
 ## 2. Keep a sweep ledger
 
@@ -94,7 +120,9 @@ Draw improvements from these mechanical families and axes:
 - **Families — prioritize breadth across these (all defined mechanically):**
   - **Momentum / strong winners** — hold the top-N by trailing 3/6/12-month return.
   - **Fallen winners** — former leaders now far below their trailing high (e.g. prior
-    large-caps down ≥ X% from a 52-week peak); a quality-mean-reversion bet.
+    large-caps down ≥ X% from a 52-week peak); a quality-mean-reversion bet. Screen these
+    directly with `stock screen --min-drawdown=X --max-drawdown=Y` (percent below the
+    52-week high); `stock status`/`screen` also expose `high52w`/`low52w`/`pctFrom52wHigh`.
   - **Value + growth (GARP)** — low P/E among names whose earnings are still growing.
   - **Thematic hardware basket** — a fixed segment/industry basket (e.g. semiconductors
     / tech hardware) selected *by classification*, never by knowing it would win.
@@ -103,7 +131,7 @@ Draw improvements from these mechanical families and axes:
   - **Defensive switch** — risk-off into defensive segments / low-beta / cash when the
     broad trend or breadth deteriorates; risk-on otherwise.
   - **Dip buying / DCA** — deploy contributions steadily, adding more when price is X%
-    below a recent high.
+    below a recent high (find those names with `stock screen --min-drawdown=X`).
   - **Quality compounders** — stable, profitable names held long-term with minimal turnover.
   - **Mean reversion** — buy the largest trailing decliners, trim as they recover.
   - **Risk-control overlays** — volatility targeting, position caps, max-drawdown guards,
@@ -158,22 +186,41 @@ Always record each variant's rule (and its role) in the report's strategy metada
 
 ## 4. The autopilot loop (per iteration)
 
-Run strictly sequentially. For each iteration:
+Run sequentially on a single session (default), or fan the loop out across several sessions
+in parallel per §7. For each iteration:
 
 1. **Set run params (§1):** random range, random fitting start, and a role + variant (§3)
    — Explorer (new family) or Optimizer (refine a promising published strategy).
-2. **Run it** end to end per `stock-trade-simulation`: `account init`,
-   `date set <start>`, fund, drive the clock with irregular 1–10 day `date next` hops,
-   make the monthly contribution, attach a data-grounded `--note` to every trade, and
-   stop at the derived end date. Script the run for mechanical variants.
+2. **Run it** end to end per `stock-trade-simulation`, in a **new uniquely-named session**
+   for this run (e.g. `session new <family>-<start>-<range>`, or `--session=<name>` on a
+   fresh name, which seeds a clean account) — do **not** reuse or reset a prior session.
+   Then `date set <start>`, fund, drive the clock with irregular `date next` hops, make the
+   monthly contribution, attach a data-grounded `--note` to every trade, and stop at the
+   derived end date. Script the run for mechanical variants.
+   - **Build & reuse tools.** Since the autopilot runs many similar mechanical variants,
+     invest in **reusable Python drivers saved to `tools/unapproved/`** (recorded in
+     `tools/unapproved/INDEX.md`) rather than one-off scripts — e.g. a persistent-CLI-shell
+     helper plus a strategy runner parameterized by window/strategy. **Check
+     `tools/docs/TOOLS.md` and `tools/unapproved/INDEX.md` first and reuse** an existing
+     tool; only add a new one if none fits. Tools must obey every run guardrail (CLI-only,
+     no look-ahead). That folder is git-ignored, so this makes no git changes. See the repo
+     tools convention (`.claude/CLAUDE.md` / `tools/README.md`).
+   - **Scripting for speed:** a multi-year mechanical run is many hundreds of CLI calls.
+     Run the CLI once as a persistent interactive shell (`npm run cli`, then feed one
+     command per line) so the tsx startup cost is paid once, not per command. Use larger
+     `date next` hops (e.g. 15–30 trading days) to cut a 5-year run to a few dozen steps,
+     acting only when a new month is crossed. Use `account cash` (cash + share counts, no
+     valuation) for the per-step read, and `stock screen --min-drawdown=`/`--max-drawdown=`
+     for dip/fallen-winner signals instead of pulling each name's full history.
 3. **Build the report** with `report build` per `simulation-reporting`, setting the
    strategy/objective metadata and the run window.
 4. **Upload automatically — no prompt.** Read `SECRET_KEY` from `simulator/.env` and
-   POST the five session files to `https://stock.369usa.com/insert.php?key=$SECRET_KEY`
-   using the multipart shape from `upload-stock-report`. On `ok:true`, the next
-   iteration's `account init` serves as the reset (no separate reset needed). If the
-   upload fails, log the exact response and continue — do **not** reset, so it can be
-   retried.
+   POST the five session files (from this run's session folder, `user-sessions/<name>/`)
+   to `https://stock.369usa.com/insert.php?key=$SECRET_KEY`
+   using the multipart shape from `upload-stock-report`. On `ok:true`, **preserve the
+   session — do not reset it**; the next iteration simply starts its own new session, so
+   the finished run's data stays on disk. If the upload fails, log the exact response and
+   continue — leave the session intact so it can be retried.
 5. **Record** the result in the ledger (§2).
 6. **Leave a suggestion** in `suggestions/` (§5).
 7. **Loop.** Surface a one-line progress update (role, window, strategy, edge over
@@ -204,6 +251,35 @@ When the user stops it (or an external limit is hit):
   result. Call out the best variant and the clearest dead ends.
 - **Point to `suggestions/`** for the accumulated app/market-data notes.
 
+## 7. Running in parallel (multiple sessions)
+
+Independent runs (e.g. the §1 named window sets, or several unrelated strategies) can run
+**concurrently, one named session per run**, to cut wall-clock. This is safe because each
+session is its own folder (`user-sessions/<name>/`) and `account init` only resets its own
+folder. Follow these rules:
+
+- **One OS process per session.** Launch a separate CLI process for each parallel run and
+  pin it to a distinct session, passing `--session=<name>` on every command (e.g. `w2001`,
+  `w2006`, …). Do **not** run parallel sessions from one process or one interactive shell:
+  the active session is process-global, so interleaved in-process commands would write to
+  the wrong folder. Give each window/strategy a unique session name.
+- **Never share a session or use `default` for parallel runs.** The `default` session and
+  the browser UI show one session at a time; reserve it for single interactive runs. One
+  writer per session, always.
+- **Cap concurrency.** All runs read the same market-data API (`localhost:8700`) and DB, so
+  concurrency multiplies load and speedup is sublinear. Use a small pool (≈3–5 at once), not
+  dozens; add more only if the API keeps up.
+- **Isolate per-run bookkeeping.** Give each parallel run its **own ledger file** (§2) and
+  prefix its **suggestion filenames** with the session name, since the `-2/-3` dedup is not
+  atomic across processes. Merge the ledgers into one leaderboard at the end (§6).
+- **Upload independently.** Each run uploads its own session folder's five files
+  (`user-sessions/<name>/…`, §4); concurrent uploads are fine (the server assigns ids).
+- **Finish + summarize together.** When stopping, let every in-flight process finish its
+  current run cleanly, then merge all ledgers into a single ranked leaderboard.
+
+For the **default 5-year / 10-year window sets** (§1), this is the recommended shape: run
+the windows as parallel per-session processes, then merge for the rolling-backtest summary.
+
 ## Guardrails
 
 - **Fully autonomous: never prompt the user** — no setup questions, no upload permission.
@@ -213,7 +289,9 @@ When the user stops it (or an external limit is hit):
   feed at stock.369usa.com/feed.php) unless the user named specific strategies to test.
 - **Always upload** each report using `SECRET_KEY` from `simulator/.env`; never ask for
   the key. Upload target is production only (`https://stock.369usa.com`).
-- One simulation at a time; mechanical and no-hindsight; judge on risk-adjusted edge.
+- One writer per session (never two runs on the same session or on `default`); parallel
+  runs across **distinct named sessions** are allowed, one process each (§7). Mechanical and
+  no-hindsight; judge on risk-adjusted edge.
 - **Diversity over micro-tuning.** Favor exploring different strategy families over
   repeatedly tweaking small parameters around one idea (the market is unstable — local
   optimization overfits). Run as Explorer (new families) or Optimizer (refine only

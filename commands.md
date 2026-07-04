@@ -5,6 +5,12 @@ driving the simulator (e.g. running automated trading simulations), so it
 focuses on exact invocation, inputs, outputs, exit codes, and the machine-readable
 `--json` mode.
 
+## Requirements
+
+- **Node 18+** (repo-pinned to **Node 22** via `nvm` / `dev.sh`). The CLI reads market data
+  over `fetch`; on older Node it fails with `fetch is not defined` — run `nvm use 22` first.
+- The **market-data API** must be running on `localhost:8700` (started by `dev.sh`).
+
 ## How to run
 
 Three modes, same commands:
@@ -53,18 +59,23 @@ These can appear anywhere in a command:
 
 ## Core concepts
 
-- **Session file** `user-sessions/default.json` (or `<name>.json`) holds the
-  account state read/written by every account command:
-  - `date` — the **simulated date** (`YYYY-MM-DD`). All trades and stock lookups
-    are priced/reported **as of this date**.
-  - `cash` — available cash.
-  - `positions` — held lots per stock, each with `quantity`, `cost_per_share`,
-    `purchase_date`.
-- **Audit log** `user-sessions/history.log` — append-only, one line per event
+- **Sessions are folders.** Each session lives in its own directory
+  `user-sessions/<name>/`; the default session is `user-sessions/default/`. Select a
+  session with `--session=<name>` (see [Global flags](#global-flags)) or manage them with
+  the [`session`](#session) commands. The browser UI reads the active session (default
+  unless switched). Note: `--session=default` means a *named* session called "default", not
+  the true default — omit `--session` for the default. Older flat layouts (bare files, or
+  `<name>.account.json`, or a pre-split `<name>.json`) are migrated into the folder on first
+  read.
+- **Session files** (inside `user-sessions/<name>/`): `account.json` holds the
+  account state (`date` = simulated date, `cash`, `positions` = held lots with
+  `quantity`/`cost_per_share`/`purchase_date`); `meta.json` holds the sim date + last-updated
+  timestamp. All trades and stock lookups are priced/reported **as of `date`**.
+- **Audit log** `user-sessions/<name>/history.log` — append-only, one line per event
   (BUY, SELL, DIVIDEND, DEPOSIT). See [History log format](#history-log-format).
-- **Value log** `user-sessions/values.log` — daily total portfolio value, the
+- **Value log** `user-sessions/<name>/values.log` — daily total portfolio value, the
   source for `values show`.
-- **Report file** `user-sessions/report.json` — compact simulation summary
+- **Report file** `user-sessions/<name>/report.json` — compact simulation summary
   artifact built by `report build` for storage, review, or later agent study.
 - **Market data** is served from the project database via the PHP API (no local
   files). Each `stock status`/`history`/`price`/`compare`/`screen` reads close +
@@ -91,7 +102,8 @@ These can appear anywhere in a command:
 | `account sell <code> all` | Sell the entire position in `<code>`. |
 | `account sell <code> --percent=<p>` | Sell `floor(owned × p/100)` shares. |
 | `account deposit <cash>` | Add `<cash>` (negative withdraws). Accepts `--note=<text>` to annotate the DEPOSIT history row (e.g. a recurring contribution). |
-| `account init` | Reset to a clean slate: empty the entire `user-sessions/` directory (every session, log, and report) and write a fresh default account (`date` `2001-01-02`, `cash` `0`, no positions). |
+| `account cash` | Fast read: the sim date, cash, and per-code share counts only — no per-holding valuation (no market-data fetch). `--json` returns `{date, cash, positions:{code:qty}}`. Use it in scripted loops that only need cash + positions. |
+| `account init` | Reset the **active session** to a clean slate: clear its own `user-sessions/<name>/` folder (account, meta, history log, value log, report) and write a fresh default account (`date` `2001-01-02`, `cash` `0`, no positions). Other sessions are left intact. |
 
 Buy/sell extras (any order):
 
@@ -117,10 +129,10 @@ Success output: `<qty> stocks of <CODE> successfully bought.` / `...sold.`
 | `stock list` | List every available stock code (`--json` returns the array). |
 | `stock info <code>` | Show the stock's profile from the database: company name, segment (sector), industry, and a short description. |
 | `stock price <code>` | One-line close + day change for the sim date. |
-| `stock status <code>` | Fuller snapshot: close, day change, P/E, TTM EPS, dividend, as of the sim date (falls back to the most recent prior trading day). |
-| `stock history <code>` | Daily series from the start of the stock's data through the sim date. |
-| `stock compare <code> [<code>...]` | Side-by-side table of several stocks' sim-date figures. |
-| `stock screen [filters]` | Screen all stocks. Filters: `--max-pe=`, `--min-pe=`, `--max-price=`, `--min-price=`, `--min-cap=`/`--max-cap=` (market cap in **billions**), `--dividends` (payers only), `--limit=`. |
+| `stock status <code>` | Fuller snapshot: close, day change, **52-week high/low** (`high52w`/`low52w`) and **% below the 52-week high** (`pctFrom52wHigh`), P/E, TTM EPS, dividend, as of the sim date (falls back to the most recent prior trading day). |
+| `stock history <code>` | Daily series from the start of the stock's data through the sim date. `--last=<n>` returns only the trailing `n` rows; `--since=<yyyy-mm-dd>` returns only rows on/after a date (both still sim-date-bounded). |
+| `stock compare <code> [<code>...]` | Side-by-side table of several stocks' sim-date figures (incl. `from_high%`). |
+| `stock screen [filters]` | Screen all stocks (fetched concurrently for speed). Filters: `--max-pe=`, `--min-pe=`, `--max-price=`, `--min-price=`, `--min-cap=`/`--max-cap=` (market cap in **billions**), `--min-drawdown=`/`--max-drawdown=` (**percent below the 52-week high** — e.g. `--min-drawdown=30 --max-drawdown=50` for names 30–50% off their high), `--dividends` (payers only), `--limit=`. |
 
 > **Legacy (pre-v2):** `stock download`, `stock scrape-eps`, `stock build`, and
 > `stock seed` belonged to the old local `market-data/` acquisition pipeline. In v2
@@ -135,6 +147,20 @@ Success output: `<qty> stocks of <CODE> successfully bought.` / `...sold.`
 | `values show` | Daily total-value series plus a return summary (start → now, %, high/low). `--json` returns the full summary. |
 | `history show [filters]` | Recorded activity. Filters: `--type=<BUY\|SELL\|DIVIDEND\|DEPOSIT>`, `--stock=<CODE>`, `--since=<date>`, `--until=<date>` (compared against the simulated date), `--limit=<n>` (most recent n). |
 | `report build [flags]` | Build `report.json` for the active session. Flags: `--out=<path>`, `--strategy=<name>`, `--strategy-version=<version>`, `--strategy-summary=<text>`, `--objective=<title>`, `--objective-metric=<metric>`, `--objective-constraint=<text>` (repeatable), `--market-regime=<label>`, `--volatility-level=<label>`, `--note=<text>`. `--json` returns the full report payload. |
+
+### Session (manage multiple sessions)
+
+Each session is a folder `user-sessions/<name>/`. These commands manage them and the
+active-session pointer the browser UI reads. (Within a single command you can still target
+any session ad hoc with `--session=<name>`.)
+
+| Command | Effect |
+| --- | --- |
+| `session list` | List all sessions (each folder) with sim date + last-updated, active one flagged. |
+| `session current` | Print the active session name. |
+| `session new <name>` | Create a new named session (fresh default account in its own folder) and make it active. Fails if it already exists. Names: letters/digits/dashes/underscores. |
+| `session use <name>` | Switch the active session to `<name>`. |
+| `session delete <name>` | Delete a session's folder (the `default` session cannot be deleted; deleting the active one falls back to `default`). |
 
 ### Other
 

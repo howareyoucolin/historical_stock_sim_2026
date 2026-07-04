@@ -42,13 +42,12 @@ The current endpoint behavior is:
    user which target to use; it is always production.
 5. Tell the user whether the upload succeeded and include the returned report id
    when available.
-6. **After a successful upload only** (the server returns `ok: true` with a
-   report id), clear the session for a clean next start: run
-   `npm run cli -- account init`, which empties the entire `user-sessions/`
-   directory and writes a fresh default account. The published copy already lives
-   on the report
-   website, so the local reset loses nothing. If the upload failed, do **not**
-   clear — leave the session intact so it can be retried.
+6. **Preserve the session — do NOT reset after upload.** Now that each run lives in
+   its own session folder (`user-sessions/<name>/`), keep the completed run's data on
+   disk after a successful upload so it stays inspectable in the browser UI and can be
+   re-examined later. Start the *next* run in a **new** session instead of clearing this
+   one. (Only reset a session with `account init` if the user explicitly asks to discard
+   it.) On a failed upload, likewise leave the session intact so it can be retried.
 
 ## Request shape
 
