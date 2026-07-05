@@ -3,7 +3,7 @@ import fs from 'node:fs/promises'
 import os from 'node:os'
 import path from 'node:path'
 
-import { createSession, deleteSession, listSessions, readActiveSessionName, switchSession, validateSessionName } from './session-management'
+import { clearAllSessions, createSession, deleteSession, listSessions, readActiveSessionName, switchSession, validateSessionName } from './session-management'
 import { readDefaultUserAccountSession, writeDefaultUserAccountSession } from './account/model'
 import { setActiveSession } from './session'
 
@@ -75,8 +75,39 @@ async function testListSwitchDeleteRoundTrip(): Promise<void> {
 }
 
 // Run the focused session-management tests.
+// clearAllSessions removes every session except default and makes default active.
+async function testClearAllSessionsKeepsOnlyDefault(): Promise<void> {
+    const cwd = () => tempRepoRoot
+    const tempRepoRoot = await createTempRepoRoot()
+    try {
+        await createSession('alpha', { cwd })
+        await createSession('beta', { cwd })
+        await createSession('gamma', { cwd })
+        // Ensure the default session folder exists too.
+        setActiveSession(null)
+        await writeDefaultUserAccountSession({ date: '2020-01-02', cash: 500, positions: {} }, { cwd })
+
+        const removed = await clearAllSessions({ cwd })
+        assert.equal(removed, 3)
+
+        // Only default remains on disk and in the list; default is active.
+        const dirs = (await fs.readdir(path.join(tempRepoRoot, 'user-sessions'), { withFileTypes: true }))
+            .filter((e) => e.isDirectory())
+            .map((e) => e.name)
+            .sort()
+        assert.deepEqual(dirs, ['default'])
+        assert.deepEqual((await listSessions({ cwd })).map((s) => s.name), ['default'])
+        assert.equal(await readActiveSessionName({ cwd }), 'default')
+        // Default's data is preserved (not wiped).
+        assert.equal((await readDefaultUserAccountSession({ cwd })).cash, 500)
+    } finally {
+        setActiveSession(null)
+    }
+}
+
 export async function runSessionManagementTests(): Promise<void> {
     testValidateSessionName()
     await testCreateSessionMakesFolderAndActivates()
     await testListSwitchDeleteRoundTrip()
+    await testClearAllSessionsKeepsOnlyDefault()
 }

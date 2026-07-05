@@ -6,10 +6,10 @@ import './style.css'
 import { useAppDispatch, useAppSelector } from '../../../../store/hooks'
 import { closeSessionModal } from '../../../../store/uiSlice'
 import { setSessionError } from '../../../../store/sessionSlice'
-import { createSession, deleteSession, loadSessions, resetCurrentSession, switchSession } from './actions'
+import { clearAllSessions, createSession, deleteSession, loadSessions, resetCurrentSession, switchSession } from './actions'
 
 // How many sessions per page in the modal list.
-const PAGE_SIZE = 6
+const PAGE_SIZE = 12
 
 // Session management modal: paginated session list with load/delete, reset-current, and new-session.
 // Renders nothing while closed.
@@ -25,6 +25,11 @@ export function SessionModal() {
     const [confirmReset, setConfirmReset] = useState(false)
     // Name of the session pending a delete confirmation (null = none), so a misclick can't delete.
     const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
+    // Whether the destructive "clear all sessions" action is awaiting confirmation.
+    const [confirmClearAll, setConfirmClearAll] = useState(false)
+
+    // Count of deletable (non-default) sessions, used to enable/label the Clear all control.
+    const clearableCount = sessions.filter((session) => session.name !== 'default').length
 
     // Refresh the session list each time the modal opens, and reset transient UI state.
     useEffect(() => {
@@ -33,6 +38,7 @@ export function SessionModal() {
             setPage(0)
             setConfirmReset(false)
             setConfirmDelete(null)
+            setConfirmClearAll(false)
             dispatch(setSessionError(null))
         }
     }, [isOpen, dispatch])
@@ -181,6 +187,37 @@ export function SessionModal() {
                     ) : (
                         <button type="button" className="sessionModalReset" disabled={isBusy} onClick={() => setConfirmReset(true)}>
                             Reset current session ({active})
+                        </button>
+                    )}
+
+                    {/* Clear all sessions (except default), with its own confirmation. */}
+                    {confirmClearAll ? (
+                        <div className="sessionModalConfirm sessionModalConfirmClear">
+                            <span>Delete all {clearableCount} session{clearableCount === 1 ? '' : 's'} (except default)? This cannot be undone.</span>
+                            <button type="button" className="sessionModalCancel" disabled={isBusy} onClick={() => setConfirmClearAll(false)}>
+                                Cancel
+                            </button>
+                            <button
+                                type="button"
+                                className="sessionModalDeleteConfirm"
+                                disabled={isBusy}
+                                onClick={() => {
+                                    setConfirmClearAll(false)
+                                    void dispatch(clearAllSessions())
+                                }}
+                            >
+                                Yes, clear all
+                            </button>
+                        </div>
+                    ) : (
+                        <button
+                            type="button"
+                            className="sessionModalClearAll"
+                            disabled={isBusy || clearableCount === 0}
+                            title={clearableCount === 0 ? 'No sessions to clear (only default exists)' : `Delete all ${clearableCount} non-default sessions`}
+                            onClick={() => setConfirmClearAll(true)}
+                        >
+                            Clear all sessions
                         </button>
                     )}
                 </div>

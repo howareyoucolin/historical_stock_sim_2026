@@ -105,6 +105,26 @@ export function deleteSession(name: string): AppThunk<Promise<void>> {
     return mutateSession('delete', name)
 }
 
+// Delete ALL sessions except the default, then reload the (now default) dashboard.
+export function clearAllSessions(): AppThunk<Promise<void>> {
+    return async (dispatch) => {
+        const response = await fetch('/api/session', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'clearAll' }),
+        })
+        const payload = (await response.json()) as SessionListResponse
+
+        if (!response.ok || !payload.sessions) {
+            dispatch(setSessionError(payload.error ?? 'Clear all failed.'))
+            return
+        }
+
+        dispatch(setSessions(payload.sessions))
+        await dispatch(reloadActiveSession())
+    }
+}
+
 // Reset the CURRENT (active) session to the default starting state (POST /api/account inits the active
 // session's folder). Like switching, it closes the modal, jumps to the Positions tab, and shows the
 // brief loading state while the freshly reset session's data replaces the old view.

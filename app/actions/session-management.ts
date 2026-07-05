@@ -155,3 +155,27 @@ export async function deleteSession(name: string, dependencies: SessionManagemen
         await switchSession(DEFAULT_SESSION_NAME, dependencies)
     }
 }
+
+// Delete EVERY session except the default (the always-present home), then make default active.
+// Returns the number of sessions removed. The default session's data is left intact.
+export async function clearAllSessions(dependencies: SessionManagementDependencies = {}): Promise<number> {
+    const { cwd = process.cwd } = dependencies
+
+    let entries: import('node:fs').Dirent[] = []
+    try {
+        entries = await fs.readdir(sessionsDirectory(cwd), { withFileTypes: true })
+    } catch {
+        entries = []
+    }
+
+    const names = entries
+        .filter((entry) => entry.isDirectory() && SESSION_NAME_PATTERN.test(entry.name) && entry.name !== DEFAULT_SESSION_NAME)
+        .map((entry) => entry.name)
+
+    for (const name of names) {
+        await deleteSession(name, dependencies)
+    }
+
+    await switchSession(DEFAULT_SESSION_NAME, dependencies)
+    return names.length
+}
