@@ -234,6 +234,71 @@ async function testBuildViewBreaksDownLots(): Promise<void> {
     assert.equal(newer.gainLoss, 120) // 4 * 150 market value 600 - 480 cost
 }
 
+// Verify an existing holding can still render when the account date is missing from the quote feed.
+async function testBuildViewCarriesForwardPreviousCloseForMissingDate(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+
+    const view = await buildDefaultUserAccountSessionView(
+        {
+            date: '2018-12-06',
+            cash: 0,
+            positions: {
+                SVU: [{ quantity: 5, cost_per_share: 20, purchase_date: '2018-11-01' }],
+            },
+        },
+        {
+            cwd: () => tempRepoRoot,
+            getStockData: stockDataFetcher({
+                SVU: {
+                    '2018-12-04': { close: 31, peRatio: 12.4 },
+                    '2018-12-05': { close: 32, peRatio: 12.8 },
+                },
+            }),
+        }
+    )
+
+    const [svu] = view.rows
+
+    assert.equal(svu.currentPrice, 32)
+    assert.equal(svu.priceChange, 1)
+    assert.equal(svu.dayChangeValue, 5)
+    assert.equal(svu.peRatio, 12.8)
+}
+
+// Verify an existing holding before its first quote uses cost basis for display instead of peeking ahead.
+async function testBuildViewUsesCostBasisWhenNoPriorCloseExists(): Promise<void> {
+    const tempRepoRoot = await createTempRepoRoot()
+
+    const view = await buildDefaultUserAccountSessionView(
+        {
+            date: '2001-01-02',
+            cash: 0,
+            positions: {
+                AXON: [
+                    { quantity: 2, cost_per_share: 8, purchase_date: '2001-01-02' },
+                    { quantity: 1, cost_per_share: 14, purchase_date: '2001-01-02' },
+                ],
+            },
+        },
+        {
+            cwd: () => tempRepoRoot,
+            getStockData: stockDataFetcher({
+                AXON: {
+                    '2001-01-03': { close: 25, peRatio: 20 },
+                },
+            }),
+        }
+    )
+
+    const [axon] = view.rows
+
+    assert.equal(axon.currentPrice, 10)
+    assert.equal(axon.priceChange, 0)
+    assert.equal(axon.totalValue, 30)
+    assert.equal(axon.totalGainLoss, 0)
+    assert.equal(axon.peRatio, null)
+}
+
 // Verify the show action reports an empty holdings state without trying to render a stock table.
 async function testShowDefaultUserAccountSessionWithoutTrackedStocks(): Promise<void> {
     const tempRepoRoot = await createTempRepoRoot()
@@ -262,5 +327,7 @@ export async function runShowAccountActionTests(): Promise<void> {
     await testShowDefaultUserAccountSessionIncludesPeRatio()
     await testBuildViewComputesDayChangeAndGroup()
     await testBuildViewBreaksDownLots()
+    await testBuildViewCarriesForwardPreviousCloseForMissingDate()
+    await testBuildViewUsesCostBasisWhenNoPriorCloseExists()
     await testShowDefaultUserAccountSessionWithoutTrackedStocks()
 }

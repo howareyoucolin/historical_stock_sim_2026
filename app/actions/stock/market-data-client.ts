@@ -10,6 +10,7 @@ type NullableNumber = number | null
 // One day's record, matching the shape the old data.json carried so downstream consumers are unchanged.
 export interface MarketDataEntry {
     close: NullableNumber
+    volume?: number | null
     isPayoutDate: boolean
     dividendPerShare: number
     ttmEps: NullableNumber

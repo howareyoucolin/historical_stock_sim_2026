@@ -9,6 +9,7 @@ type DataFileEntry = MarketDataEntry
 export interface StockHistoryRow {
     date: string
     close: NullableNumber
+    volume?: number | null
     ttmEps: NullableNumber
     peRatio: NullableNumber
     dividendPerShare: number

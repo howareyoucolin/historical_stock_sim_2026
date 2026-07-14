@@ -39,6 +39,7 @@ def worker(wid, boundary, jobs, results, errors, progress):
             results[code] = {
                 "d": [r["date"] for r in rows],
                 "c": [r["close"] for r in rows],
+                "v": [r.get("volume") for r in rows],
                 "e": [r["ttmEps"] for r in rows],
                 "p": [r["peRatio"] for r in rows],
                 "m": [r["marketCap"] for r in rows],

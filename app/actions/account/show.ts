@@ -41,8 +41,13 @@ interface MarketDataForDate {
     previousClose: number | null
 }
 
+interface CloseForDate {
+    close: number
+    date: string
+}
+
 // Find the most recent close strictly before the given date, used for day-change figures.
-function findPreviousClose(historyByDate: Record<string, StockMarketEntry>, accountDate: string): number | null {
+function findPreviousCloseForDate(historyByDate: Record<string, StockMarketEntry>, accountDate: string): CloseForDate | null {
     let previousDate: string | null = null
 
     for (const day of Object.keys(historyByDate)) {
@@ -53,23 +58,33 @@ function findPreviousClose(historyByDate: Record<string, StockMarketEntry>, acco
         }
     }
 
-    return previousDate === null ? null : (historyByDate[previousDate].close ?? null)
+    return previousDate === null ? null : { close: historyByDate[previousDate].close as number, date: previousDate }
 }
 
 // Look up the close, PE ratio, and prior close for a stock on the account's current simulation date.
-function getMarketDataForDate(stockCode: string, accountDate: string, payload: StockMarketPayload): MarketDataForDate {
+function getMarketDataForDate(accountDate: string, payload: StockMarketPayload, fallbackClose: number): MarketDataForDate {
     const historyByDate = payload.historyByDate ?? {}
     const entry = historyByDate[accountDate]
 
-    if (!entry) {
-        throw new Error(`No price data found for ${stockCode} on ${accountDate}.`)
+    if (entry?.close !== null && entry?.close !== undefined) {
+        return {
+            close: entry.close,
+            peRatio: entry.peRatio ?? null,
+            previousClose: findPreviousCloseForDate(historyByDate, accountDate)?.close ?? null,
+        }
     }
 
-    if (entry.close === null || entry.close === undefined) {
-        throw new Error(`Closing price for ${stockCode} on ${accountDate} is unavailable.`)
+    const previousClose = findPreviousCloseForDate(historyByDate, accountDate)
+
+    if (previousClose !== null) {
+        return {
+            close: previousClose.close,
+            peRatio: historyByDate[previousClose.date].peRatio ?? null,
+            previousClose: findPreviousCloseForDate(historyByDate, previousClose.date)?.close ?? null,
+        }
     }
 
-    return { close: entry.close, peRatio: entry.peRatio ?? null, previousClose: findPreviousClose(historyByDate, accountDate) }
+    return { close: fallbackClose, peRatio: null, previousClose: null }
 }
 
 // Build the per-lot detail rows shown when a holding is expanded, oldest purchase first.
@@ -139,7 +154,9 @@ async function buildAccountStockTableRows(
 
     for (const [stockCode, positions] of stockEntries) {
         const marketPayload = await readLocalStockMarketData(stockCode, dependencies)
-        const marketData = getMarketDataForDate(stockCode, account.date, marketPayload)
+        const fallbackClose = positions.reduce((total, position) => total + position.quantity * position.cost_per_share, 0) /
+            positions.reduce((total, position) => total + position.quantity, 0)
+        const marketData = getMarketDataForDate(account.date, marketPayload, fallbackClose)
 
         rows.push(buildAccountStockTableRow(stockCode, positions, marketData))
     }
