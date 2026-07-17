@@ -86,25 +86,92 @@ operating_margin_pct, free_cash_flow_margin_pct, shares_outstanding, market_cap`
 See `tools/unapproved/scoring_scripts/exp_001_regime_momentum_quality_value.py` for a
 worked two-regime example.
 
+## Explore vs. exploit policy (how to spend each iteration)
+
+The objective is a script that maximizes `justified_gain`, but the fastest route to a *true*
+maximum is NOT to refine the current leader every run — that hill-climbs one idea and stalls in
+a local optimum (and, unchecked, floods the feed with near-identical re-keyed copies). Split
+effort deterministically between **exploit** (take the leader to its best) and **explore** (try a
+structurally different tactic).
+
+**Target mix ≈ 2 exploit : 1 explore. Measure it from the feed, don't guess.** Every experiment
+tags its `NOTES` first line with `mode=exploit|explore; family=<slug>`. Take the **12 most recently
+created** experiments — the feed sorts by score by default, so fetch this count with
+`&sort=recent` (or sort by `createdAt` yourself) — and count modes: if explore is **under
+one-third** of them, this iteration is **explore**; otherwise **exploit**. This self-corrects — a
+burst of exploit runs pulls the next one toward explore, and vice-versa.
+
+**Force explore when the champion family has plateaued** (regardless of the ratio): if the last 3
+exploit runs whose parent is in the current top family each returned `metric_delta <= +0.05`
+justified, the family is converged. Stop refining it; explore until a new family lands on the board,
+then let exploit resume on whichever family now leads.
+
+### Exploit mode — take the leader to its best
+- Parent = the top-`justifiedGainPct` script in the feed.
+- Make **one** targeted, attributable change *within the same structural family*: retune a weight,
+  shift a regime threshold, add or adjust a single factor. Keep `LOGIC_VARIANT_COUNT` honest.
+- First `NOTES` line: `mode=exploit; family=<same family slug as the parent>`.
+
+### Explore mode — try a genuinely different tactic
+- The script must be **structurally unlike** every current top-family script — a different *idea*,
+  not a re-tuned threshold. Rotate through archetypes the feed has NOT tried (or tried least):
+  - **mean-reversion** — buy oversold: low `return_1m/3m_pct`, well below `ma_200d`
+  - **deep value** — low `pe`/`peg`, high `free_cash_flow_margin_pct`, no momentum gate
+  - **low-volatility / quality-only** — rank by low `realized_vol_3m` + high margins
+  - **dividend / income** — high `dividend_yield_ttm_pct` + rising `dividend_ttm`
+  - **different regime definition** — gate on `median_from_200d_ma_pct` or breadth extremes
+    instead of the current bull/risk-off split
+  - **contrarian / other tilts** — `from_52w_high_pct`, small-cap via `market_cap`, etc.
+- Build a ledger from the feed of which `family` slugs already exist; pick an **untried** archetype,
+  or the least-tried. Never repeat an archetype that already has a script.
+- First `NOTES` line: `mode=explore; family=<new archetype slug>`.
+- **An explorer that scores below the champion is a SUCCESS, not a waste.** Its value is the
+  `--lesson`: always record *why* the tactic under/over-performed and in which window. Only an
+  explorer that beats or rivals the champion seeds a new family for exploit to refine — a losing one
+  still leaves a durable lesson so the loop never blindly re-tries that dead end. Do NOT let the
+  raw `justified_gain` alone judge an explore run; judge it by what it taught.
+
+### Never submit a duplicate (mandatory, every iteration)
+Re-submitting identical logic under a new `test_key` wastes the run and pollutes the leaderboard —
+this has already happened at scale. Before backtesting:
+1. Fetch all scripts: `curl -s ".../experiments-feed.php?pretty=1&view=full&limit=500"`.
+2. Compute a **logic fingerprint** of your candidate: drop the `FORMULA_NAME` and `NOTES` lines,
+   strip comments and blank lines, normalize whitespace, then hash the remainder. Fingerprint every
+   feed script the same way.
+3. If your fingerprint matches any existing script, **do not mint a new `test_key` for it** — revise
+   until it is structurally new. (Re-running an *existing* `test_key` to reproduce it is fine;
+   creating a new key for identical logic is the bug.)
+
 ## The loop (autonomous — no prompts)
 
 1. **Study the production feed FIRST (required).** Before proposing anything, fetch the live
-   experiments feed and read it end to end — it is the system of record (results are published to
-   prod, not kept locally):
+   experiments feed with full scripts and read it end to end — it is the system of record (results
+   are published to prod, not kept locally):
    ```
-   curl -s "https://stock.369usa.com/experiments-feed.php?pretty=1"
+   curl -s "https://stock.369usa.com/experiments-feed.php?pretty=1&view=full&limit=500"
    ```
    It returns every experiment ranked by `justifiedGainPct`, each with its `lessons` (what changed
-   the score and why), `favoredStocks` (which names the formula gravitated to), and the scoring
-   script, plus a global `lessons` list. For one experiment's month-by-month picks and full script:
+   the score and why), `favoredStocks` (which names the formula gravitated to), and the full scoring
+   script, plus a global `lessons` list. For one experiment's month-by-month picks:
    `...experiments-feed.php?testKey=<key>&picks=full`. Ground your next move in what the feed shows;
-   do NOT read the local DB for this — it may be behind prod.
-2. **Hypothesize.** Pick the best current script (top `justifiedGainPct` in the feed) as the
-   **parent** and form ONE concrete, testable change grounded in the lessons (e.g. "raise the
-   risk-off low-vol weight; the last two degrade-lessons say momentum hurt the 2006 window").
-   Prefer one change at a time so the lesson is attributable.
+   do NOT read the local DB for this — it may be behind prod. While reading, build three things you
+   will need below: the **mode counts of the last 12 experiments** (from each `NOTES` line), the
+   **family ledger** (which `family` slugs exist and their best `justifiedGainPct`), and the **logic
+   fingerprints** of all existing scripts (for the dedupe guard).
+2. **Decide this iteration's mode, then hypothesize** (see *Explore vs. exploit policy* above):
+   - Apply the 2:1 rule and the plateau override to choose **exploit** or **explore**.
+   - **Exploit:** parent = top-`justifiedGainPct` script; form ONE concrete, attributable change
+     within its family, grounded in the lessons (e.g. "raise the risk-off low-vol weight; the last
+     two degrade-lessons say momentum hurt the 2006 window"). One change at a time.
+   - **Explore:** pick an untried (or least-tried) archetype from the family ledger and design a
+     structurally new script for it. There is no "parent" in the family sense; still pass
+     `--parent-test-key` = the current champion so `metric_delta` is measured against the bar.
 3. **Write the script.** Save a new file `tools/unapproved/scoring_scripts/exp_NNN_<slug>.py`
-   (increment N). Set `LOGIC_VARIANT_COUNT` to the true number of regime branches.
+   (increment N). Set `LOGIC_VARIANT_COUNT` to the true number of regime branches. Make the **first
+   `NOTES` line** `mode=<exploit|explore>; family=<slug>` so the feed stays measurable. Then run the
+   **dedupe guard**: fingerprint this script and compare to every feed script — if it matches an
+   existing one, revise until structurally new before proceeding (never mint a new key for existing
+   logic).
 4. **Backtest + record locally** (one command does the 4 windows, aggregation, upsert, and lesson):
    ```
    python3 tools/approved/scoring_lab.py \
@@ -115,7 +182,10 @@ worked two-regime example.
      --lesson-direction improve|degrade|neutral \
      --out tools/unapproved/exp_NNN_result.json
    ```
-   The runner computes `metric_delta` vs the parent automatically.
+   The runner computes `metric_delta` vs the parent automatically. **Always pass `--lesson`** — an
+   explore run that lost to the champion still MUST record why its tactic under-performed and in
+   which window (that is its entire payoff). `--lesson-direction` reflects `metric_delta` vs the
+   champion; a `degrade` on an explore run is expected and still valuable.
 5. **Publish to production (required).** From `stock_report_website/`, push the run so the feed
    (and the next iteration) sees it — otherwise your learning history stalls:
    ```
