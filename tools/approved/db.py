@@ -39,6 +39,7 @@ DB_PASS = os.environ.get("STOCKAI_DB_PASS", "stock_pass")
 DATE_COLUMN = {
     "stock_daily_prices": "trade_date",
     "stock_dividends": "ex_date",
+    "stock_monthly_metrics": "month_end",
     "stock_quarterly_metrics": "fiscal_quarter",
     "stock_quarterly_market_cap": "fiscal_quarter",
     "stock_corporate_actions": "action_date",
