@@ -46,8 +46,16 @@ script text is stored in the DB, so any row can be re-run and re-scored.
 - **The SCRIPT is the only variable.** Sizing/windows/funding/objective are harness policy.
   Change them only if the user explicitly asks; otherwise a run tells you whether the *ranking
   logic* worked, nothing else.
-- **Every run is recorded.** Upsert the result to `report_scoring_experiments` (keyed on
-  `test_key`; re-running a script updates its row) and append a `report_scoring_lessons` row.
+- **Every run is recorded.** `--upsert` writes three tables: the result to
+  `report_scoring_experiments` (keyed on `test_key`; re-running a script updates its row), the
+  month-by-month **top-15 picks** to `report_scoring_experiment_picks` (rank, symbol, score,
+  weight — replaced per `test_key` each run, so you can study which stocks it selected), and a
+  `report_scoring_lessons` row when `--lesson` is given.
+- **Production is the system of record — learn from it, and always publish to it.** The local DB
+  is only a scratch pad for running; results are kept on prod. After every run you MUST publish
+  with the website `publish-scoring-results` skill (`./deploy/publish_scoring_results.sh <test_key>`),
+  and you MUST start each iteration by reading the **production feed** (see step 1) — not the
+  local DB — so you learn from the full accumulated history.
 
 ## The scoring-script contract
 
@@ -80,22 +88,26 @@ worked two-regime example.
 
 ## The loop (autonomous — no prompts)
 
-1. **Study.** Read the current standings and memory:
-   - Leaderboard: `SELECT test_key, formula_name, weighted_gain_pct, window_dispersion_pct,
-     justified_gain_pct, logic_variant_count FROM report_scoring_experiments
-     ORDER BY justified_gain_pct DESC LIMIT 20;`
-   - Lessons: `SELECT direction, metric_delta, lesson, regime_context FROM report_scoring_lessons
-     ORDER BY id DESC LIMIT 30;`
-   (Query via `docker exec -i stock_report_mysql mysql -ustock_user -pstock_pass stock_report ...`.)
-2. **Hypothesize.** Pick the best current script as the **parent** and form ONE concrete,
-   testable change grounded in the lessons (e.g. "raise the risk-off low-vol weight; the last
-   two degrade-lessons say momentum hurt the 2006 window"). Prefer one change at a time so the
-   lesson is attributable.
-3. **Write the script.** Save a new file `exp_NNN_<slug>.py` (increment N). Set
-   `LOGIC_VARIANT_COUNT` to the true number of regime branches.
-4. **Backtest + record** (one command does the 4 windows, aggregation, upsert, and lesson):
+1. **Study the production feed FIRST (required).** Before proposing anything, fetch the live
+   experiments feed and read it end to end — it is the system of record (results are published to
+   prod, not kept locally):
    ```
-   python3 tools/unapproved/scoring_lab.py \
+   curl -s "https://stock.369usa.com/experiments-feed.php?pretty=1"
+   ```
+   It returns every experiment ranked by `justifiedGainPct`, each with its `lessons` (what changed
+   the score and why), `favoredStocks` (which names the formula gravitated to), and the scoring
+   script, plus a global `lessons` list. For one experiment's month-by-month picks and full script:
+   `...experiments-feed.php?testKey=<key>&picks=full`. Ground your next move in what the feed shows;
+   do NOT read the local DB for this — it may be behind prod.
+2. **Hypothesize.** Pick the best current script (top `justifiedGainPct` in the feed) as the
+   **parent** and form ONE concrete, testable change grounded in the lessons (e.g. "raise the
+   risk-off low-vol weight; the last two degrade-lessons say momentum hurt the 2006 window").
+   Prefer one change at a time so the lesson is attributable.
+3. **Write the script.** Save a new file `tools/unapproved/scoring_scripts/exp_NNN_<slug>.py`
+   (increment N). Set `LOGIC_VARIANT_COUNT` to the true number of regime branches.
+4. **Backtest + record locally** (one command does the 4 windows, aggregation, upsert, and lesson):
+   ```
+   python3 tools/approved/scoring_lab.py \
      --script tools/unapproved/scoring_scripts/exp_NNN_<slug>.py \
      --test-key exp_NNN --upsert \
      --parent-test-key <parent> \
@@ -104,19 +116,27 @@ worked two-regime example.
      --out tools/unapproved/exp_NNN_result.json
    ```
    The runner computes `metric_delta` vs the parent automatically.
-5. **Record the app/data suggestion** only if you hit a genuine tooling/data limitation.
-6. **Loop** to step 1. Stop only on the user's stop condition (or when told to stop).
+5. **Publish to production (required).** From `stock_report_website/`, push the run so the feed
+   (and the next iteration) sees it — otherwise your learning history stalls:
+   ```
+   ./deploy/publish_scoring_results.sh exp_NNN
+   ```
+   (This is the `publish-scoring-results` skill; it mirrors the experiment + picks + lesson to prod.)
+6. **Record the app/data suggestion** only if you hit a genuine tooling/data limitation.
+7. **Loop** to step 1. Stop only on the user's stop condition (or when told to stop).
 
 ## Building blocks
 
-- `tools/unapproved/build_metrics_panel.py` — one-time export of `stock_monthly_metrics`
-  (+ symbol) to `metrics_panel.json`, capped at the data boundary via approved `db.py`.
-  Re-run only if the underlying metrics table changes.
-- `tools/unapproved/scoring_lab.py` — the four-window runner (ranking, regime, reporting
+- `tools/approved/build_metrics_panel.py` — one-time export of `stock_monthly_metrics`
+  (+ symbol) to `tools/unapproved/metrics_panel.json`, capped at the data boundary via approved
+  `db.py`. Re-run only if the underlying metrics table changes.
+- `tools/approved/scoring_lab.py` — the four-window runner (ranking, regime, reporting
   lag, restricted-namespace script exec, in-process monthly-rebalance backtest, XIRR,
   aggregation, DB writes). Runs the full four windows in ~15–20s.
   Flags: `--reporting-lag-days` (default 60), `--top-n` (default 15), `--upsert`,
   `--lesson`/`--lesson-direction`/`--parent-test-key`.
+- Candidate scripts live in `tools/unapproved/scoring_scripts/` and the generated
+  `tools/unapproved/metrics_panel.json` is a data artifact (both git-ignored).
 - Reporting lag is a **flag, not a knob to weaken silently** — if a run lowers it, say so in
   the lesson; it changes the honesty of the fundamentals.
 
