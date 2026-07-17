@@ -31,9 +31,11 @@ Read only the files relevant to the current task:
 
 - `skills/simulation-reporting/SKILL.md`: workflow for building and summarizing
   the structured `report.json` artifact for a completed simulation.
-- `skills/scoring-exploration-autopilot/SKILL.md`: workflow for unattended search
-  over monthly stock-scoring formulas, optimized for high weighted multi-window gain
-  with low cross-window instability and minimal logic variants.
+- `skills/scoring-script-autopilot/SKILL.md`: workflow for unattended invention and
+  backtesting of regime-aware stock-scoring SCRIPTS (Python, may branch on market
+  regime) across the four anchored windows, ranking the universe monthly and holding
+  the top 15 at linear-decay rank weights; optimizes justified_gain, records each run
+  to report_scoring_experiments and what it learned to report_scoring_lessons.
 - `skills/stock-trade-simulation/SKILL.md`: workflow for running an automated
   stock trade simulation through the CLI (see also `commands.md`).
 - `skills/stock-strategy-autopilot/SKILL.md`: workflow for continuously auto-running
