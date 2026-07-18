@@ -174,17 +174,22 @@ Before backtesting:
 4. **Backtest + record locally** (one command does all windows, the benchmark, aggregation, upsert,
    picks, and lesson):
    ```
-   python3 tools/unapproved/scoring_lab_v2.py \
+   python3 tools/approved/scoring_lab_v2.py \
      --script tools/unapproved/scoring_scripts/exp_NNN_<slug>.py \
      --test-key exp_NNN --upsert \
+     --benchmark spy \
      --parent-test-key <parent> \
      --lesson "<what changed vs parent and how relative_return moved, in which windows/regimes, with the why>" \
      --lesson-direction improve|degrade|neutral \
      --out tools/unapproved/exp_NNN_v2_result.json
    ```
+   `--benchmark spy` uses the shipped benchmark data at `tools/data/spy_benchmark.json` (the default
+   `--benchmark-file`) — currently the cap-weight proxy (`benchmark_code = CAPW_UNIV`), automatically
+   real SPY once that file is replaced. All experiments therefore share one benchmark source.
    The runner computes `metric_delta` (in relative-return units) vs the parent automatically. It runs
-   in ~15-20s (rank every month once, then ~180 windows as fast single-asset XIRRs). **Always pass
-   `--lesson`** — an explore run that lost to the champion still MUST record why and in which windows.
+   in ~8s warm / ~15s cold (rank every month once, then ~180 windows as fast single-asset XIRRs; the
+   benchmark is loaded from `tools/data`, not recomputed). **Always pass `--lesson`** — an explore run
+   that lost to the champion still MUST record why and in which windows.
 5. **Publish to production (required).** From `stock_report_website/`:
    ```
    ./deploy/publish_scoring_results_v2.sh exp_NNN
@@ -194,31 +199,30 @@ Before backtesting:
    SPY benchmark data — see *Benchmark* below).
 7. **Loop** to step 1. Stop only on the user's stop condition (or when told to stop).
 
-## Benchmark (interim proxy → real SPY)
+## Benchmark
 
-The V2 objective is benchmark-relative, but the project has **no SPY series yet**. Until it lands,
-the runner computes an in-panel **cap-weight universe** proxy from the panel's own `adj_close`
-total returns, run through the identical deposit/XIRR engine (`benchmark_code = CAPW_UNIV`; use
-`--benchmark ew` for an equal-weight proxy, `EW_UNIV`). This is a faithful "same methodology"
-market baseline and lets the lab accumulate experiments now.
+The benchmark is one file: **`tools/data/spy_benchmark.json`**. Run with `--benchmark spy` (already in
+the step-4 command; it defaults `--benchmark-file` to that path) and the runner computes the
+benchmark's XIRR for every rolling window itself, using the same deposits/dates as the strategy —
+so the two always stay consistent. That's the whole comparison; nothing else to set up.
 
-When real **SPY total-return** data arrives, drop it in with no code change:
+**Interim vs real SPY.** There is no SPY series in the project yet, so the file currently holds an
+in-panel cap-weight proxy (`benchmark_code = CAPW_UNIV`). To switch to real SPY, regenerate that one
+file — no workflow change:
 
 ```
-python3 tools/unapproved/scoring_lab_v2.py --script ... \
-  --benchmark spy --benchmark-file tools/unapproved/spy_benchmark.json ...
+python3 tools/approved/build_spy_benchmark.py --spy-file <dividend-adjusted SPY {me,adj_close}>
 ```
 
-where `spy_benchmark.json` is `{"me": [month_end...], "price": [total_return_level...]}`. Those
-rows will carry `benchmark_code = SPY`; treat them as a new benchmark generation and rank them only
-against each other. (Sourcing external SPY data is new tooling — flag it as a data suggestion; per
-TSI policy new external data/services go through Brett Boston before configuration.)
+Rows then carry `benchmark_code = SPY`. **Only compare `relative_return` within the same
+`benchmark_code`** — never rank SPY runs against the older `CAPW_UNIV` proxy runs. (If the lack of
+real SPY data blocks progress, record it as a data suggestion.)
 
 ## Building blocks
 
 - `tools/approved/build_metrics_panel.py` — one-time export of `stock_monthly_metrics` (+ symbol)
   to `tools/unapproved/metrics_panel.json`. Re-run only if the underlying metrics table changes.
-- `tools/unapproved/scoring_lab_v2.py` — the V2 runner (rank-every-month precompute, strategy +
+- `tools/approved/scoring_lab_v2.py` — the V2 runner (rank-every-month precompute, strategy +
   benchmark NAV series, rolling + anchored windows, XIRR, aggregation to `relative_return`, DB
   writes to the V2 tables). It reuses V1's audited point-in-time engine (`tools/approved/scoring_lab.py`)
   for panel access, reporting lag, restricted-namespace exec, and XIRR, so the no-look-ahead

@@ -42,7 +42,7 @@ Read only the files relevant to the current task:
   window scored RELATIVE TO A BENCHMARK (same deposits/dates/dividends/methodology),
   equal window weighting, dispersion reference-only. Optimizes
   relative_return = mean over rolling windows of (1+strategy)/(1+benchmark); records
-  to the parallel report_scoring_*_v2 tables. Runs `tools/unapproved/scoring_lab_v2.py`.
+  to the parallel report_scoring_*_v2 tables. Runs `tools/approved/scoring_lab_v2.py`.
   V1 remains available unchanged.
 - `skills/stock-trade-simulation/SKILL.md`: workflow for running an automated
   stock trade simulation through the CLI (see also `commands.md`).
