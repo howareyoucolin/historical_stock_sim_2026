@@ -151,9 +151,35 @@ Before backtesting:
 3. If your fingerprint matches any existing script, **do not mint a new `test_key`** — revise until
    structurally new. (Re-running an *existing* `test_key` to reproduce it is fine.)
 
+## Progress logging (heartbeat — required)
+
+Emit a log line at each meaningful step with `tools/approved/alog.py`, so the run is visible
+remotely at `https://stock.369usa.com/logs.php` and the local watchdog can tell the automation is
+still progressing (it flags a stall if no new log line appears for 5 min). One line per step is
+plenty — at minimum: iteration start, after the backtest, after the publish, and on any error:
+```
+python3 tools/approved/alog.py "iter start: studying feed" --source autopilot
+python3 tools/approved/alog.py "backtested exp_NNN: relative_return 1.27x (Δ +0.01 vs exp_MMM)" --source autopilot --test-key exp_NNN
+python3 tools/approved/alog.py "published exp_NNN to prod" --source autopilot --test-key exp_NNN
+python3 tools/approved/alog.py "FAILED exp_NNN: <what broke>" --level error --source autopilot --test-key exp_NNN
+```
+(Logging writes only to the LOCAL `automation_log` table; `deploy/push_logs.sh` mirrors the latest
+500 to prod every minute. Never block an iteration on a logging failure.)
+
+## Two ways to run this loop
+
+- **Interactively** (you, or an agent, following the steps below) — flexible, good for hands-on steering.
+- **Headless / unattended** — `tools/approved/run_autopilot.py` is a hard supervisor that performs
+  the exact steps below deterministically (mode decision, dedupe, backtest, lesson, publish, `alog`
+  heartbeat, retry/skip, resume) and delegates only the creative *script generation* to a pluggable
+  generator (`--generator codex` = headless `codex exec`, hybrid; or `--generator mutate` = no-AI
+  parameter sweep). Run `python3 tools/approved/run_autopilot.py --loop`; pair with `watchdog.sh`
+  (`WORKER_CMD='python3 tools/approved/run_autopilot.py --loop'`) for multi-day self-healing.
+
 ## The loop (autonomous — no prompts)
 
-1. **Study the production V2 feed FIRST (required).** Before proposing anything, fetch the live V2
+1. **Study the production V2 feed FIRST (required).** Log `iter start` (see *Progress logging*),
+   then fetch the live V2
    feed with full scripts and read it end to end — it is the system of record:
    ```
    curl -s "https://stock.369usa.com/experiments-feed-v2.php?pretty=1&view=full&limit=500"
@@ -189,12 +215,14 @@ Before backtesting:
    The runner computes `metric_delta` (in relative-return units) vs the parent automatically. It runs
    in ~8s warm / ~15s cold (rank every month once, then ~180 windows as fast single-asset XIRRs; the
    benchmark is loaded from `tools/data`, not recomputed). **Always pass `--lesson`** — an explore run
-   that lost to the champion still MUST record why and in which windows.
+   that lost to the champion still MUST record why and in which windows. Then log the result
+   (`alog.py "backtested exp_NNN: ..." --source autopilot --test-key exp_NNN`).
 5. **Publish to production (required).** From `stock_report_website/`:
    ```
    ./deploy/publish_scoring_results_v2.sh exp_NNN
    ```
    (The `publish-scoring-results-v2` skill; it mirrors the V2 experiment + picks + lesson to prod.)
+   Then log it (`alog.py "published exp_NNN to prod" --source autopilot --test-key exp_NNN`).
 6. **Record an app/data suggestion** only if you hit a genuine tooling/data limitation (e.g. real
    SPY benchmark data — see *Benchmark* below).
 7. **Loop** to step 1. Stop only on the user's stop condition (or when told to stop).
