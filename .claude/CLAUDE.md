@@ -36,6 +36,14 @@ Read only the files relevant to the current task:
   regime) across the four anchored windows, ranking the universe monthly and holding
   the top 15 at linear-decay rank weights; optimizes justified_gain, records each run
   to report_scoring_experiments and what it learned to report_scoring_lessons.
+- `skills/scoring-script-autopilot-v2/SKILL.md`: V2 of the scoring-script lab. Same
+  script contract and no-look-ahead engine, but a better evaluation framework —
+  all rolling 5-year windows (monthly step) + the four anchored windows, every
+  window scored RELATIVE TO A BENCHMARK (same deposits/dates/dividends/methodology),
+  equal window weighting, dispersion reference-only. Optimizes
+  relative_return = mean over rolling windows of (1+strategy)/(1+benchmark); records
+  to the parallel report_scoring_*_v2 tables. Runs `tools/unapproved/scoring_lab_v2.py`.
+  V1 remains available unchanged.
 - `skills/stock-trade-simulation/SKILL.md`: workflow for running an automated
   stock trade simulation through the CLI (see also `commands.md`).
 - `skills/stock-strategy-autopilot/SKILL.md`: workflow for continuously auto-running
