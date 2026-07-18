@@ -76,12 +76,11 @@ npm run autopilot:start --message="focus on low-vol dividend names in risk-off r
 The directive is injected into the generator prompt so the AI skews toward it, while the
 explore/exploit scaffolding stays mechanical. (Only affects the Codex generator; the sweep ignores it.)
 
-**Watch it remotely** at `https://stock.369usa.com/logs.php` — the live log page (green "Live" /
-red "STALE >5m"). To feed it, run the 1-minute log pusher on this machine via cron:
-
-```cron
-* * * * * cd /path/to/stock_report_website && ./deploy/push_logs.sh >/dev/null 2>&1
-```
+**Watch it remotely** at `https://stock.369usa.com/logs.php` — the live log page (green "Live",
+gray "Idle" when stopped, red "STALE" only if a *running* loop goes silent >5m). `autopilot:start`
+starts a background pusher that mirrors local logs to prod every minute, so the page stays live
+automatically — no cron needed. (`autopilot:stop` stops the pusher and does a final push so the page
+shows Idle.)
 
 **Self-healing:** `npm run autopilot:start` runs under `tools/approved/watchdog.sh`, which restarts
 the loop if it stalls for 5 min. Per-step timeouts + retry/skip mean one bad generation or backtest

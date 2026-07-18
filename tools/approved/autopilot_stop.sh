@@ -23,22 +23,23 @@ if pgrep -f 'tools/approved/watchdog.sh' >/dev/null 2>&1; then
   sleep 3
 fi
 
-# 2. Stop a directly-run supervisor and any in-flight backtest/generation children.
+# 2. Stop the background log pusher, a directly-run supervisor, and in-flight backtest/generation.
 #    'codex exec' targets only the headless generator, never an interactive `codex` TUI session.
-say "stopping supervisor + in-flight children…"
-for pat in 'run_autopilot.py' 'scoring_lab_v2.py' 'codex exec'; do
+say "stopping pusher + supervisor + in-flight children…"
+for pat in 'push_logs_loop.sh' 'run_autopilot.py' 'scoring_lab_v2.py' 'codex exec'; do
   pkill -TERM -f "$pat" 2>/dev/null || true
 done
 sleep 2
 
 # 3. Force-kill anything that ignored SIGTERM.
-for pat in 'tools/approved/watchdog.sh' 'run_autopilot.py' 'scoring_lab_v2.py' 'codex exec'; do
+for pat in 'tools/approved/watchdog.sh' 'push_logs_loop.sh' 'run_autopilot.py' 'scoring_lab_v2.py' 'codex exec'; do
   pkill -KILL -f "$pat" 2>/dev/null || true
 done
 rm -f /tmp/stockai_worker.pid
 
-# 4. Best-effort stop marker in the log (no-op if the local DB is already down).
+# 4. Log the stop marker and push it once so /logs.php reflects the Idle state (before Docker goes down).
 python3 "${HERE}/alog.py" "autopilot stopped (autopilot:stop)" --level warn --source system >/dev/null 2>&1 || true
+bash "${HERE}/../../../stock_report_website/deploy/push_logs.sh" >/dev/null 2>&1 || true
 
 # 5. Report what (if anything) is still alive.
 left="$(pgrep -fl 'tools/approved/watchdog.sh|run_autopilot.py|scoring_lab_v2.py' 2>/dev/null | wc -l | tr -d ' ')"
