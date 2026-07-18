@@ -213,6 +213,12 @@ Follow the contract in .claude/skills/scoring-script-autopilot-v2/SKILL.md exact
 - set LOGIC_VARIANT_COUNT to the true number of regime branches.
 - FIRST line of NOTES must be: mode={mode}; family={family}
 - {'EXPLOIT: ONE targeted, attributable change within the parent family below.' if mode=='exploit' else 'EXPLORE: a structurally NEW idea for the '+family+' archetype, unlike the parent.'}
+- Metric-coverage rule: consider the FULL metric menu in the skill (momentum, trend/recovery, vol,
+  liquidity, income, valuation, growth, quality, size). Using only a few is fine, but weight-0 the
+  rest DELIBERATELY — don't default to the same 4-5. Do NOT assume an untried metric is useless;
+  rotate which metrics you use across runs so the backtest can prove or kill each. Beware correlated
+  metrics (return/momentum/distance are one bet; pe/forward_pe/peg are one bet) and sparse
+  fundamentals (~30% coverage tilts toward large caps).
 
 Recent lessons (learn from these; do not repeat degrade lessons):
 {lesson_txt or '(none yet)'}

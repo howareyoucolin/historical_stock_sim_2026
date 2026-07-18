@@ -93,13 +93,39 @@ def score_universe(stocks, regime, ctx):
     ...
 ```
 
-Row fields available (point-in-time; fundamentals reporting-lagged):
-`close, adj_close, return_1m/3m/6m/12m_pct, momentum_12_1_pct, high_52w, from_52w_high_pct,
-ma_200d, from_200d_ma_pct, realized_vol_3m, avg_daily_volume_3m, avg_daily_dollar_volume_3m,
-trading_days_3m, dividend_ttm, dividend_yield_ttm_pct, eps_ttm, eps_growth_pct, forward_eps,
-pe, forward_pe, peg, revenue_ttm, revenue_growth_pct, operating_income_ttm,
-operating_income_growth_pct, free_cash_flow_ttm, free_cash_flow_growth_pct,
-operating_margin_pct, free_cash_flow_margin_pct, shares_outstanding, market_cap`.
+### The full metric menu (point-in-time; fundamentals reporting-lagged)
+
+Every metric below is available on each `stocks` row and via `ctx.z(metric)`. They are grouped by
+the signal they carry:
+
+- **Momentum / return:** `return_1m_pct`, `return_3m_pct`, `return_6m_pct`, `return_12m_pct`,
+  `momentum_12_1_pct`
+- **Trend / recovery (distance):** `from_200d_ma_pct`, `from_52w_high_pct`
+- **Volatility / risk:** `realized_vol_3m`
+- **Liquidity:** `avg_daily_volume_3m`, `avg_daily_dollar_volume_3m`, `trading_days_3m`
+- **Income:** `dividend_yield_ttm_pct`, `dividend_ttm`
+- **Valuation (ratios):** `pe`, `forward_pe`, `peg`
+- **Growth:** `eps_growth_pct`, `revenue_growth_pct`, `operating_income_growth_pct`,
+  `free_cash_flow_growth_pct`, `forward_eps`
+- **Quality / profitability:** `operating_margin_pct`, `free_cash_flow_margin_pct`
+- **Size / raw levels (use as a tilt or inside a ratio — NOT a raw z-score; a $500 stock isn't
+  "better" than a $50 one):** `market_cap`, `shares_outstanding`, `close`, `adj_close`, `high_52w`,
+  `ma_200d`, `eps_ttm`, `revenue_ttm`, `operating_income_ttm`, `free_cash_flow_ttm`
+
+**Metric-coverage rule (required).** When you design a script, **consider EVERY metric in this
+menu** — do not default to the same 4–5 out of habit. A given strategy may deliberately use only a
+few (that is fine and often better), but that must be a *conscious choice*: the metrics you don't
+use are ones you decided to give **weight 0**, not ones you forgot exist. Do **not** assume a metric
+is useless because it's uncommon — it very likely is weak, but the only way to know is to try it, so
+**across runs actively rotate which metrics you draw on** and let the backtest prove or kill each one
+(that is the whole point of the lessons log). If you drop a metric a prior lesson already tested and
+found weak, say so; if a metric has never been tried, it's a prime explore candidate.
+
+Two cautions when you do reach for the wider menu: (1) many metrics are **correlated** (all the
+return/momentum/distance columns are one bet; `pe`/`forward_pe`/`peg` are one bet) — stacking them
+double-counts rather than adds signal; (2) fundamentals are present for only ~30% of names at a given
+month, so leaning on them tilts selection toward large caps (the runner skips `None` metrics). Prefer
+**normalizing by the weights actually present** for a name if you use sparse metrics.
 
 The same script files work in V1 and V2 — only the evaluation differs. See
 `tools/unapproved/scoring_scripts/exp_001_regime_momentum_quality_value.py` for a worked example.

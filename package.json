@@ -8,9 +8,10 @@
     "start": "next start -p 8600",
     "cli": "tsx cli/index.ts",
     "test": "tsx app/test.ts",
-    "autopilot": "docker compose -f ../stock_report_website/docker-compose.yml up -d && AUTOPILOT_MESSAGE=\"$npm_config_message\" WORKER_CMD='python3 tools/approved/run_autopilot.py --loop --gen-timeout 300 --bt-timeout 300' STALE_SECS=900 bash tools/approved/watchdog.sh",
+    "autopilot:start": "docker compose -f ../stock_report_website/docker-compose.yml up -d && AUTOPILOT_MESSAGE=\"$npm_config_message\" WORKER_CMD='python3 tools/approved/run_autopilot.py --loop --gen-timeout 300 --bt-timeout 300' STALE_SECS=900 bash tools/approved/watchdog.sh",
     "autopilot:test": "docker compose -f ../stock_report_website/docker-compose.yml up -d && AUTOPILOT_MESSAGE=\"$npm_config_message\" python3 tools/approved/run_autopilot.py --once --generator mutate --dry-run --test-key exp_dryrun",
     "autopilot:sweep": "WORKER_CMD='python3 tools/approved/run_autopilot.py --loop --generator mutate' STALE_SECS=900 bash tools/approved/watchdog.sh",
+    "autopilot:stop": "bash tools/approved/autopilot_stop.sh",
     "setup-hooks": "node scripts/setup-git-hooks.mjs",
     "prepare": "node scripts/setup-git-hooks.mjs"
   },

@@ -61,7 +61,8 @@ across all rolling 5-year windows vs the benchmark → record a lesson → publi
 `.claude/skills/scoring-script-autopilot-v2/SKILL.md` for the methodology.
 
 ```bash
-npm run autopilot          # run it (self-healing): Codex generates each script, publishes to prod
+npm run autopilot:start    # run it (self-healing): Codex generates each script, publishes to prod
+npm run autopilot:stop     # cleanly stop the autopilot + background processes + local Docker stack
 npm run autopilot:sweep    # no-AI mode: deterministic parameter sweep (free, no Codex)
 npm run autopilot:test     # safe check: one dry-run iteration, no publish, no Codex, no number used
 ```
@@ -69,7 +70,7 @@ npm run autopilot:test     # safe check: one dry-run iteration, no publish, no C
 **Steer a run toward a focus** with `--message` (persists for the whole session, survives restarts):
 
 ```bash
-npm run autopilot --message="focus on low-vol dividend names in risk-off regimes"
+npm run autopilot:start --message="focus on low-vol dividend names in risk-off regimes"
 ```
 
 The directive is injected into the generator prompt so the AI skews toward it, while the
@@ -82,9 +83,10 @@ red "STALE >5m"). To feed it, run the 1-minute log pusher on this machine via cr
 * * * * * cd /path/to/stock_report_website && ./deploy/push_logs.sh >/dev/null 2>&1
 ```
 
-**Self-healing:** `npm run autopilot` runs under `tools/approved/watchdog.sh`, which restarts the
-loop if it stalls for 5 min. Per-step timeouts + retry/skip mean one bad generation or backtest
-never wedges the run; numbering resumes from the prod feed after any restart. Stop with `Ctrl-C`.
+**Self-healing:** `npm run autopilot:start` runs under `tools/approved/watchdog.sh`, which restarts
+the loop if it stalls for 5 min. Per-step timeouts + retry/skip mean one bad generation or backtest
+never wedges the run; numbering resumes from the prod feed after any restart. Stop it with
+`npm run autopilot:stop` (or `Ctrl-C` if it's in the foreground).
 
 Prerequisites: the Docker backend up (the `autopilot*` scripts start it for you), and for the
 default Codex generator, the `codex` CLI installed and authenticated. The interim benchmark is a
