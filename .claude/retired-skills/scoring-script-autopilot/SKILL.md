@@ -5,6 +5,13 @@ description: Autonomously invent and test regime-aware stock-scoring SCRIPTS (Py
 
 # Scoring Script Autopilot
 
+> **⚠️ RETIRED — do not run.** V1 has been superseded by **`scoring-script-autopilot-v2`**, which is
+> the permanent lab going forward. This file lives in `.claude/retired-skills/` (outside the scanned
+> `.claude/skills/` dir) so it is **not** offered as an active skill; it is kept only for reference.
+> V1's historical **data is intentionally preserved** — the `report_scoring_experiments` /
+> `_experiment_picks` / `_scoring_lessons` tables and the V1 pages (`/experiments.php`,
+> `/experiment.php`, `/experiments-feed.php`) remain live. Do not create new V1 experiments.
+
 Run an unattended search for the best **monthly stock-scoring SCRIPT**. Unlike a fixed
 formula, a script may branch on the market regime (e.g. *if bull: weight momentum more;
 if risk-off: favor low-vol quality/value*). Each iteration the agent studies what has

@@ -31,19 +31,18 @@ Read only the files relevant to the current task:
 
 - `skills/simulation-reporting/SKILL.md`: workflow for building and summarizing
   the structured `report.json` artifact for a completed simulation.
-- `skills/scoring-script-autopilot/SKILL.md`: workflow for unattended invention and
-  backtesting of regime-aware stock-scoring SCRIPTS (Python, may branch on market
-  regime) across the four anchored windows, ranking the universe monthly and holding
-  the top 15 at linear-decay rank weights; optimizes justified_gain, records each run
-  to report_scoring_experiments and what it learned to report_scoring_lessons.
-- `skills/scoring-script-autopilot-v2/SKILL.md`: V2 of the scoring-script lab. Same
-  script contract and no-look-ahead engine, but a better evaluation framework —
-  all rolling 5-year windows (monthly step) + the four anchored windows, every
-  window scored RELATIVE TO A BENCHMARK (same deposits/dates/dividends/methodology),
-  equal window weighting, dispersion reference-only. Optimizes
-  relative_return = mean over rolling windows of (1+strategy)/(1+benchmark); records
-  to the parallel report_scoring_*_v2 tables. Runs `tools/approved/scoring_lab_v2.py`.
-  V1 remains available unchanged.
+- `skills/scoring-script-autopilot-v2/SKILL.md`: the scoring-script lab (current,
+  permanent). Regime-aware stock-scoring SCRIPTS (Python, may branch on market
+  regime), evaluated across all rolling 5-year windows (monthly step) + the four
+  anchored windows, every window scored RELATIVE TO A BENCHMARK (same deposits/
+  dates/dividends/methodology), equal window weighting, dispersion reference-only.
+  Optimizes relative_return = mean over rolling windows of (1+strategy)/(1+benchmark);
+  records to the report_scoring_*_v2 tables. Runs `tools/approved/scoring_lab_v2.py`.
+- V1 (`scoring-script-autopilot`) is **RETIRED** — no longer run, moved to
+  `.claude/retired-skills/` so it is not offered as an active skill. Its historical
+  data is kept: the `report_scoring_experiments` / `_experiment_picks` /
+  `_scoring_lessons` tables and the V1 pages (`/experiments.php`, `/experiment.php`,
+  `/experiments-feed.php`) remain live for reference. Use V2 for all new work.
 - `skills/stock-trade-simulation/SKILL.md`: workflow for running an automated
   stock trade simulation through the CLI (see also `commands.md`).
 - `skills/stock-strategy-autopilot/SKILL.md`: workflow for continuously auto-running
