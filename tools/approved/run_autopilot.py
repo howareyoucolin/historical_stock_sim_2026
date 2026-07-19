@@ -4,7 +4,7 @@
 Everything mechanical lives here so the loop can run unattended for days and be managed by
 watchdog.sh (WORKER_CMD='python3 run_autopilot.py --loop'):
 
-  study feed -> decide mode (2:1 exploit:explore) -> pick parent/family -> GENERATE next script
+  study feed -> decide allocation track -> pick parent/family -> GENERATE next script
   -> validate + dedupe -> backtest (scoring_lab_v2.py) -> compose+insert lesson -> publish -> log
 
 The ONE creative step (writing the next scoring script) is delegated to a pluggable generator:
@@ -41,8 +41,45 @@ PHP_CONTAINER = "stock_report_php"
 PROD_FEED = "https://stock.369usa.com/experiments-feed-v2.php"
 
 # Explore archetypes rotated through when no untried family is obvious (kept in sync with the skill).
-ARCHETYPES = ["mean-reversion", "deep-value", "low-vol-quality", "dividend-income",
-              "breadth-regime", "contrarian-52w", "small-cap"]
+ARCHETYPES = [
+    "mean-reversion",
+    "deep-value",
+    "low-vol-quality",
+    "dividend-income",
+    "breadth-regime",
+    "contrarian-52w",
+    "small-cap",
+    "consistency",
+    "acceleration",
+    "capital-efficiency",
+    "recovery-quality",
+    "market-leaders",
+    "stability-compounders",
+    "scarcity-filter",
+    "boolean-gate",
+    "anti-bubble",
+    "density-score",
+    "orthogonal-factors",
+    "sparse-formula",
+    "interaction-effects",
+    "garp",
+    "qarp",
+    "trend-confirmation",
+    "fundamental-momentum",
+    "turnaround",
+    "income-growth",
+    "liquidity-preference",
+    "regime-specialist",
+    "underused-metrics",
+    "contradiction",
+    "percentile-ranking",
+    "threshold-ladder",
+]
+
+DEFAULT_DECISION_WINDOW = 20
+DEFAULT_EXPLORE_SHARE = 0.50
+DEFAULT_WINNER_SHARE = 0.10
+DEFAULT_CONTENDER_SHARE = 0.40
 
 
 def now_iso():
@@ -57,28 +94,55 @@ def log(msg, level="info", test_key=None):
 
 # --- feed -------------------------------------------------------------------
 def fetch_feed(url):
-    with urllib.request.urlopen(url + "?view=full&limit=500", timeout=30) as r:
+    with urllib.request.urlopen(url + "?view=full&limit=500&picks=none", timeout=30) as r:
         return json.loads(r.read().decode())
 
 
 def notes_tag(exp):
     line = ((exp.get("notes") or "").splitlines() or [""])[0]
     mode = "explore" if "mode=explore" in line else ("exploit" if "mode=exploit" in line else None)
+    focus = None
+    m_focus = re.search(r"focus=([A-Za-z0-9_-]+)", line)
+    if m_focus:
+        focus = m_focus.group(1)
     fam = None
     m = re.search(r"family=([A-Za-z0-9_-]+)", line)
     if m:
         fam = m.group(1)
-    return mode, fam
+    return mode, fam, focus
 
 
 # --- deterministic decisions -----------------------------------------------
-# 2:1 exploit:explore, measured from the 12 most-recent experiments (skill rule).
-def decide_mode(exps):
-    recent = sorted(exps, key=lambda e: str(e.get("createdAt") or e.get("updatedAt") or ""), reverse=True)[:12]
+def allocation_bucket(exp):
+    mode, _, focus = notes_tag(exp)
+    if mode == "explore":
+        return "explore"
+    if mode == "exploit":
+        return "winner" if focus == "winner" else "contender"
+    return None
+
+
+def target_shares(args):
+    return {
+        "explore": args.explore_share,
+        "winner": args.winner_share,
+        "contender": args.contender_share,
+    }
+
+
+def decide_track(exps, args):
+    recent = sorted(exps, key=lambda e: str(e.get("createdAt") or e.get("updatedAt") or ""), reverse=True)[:args.decision_window]
     if not recent:
         return "explore"  # empty board: seed with an explore
-    explore = sum(1 for e in recent if notes_tag(e)[0] == "explore")
-    return "explore" if explore < len(recent) / 3.0 else "exploit"
+    counts = {k: 0 for k in target_shares(args)}
+    for exp in recent:
+        bucket = allocation_bucket(exp)
+        if bucket in counts:
+            counts[bucket] += 1
+    total = max(1, len(recent))
+    shares = target_shares(args)
+    deficits = {k: shares[k] - (counts[k] / total) for k in shares}
+    return max(deficits, key=lambda k: (deficits[k], shares[k]))
 
 
 def champion(exps, benchmark_code):
@@ -86,8 +150,24 @@ def champion(exps, benchmark_code):
     return max(pool, key=lambda e: e["relativeReturn"]) if pool else None
 
 
-def pick_family(mode, exps, parent):
-    if mode == "exploit" and parent:
+def contender_parent(exps, benchmark_code, champ):
+    champ_key = (champ or {}).get("testKey")
+    champ_family = notes_tag(champ)[1] if champ else None
+    pool = []
+    for exp in exps:
+        if exp.get("benchmarkCode") != benchmark_code or exp.get("relativeReturn") is None:
+            continue
+        if exp.get("testKey") == champ_key:
+            continue
+        fam = notes_tag(exp)[1]
+        if champ_family and fam == champ_family:
+            continue
+        pool.append(exp)
+    return max(pool, key=lambda e: (e["relativeReturn"], str(e.get("createdAt") or e.get("updatedAt") or ""))) if pool else None
+
+
+def pick_family(track, exps, parent):
+    if track in {"winner", "contender"} and parent:
         return notes_tag(parent)[1] or "regime-momentum-quality-value"
     tried = {notes_tag(e)[1] for e in exps if notes_tag(e)[1]}
     untried = [a for a in ARCHETYPES if a not in tried]
@@ -179,7 +259,7 @@ def score_universe(stocks, regime, ctx):
 }
 
 
-def gen_mutate(mode, family, parent, lessons, target, exp_num):
+def gen_mutate(mode, focus, family, parent, lessons, target, exp_num):
     tmpl_key = family if family in _MUTATE_TEMPLATES else (
         "regime-momentum-quality-value" if mode == "exploit" else "mean-reversion")
     variants, body = _MUTATE_TEMPLATES[tmpl_key]
@@ -191,28 +271,28 @@ def gen_mutate(mode, family, parent, lessons, target, exp_num):
     src = (f'# Auto-generated (mutate) exp_{exp_num:03d} — {tmpl_key} sweep point.\n'
            f'FORMULA_NAME = "{tmpl_key} (mutate v{exp_num})"\n'
            f'LOGIC_VARIANT_COUNT = {variants}\n'
-           f'NOTES = "mode={mode}; family={family}. Auto (mutate); weight jitter j={j}."\n'
+           f'NOTES = "mode={mode}; family={family}; focus={focus}. Auto (mutate); weight jitter j={j}."\n'
            + filled)
     with open(target, "w") as fh:
         fh.write(src)
     return True
 
 
-def gen_codex(mode, family, parent, lessons, target, exp_num, generator_cmd, timeout, message=""):
+def gen_codex(mode, focus, family, parent, lessons, target, exp_num, generator_cmd, timeout, message=""):
     parent_src = (parent or {}).get("scoringDefinition") or ""
     lesson_txt = "\n".join(f"- ({l.get('direction')}) {l.get('text')}" for l in lessons[:12])
     directive = (f"\n*** OPERATOR DIRECTIVE for this run (HIGHEST PRIORITY — skew the script toward "
                  f"this focus, within the mode/contract below): {message} ***\n" if message else "")
     prompt = f"""You are running scoring-script-autopilot-v2. Write ONE new Python scoring script.
 {directive}
-Mode: {mode}. Family: {family}. Next id: exp_{exp_num:03d}.
+Mode: {mode}. Focus: {focus}. Family: {family}. Next id: exp_{exp_num:03d}.
 Parent (champion) test_key: {(parent or {}).get('testKey')}, relative_return {(parent or {}).get('relativeReturn')}.
 
 Follow the contract in .claude/skills/scoring-script-autopilot-v2/SKILL.md exactly:
 - define score_universe(stocks, regime, ctx) -> {{symbol: score}}; restricted namespace (no imports/IO).
 - set LOGIC_VARIANT_COUNT to the true number of regime branches.
-- FIRST line of NOTES must be: mode={mode}; family={family}
-- {'EXPLOIT: ONE targeted, attributable change within the parent family below.' if mode=='exploit' else 'EXPLORE: a structurally NEW idea for the '+family+' archetype, unlike the parent.'}
+- FIRST line of NOTES must be: mode={mode}; family={family}; focus={focus}
+- {'EXPLOIT-WINNER: make ONE targeted, attributable change to the current champion family below.' if focus=='winner' else ('EXPLOIT-CONTENDER: optimize this non-champion family to test whether it still has upside; stay within the family but do not collapse back into the champion logic.' if focus=='contender' else 'EXPLORE: a structurally NEW idea for the '+family+' archetype, unlike the parent.')}
 - Metric-coverage rule: consider the FULL metric menu in the skill (momentum, trend/recovery, vol,
   liquidity, income, valuation, growth, quality, size). Using only a few is fine, but weight-0 the
   rest DELIBERATELY — don't default to the same 4-5. Do NOT assume an untried metric is useless;
@@ -264,19 +344,19 @@ def run_backtest(script_path, test_key, parent_key, benchmark, timeout):
         return json.load(fh)
 
 
-def insert_lesson(result, parent, mode, family):
+def insert_lesson(result, parent, mode, focus, family):
     new_rel = result.get("relative_return")
     p_rel = (parent or {}).get("relativeReturn")
     delta = round(new_rel - p_rel, 6) if (new_rel is not None and p_rel is not None) else None
     direction = "neutral" if not delta else ("improve" if delta > 0 else "degrade")
-    text = (f"{mode}/{family}: relative_return {new_rel:.4f}x"
+    text = (f"{mode}/{focus}/{family}: relative_return {new_rel:.4f}x"
             + (f" (delta {delta:+.4f} vs {parent['testKey']})" if delta is not None else "")
             + f"; win-rate {result.get('benchmark_win_rate_pct')}%,"
             + f" worst-window {result.get('worst_window_ratio')}, dispersion {result.get('window_dispersion_pct')}%.")
     payload = {"lesson": text, "direction": direction, "metric": "relative_return",
                "metric_delta": delta, "parent_test_key": (parent or {}).get("testKey"),
                "evidence_test_keys": result["test_key"] + (f",{parent['testKey']}" if parent else ""),
-               "regime_context": f"auto/{mode}; benchmark {result.get('benchmark_code')}"}
+               "regime_context": f"auto/{mode}/{focus}; benchmark {result.get('benchmark_code')}"}
     proc = subprocess.run(
         ["docker", "exec", "-i", PHP_CONTAINER, "php",
          "/var/www/html/data/importers/report_scoring_lesson_v2_insert.php"],
@@ -299,9 +379,12 @@ def iterate(args):
     feed = fetch_feed(args.feed_url)
     exps = feed.get("experiments", [])
     lessons = feed.get("lessons", [])
-    mode = decide_mode(exps)
-    parent = champion(exps, args.benchmark_code)
-    family = pick_family(mode, exps, parent)
+    track = decide_track(exps, args)
+    mode = "explore" if track == "explore" else "exploit"
+    champ = champion(exps, args.benchmark_code)
+    parent = champ if track == "winner" else (contender_parent(exps, args.benchmark_code, champ) if track == "contender" else champ)
+    focus = track
+    family = pick_family(track, exps, parent)
     # mutate only has a few templates; snap to one so the recorded family matches the real logic
     # (codex honors the chosen family, so this only applies to the no-AI sweep path).
     if args.generator == "mutate" and family not in _MUTATE_TEMPLATES:
@@ -314,16 +397,16 @@ def iterate(args):
     target = os.path.join(SCRIPTS_DIR, f"{test_key}_{slug}.py")
     os.makedirs(SCRIPTS_DIR, exist_ok=True)
     seen = feed_fingerprints(exps)
-    log(f"{test_key}: mode={mode} family={family} parent={(parent or {}).get('testKey')}", test_key=test_key)
+    log(f"{test_key}: track={track} mode={mode} family={family} parent={(parent or {}).get('testKey')}", test_key=test_key)
 
     # generate (retry until valid + unique, else skip)
     ok = False
     for attempt in range(1, args.gen_retries + 1):
         if args.generator == "mutate":
-            gen_mutate(mode, family, parent, lessons, target, exp_num + attempt - 1)
+            gen_mutate(mode, focus, family, parent, lessons, target, exp_num + attempt - 1)
         else:
             log(f"generating {test_key} via codex (attempt {attempt}/{args.gen_retries})", test_key=test_key)
-            if not gen_codex(mode, family, parent, lessons, target, exp_num, args.generator_cmd,
+            if not gen_codex(mode, focus, family, parent, lessons, target, exp_num, args.generator_cmd,
                              args.gen_timeout, args.message):
                 log(f"generation attempt {attempt} produced no file", "warn", test_key)
                 continue
@@ -355,7 +438,7 @@ def iterate(args):
     if result is None:
         log(f"{test_key}: backtest failed after {args.bt_retries} tries; skipping", "error", test_key)
         return False
-    direction, delta = insert_lesson(result, parent, mode, family)
+    direction, delta = insert_lesson(result, parent, mode, focus, family)
     log(f"backtested {test_key}: relative_return {result['relative_return']:.4f}x "
         f"({'Δ '+format(delta,'+.4f') if delta is not None else 'no parent'}, {direction}); "
         f"win {result['benchmark_win_rate_pct']}%", test_key=test_key)
@@ -395,6 +478,14 @@ def main():
     ap.add_argument("--feed-url", dest="feed_url", default=PROD_FEED)
     ap.add_argument("--dry-run", dest="dry_run", action="store_true", help="skip publish to prod")
     ap.add_argument("--sleep", type=int, default=5, help="seconds between iterations in --loop")
+    ap.add_argument("--decision-window", dest="decision_window", type=int, default=DEFAULT_DECISION_WINDOW,
+                    help="number of recent experiments used to steer track allocation")
+    ap.add_argument("--explore-share", dest="explore_share", type=float, default=DEFAULT_EXPLORE_SHARE,
+                    help="target share of iterations spent on brand-new strategy families")
+    ap.add_argument("--winner-share", dest="winner_share", type=float, default=DEFAULT_WINNER_SHARE,
+                    help="target share of iterations spent refining the current champion")
+    ap.add_argument("--contender-share", dest="contender_share", type=float, default=DEFAULT_CONTENDER_SHARE,
+                    help="target share of iterations spent revisiting strong non-champion families")
     ap.add_argument("--gen-retries", dest="gen_retries", type=int, default=3)
     ap.add_argument("--gen-timeout", dest="gen_timeout", type=int, default=600)
     ap.add_argument("--bt-retries", dest="bt_retries", type=int, default=2)
@@ -405,9 +496,17 @@ def main():
 
     if not args.loop and not args.once:
         args.once = True
+    total_share = args.explore_share + args.winner_share + args.contender_share
+    if total_share <= 0:
+        ap.error("allocation shares must sum to a positive value")
+    args.explore_share /= total_share
+    args.winner_share /= total_share
+    args.contender_share /= total_share
 
     log(f"supervisor online (generator={args.generator}, benchmark={args.benchmark}, "
         f"feed={'prod' if args.feed_url == PROD_FEED else args.feed_url}, dry_run={args.dry_run})")
+    log(f"allocation targets: explore={args.explore_share:.0%}, winner={args.winner_share:.0%}, "
+        f"contender={args.contender_share:.0%} over last {args.decision_window} runs")
     if args.message:
         log(f"operator focus this run: {args.message}"
             + ("" if args.generator == "codex" else "  (note: ignored by --generator mutate)"), "info")
