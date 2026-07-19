@@ -57,7 +57,14 @@ def log(msg, level="info", test_key=None):
 
 # --- feed -------------------------------------------------------------------
 def fetch_feed(url):
-    with urllib.request.urlopen(url + "?view=full&limit=500", timeout=30) as r:
+    # filter=family_best returns only each strategy family's champion (highest relative_return) with
+    # its full script — the lean "mutate the top families" seed set (~dozens of scripts, not the full
+    # ~hundreds), which is all this loop needs to pick a family, its champion parent, and mutate it.
+    # picks=none skips the whole-table month-by-month picks GROUP BY (favoredStocks are unused here
+    # and that aggregation 500s prod PHP as data grows). The payload also carries maxExpNum (global
+    # highest exp_<n>) so next_exp_num stays collision-free even though only champions are listed.
+    with urllib.request.urlopen(url + "?filter=family_best&sort=relative&view=full&picks=none",
+                                timeout=30) as r:
         return json.loads(r.read().decode())
 
 
@@ -94,8 +101,11 @@ def pick_family(mode, exps, parent):
     return untried[0] if untried else min(ARCHETYPES, key=lambda a: sum(1 for e in exps if notes_tag(e)[1] == a))
 
 
-def next_exp_num(exps):
-    nums = [0]
+def next_exp_num(exps, max_hint=0):
+    # max_hint = the feed's global maxExpNum; required now that the feed lists only family champions
+    # (the newest experiment may be a non-champion absent from `exps`), so without it we could re-mint
+    # a live test_key and overwrite it on upsert. Local scripts dir is the third backstop.
+    nums = [0, int(max_hint or 0)]
     for e in exps:
         m = re.match(r"exp_(\d+)", str(e.get("testKey") or ""))
         if m:
@@ -306,7 +316,7 @@ def iterate(args):
     # (codex honors the chosen family, so this only applies to the no-AI sweep path).
     if args.generator == "mutate" and family not in _MUTATE_TEMPLATES:
         family = "regime-momentum-quality-value" if mode == "exploit" else "mean-reversion"
-    exp_num = next_exp_num(exps)
+    exp_num = next_exp_num(exps, feed.get("maxExpNum"))
     # --test-key overrides automatic numbering (e.g. a fixed 'exp_dryrun' for repeatable tests: it
     # doesn't match exp_<n> so it never consumes a real number or bumps the counter).
     test_key = args.test_key or f"exp_{exp_num:03d}"
