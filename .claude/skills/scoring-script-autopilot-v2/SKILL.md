@@ -170,10 +170,10 @@ return), the family is converged. Stop refining it; explore until a new family l
 ### Never submit a duplicate (mandatory, every iteration)
 Re-submitting identical logic under a new `test_key` wastes the run and pollutes the leaderboard.
 Before backtesting:
-1. Fetch all scripts: `curl -s ".../experiments-feed-v2.php?pretty=1&view=full&limit=500"`.
+1. Fetch the minimized champion feed: `curl -s ".../experiments-feed-v2.min.php?pretty=1"`.
 2. Compute a **logic fingerprint** of your candidate: drop the `FORMULA_NAME` and `NOTES` lines,
-   strip comments and blank lines, normalize whitespace, then hash the remainder. Fingerprint every
-   feed script the same way.
+   strip comments and blank lines, normalize whitespace, then hash the remainder. Compare against the
+   endpoint's `fingerprints` array (it covers ALL historical scripts, not just family champions).
 3. If your fingerprint matches any existing script, **do not mint a new `test_key`** — revise until
    structurally new. (Re-running an *existing* `test_key` to reproduce it is fine.)
 
@@ -208,14 +208,14 @@ python3 tools/approved/alog.py "FAILED exp_NNN: <what broke>" --level error --so
    then fetch the live V2
    feed with full scripts and read it end to end — it is the system of record:
    ```
-   curl -s "https://stock.369usa.com/experiments-feed-v2.php?pretty=1&view=full&limit=500"
+   curl -s "https://stock.369usa.com/experiments-feed-v2.min.php?pretty=1"
    ```
-   It returns every experiment ranked by `relativeReturn`, each with its `lessons`, `favoredStocks`,
-   `benchmarkCode`, the reference metrics, and the full scoring script, plus a global `lessons` list.
-   For one experiment's full per-window detail add `&testKey=<key>&windows=1`; for its month-by-month
-   picks add `&testKey=<key>&picks=full`. While reading, build: the **mode counts of the last 12
-   experiments** (`&sort=recent`), the **family ledger** (families + best `relativeReturn` per
-   `benchmarkCode`), and the **logic fingerprints** of all existing scripts.
+   It returns one champion per family ranked by `relativeReturn`, each with compact metrics, the
+   family's best script, and its most relevant lessons. It also returns a `recentExperiments` block
+   for the last 12 runs (use that for the mode counts), a global `lessons` list, and a
+   `fingerprints` array for dedupe across ALL historical scripts. Build from it: the **mode counts of
+   the last 12 experiments**, the **family ledger** (already champion-only), and the **logic
+   fingerprints**.
 2. **Decide this iteration's mode, then hypothesize** (see *Explore vs. exploit policy*). Exploit:
    parent = top-`relativeReturn` script; form ONE attributable change within its family, grounded in
    the lessons. Explore: pick an untried archetype and design a structurally new script; still pass

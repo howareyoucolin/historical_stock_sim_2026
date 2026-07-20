@@ -40,7 +40,7 @@ PHP_CONTAINER = "stock_report_php"
 LOGS_DIR = os.path.join(SIM_ROOT, "logs")
 TOKENS_LOG = os.path.join(LOGS_DIR, "tokens.log")
 
-PROD_FEED = "https://stock.369usa.com/experiments-feed-v2.php"
+PROD_FEED = "https://stock.369usa.com/experiments-feed-v2.min.php"
 
 # Explore archetypes rotated through when no untried family is obvious (kept in sync with the skill).
 ARCHETYPES = ["mean-reversion", "deep-value", "low-vol-quality", "dividend-income",
@@ -169,14 +169,10 @@ Do not create or modify files yourself. Do not run anything else."""
 
 # --- feed -------------------------------------------------------------------
 def fetch_feed(url):
-    # filter=family_best returns only each strategy family's champion (highest relative_return) with
-    # its full script — the lean "mutate the top families" seed set (~dozens of scripts, not the full
-    # ~hundreds), which is all this loop needs to pick a family, its champion parent, and mutate it.
-    # picks=none skips the whole-table month-by-month picks GROUP BY (favoredStocks are unused here
-    # and that aggregation 500s prod PHP as data grows). The payload also carries maxExpNum (global
-    # highest exp_<n>) so next_exp_num stays collision-free even though only champions are listed.
-    with urllib.request.urlopen(url + "?filter=family_best&sort=relative&view=full&picks=none",
-                                timeout=30) as r:
+    # The minimized endpoint already returns one champion per family, recent experiment summaries
+    # for mode accounting, compact lessons, and global fingerprints for dedupe, so no extra query
+    # shaping is needed here.
+    with urllib.request.urlopen(url, timeout=30) as r:
         return json.loads(r.read().decode())
 
 
@@ -447,6 +443,7 @@ def iterate(args):
     append_tokens_log("feed.fetch", note=args.feed_url)
     feed = fetch_feed(args.feed_url)
     exps = feed.get("experiments", [])
+    recent_exps = feed.get("recentExperiments") or exps
     lessons = feed.get("lessons", [])
     parent = champion(exps, args.benchmark_code)
     exp_num = next_exp_num(exps, feed.get("maxExpNum"))
@@ -458,7 +455,7 @@ def iterate(args):
         parent, family, seeds = plan
         mode = "explore"  # a brand-new family is exploration, not refinement of an existing one
     else:
-        mode = decide_mode(exps)
+        mode = decide_mode(recent_exps)
         family = pick_family(mode, exps, parent)
     # mutate only has a few templates; snap to one so the recorded family matches the real logic
     # (codex honors the chosen family, so this only applies to the no-AI sweep path).
@@ -476,7 +473,7 @@ def iterate(args):
     slug = re.sub(r"[^a-z0-9]+", "_", family.lower()).strip("_")
     target = os.path.join(SCRIPTS_DIR, f"{test_key}_{slug}.py")
     os.makedirs(SCRIPTS_DIR, exist_ok=True)
-    seen = feed_fingerprints(exps)
+    seen = set(feed.get("fingerprints") or []) or feed_fingerprints(exps)
     log(f"{test_key}: mode={mode} family={family} parent={(parent or {}).get('testKey')}", test_key=test_key)
     append_tokens_log("plan.iteration", test_key=test_key, note=f"mode={mode}; family={family}")
 
