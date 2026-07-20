@@ -164,10 +164,19 @@ Recent lessons (learn from these; do not repeat degrade lessons):
 
 The target path is: {target}
 Return ONLY the raw Python file contents as your final answer so the caller can save it directly.
-Do not create or modify files yourself. Do not run anything else."""
+    Do not create or modify files yourself. Do not run anything else."""
 
 
 # --- feed -------------------------------------------------------------------
+def detail_url_for_feed(feed_url, test_key):
+    base = (feed_url or "").split("?", 1)[0]
+    if base.endswith("/experiments-feed-v2.min.php"):
+        detail_base = base[:-len("experiments-feed-v2.min.php")] + "experiment-detail-v2.php"
+    else:
+        detail_base = re.sub(r"experiments-feed-v2(?:\.min)?\.php$", "experiment-detail-v2.php", base)
+    return f"{detail_base}?key={urllib.parse.quote(str(test_key))}"
+
+
 def fetch_feed(url):
     # The minimized endpoint already returns one champion per family, recent experiment summaries
     # for mode accounting, compact lessons, and global fingerprints for dedupe, so no extra query
@@ -177,6 +186,8 @@ def fetch_feed(url):
 
 
 def notes_tag(exp):
+    if exp.get("mode") or exp.get("family"):
+        return exp.get("mode"), exp.get("family")
     line = ((exp.get("notes") or "").splitlines() or [""])[0]
     mode = "explore" if "mode=explore" in line else ("exploit" if "mode=exploit" in line else None)
     fam = None
@@ -184,6 +195,11 @@ def notes_tag(exp):
     if m:
         fam = m.group(1)
     return mode, fam
+
+
+def fetch_experiment_detail(feed_url, test_key):
+    with urllib.request.urlopen(detail_url_for_feed(feed_url, test_key), timeout=30) as r:
+        return json.loads(r.read().decode())
 
 
 # --- deterministic decisions -----------------------------------------------
@@ -485,6 +501,18 @@ def iterate(args):
             append_tokens_log("generate.mutate", test_key=test_key, attempt=attempt,
                               note=f"family={family}")
         else:
+            parent_detail = fetch_experiment_detail(args.feed_url, parent.get("testKey")) if parent and not parent.get("scoringDefinition") else parent
+            if parent_detail:
+                parent = {**parent, **parent_detail}
+            if seeds:
+                hydrated = []
+                for seed in seeds:
+                    if seed.get("scoringDefinition"):
+                        hydrated.append(seed)
+                    else:
+                        detail = fetch_experiment_detail(args.feed_url, seed.get("testKey"))
+                        hydrated.append({**seed, **detail})
+                seeds = hydrated
             log(f"generating {test_key} via codex (attempt {attempt}/{args.gen_retries})", test_key=test_key)
             prompt = build_codex_prompt(mode, family, parent, lessons, target, exp_num, args.message, seeds)
             append_tokens_log(
