@@ -173,11 +173,12 @@ Before backtesting:
 1. Fetch the minimized champion feed: `curl -s ".../experiments-feed-v2.min.php?pretty=1"`.
 2. Compute a **logic fingerprint** of your candidate: drop the `FORMULA_NAME` and `NOTES` lines,
    strip comments and blank lines, normalize whitespace, then hash the remainder. Compare against the
-   endpoint's `fingerprints` array (it covers ALL historical scripts, not just family champions).
+   dedicated dedupe endpoint `.../experiment-fingerprints-v2.php` (it covers ALL historical scripts,
+   not just family champions).
 3. If your fingerprint matches any existing script, **do not mint a new `test_key`** — revise until
    structurally new. (Re-running an *existing* `test_key` to reproduce it is fine.)
-4. Only if you need the winning script itself, fetch that experiment's on-demand detail endpoint
-   from its `detailUrl` field. Do not pull every champion script into the first pass.
+4. Only if you need the winning script or its lessons, fetch that experiment's on-demand detail
+   endpoint from its `detailUrl` field. Do not pull every champion script into the first pass.
 
 ## Progress logging (heartbeat — required)
 
@@ -214,10 +215,10 @@ python3 tools/approved/alog.py "FAILED exp_NNN: <what broke>" --level error --so
    ```
    It returns one champion per family ranked by `relativeReturn`, each with compact metrics and a
    `detailUrl` for on-demand script retrieval. It also returns a `recentExperiments` block for the
-   last 12 runs (use that for the mode counts), a global `lessons` list, and a `fingerprints` array
-   for dedupe across ALL historical scripts. Build from it: the **mode counts of the last 12
-   experiments**, the **family ledger** (already champion-only), and the **logic fingerprints**.
-   Fetch `detailUrl` only for the one or two parent candidates you actually choose to inspect.
+   last 12 runs (use that for the mode counts). Build from it: the **mode counts of the last 12
+   experiments** and the **family ledger** (already champion-only). Fetch `detailUrl` only for the
+   one or two parent candidates you actually choose to inspect, and use the separate
+   `experiment-fingerprints-v2.php` endpoint only for dedupe.
 2. **Decide this iteration's mode, then hypothesize** (see *Explore vs. exploit policy*). Exploit:
    parent = top-`relativeReturn` script; form ONE attributable change within its family, grounded in
    the lessons. Explore: pick an untried archetype and design a structurally new script; still pass

@@ -24,7 +24,7 @@ Usage:
   WORKER_CMD='python3 tools/approved/run_autopilot.py --loop' tools/approved/watchdog.sh   # self-healing
 """
 import argparse, hashlib, json, os, re, subprocess, sys, time
-import urllib.request
+import urllib.parse, urllib.request
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -177,6 +177,13 @@ def detail_url_for_feed(feed_url, test_key):
     return f"{detail_base}?key={urllib.parse.quote(str(test_key))}"
 
 
+def fingerprints_url_for_feed(feed_url):
+    base = (feed_url or "").split("?", 1)[0]
+    if base.endswith("/experiments-feed-v2.min.php"):
+        return base[:-len("experiments-feed-v2.min.php")] + "experiment-fingerprints-v2.php"
+    return re.sub(r"experiments-feed-v2(?:\.min)?\.php$", "experiment-fingerprints-v2.php", base)
+
+
 def fetch_feed(url):
     # The minimized endpoint already returns one champion per family, recent experiment summaries
     # for mode accounting, compact lessons, and global fingerprints for dedupe, so no extra query
@@ -200,6 +207,12 @@ def notes_tag(exp):
 def fetch_experiment_detail(feed_url, test_key):
     with urllib.request.urlopen(detail_url_for_feed(feed_url, test_key), timeout=30) as r:
         return json.loads(r.read().decode())
+
+
+def fetch_fingerprints(feed_url):
+    with urllib.request.urlopen(fingerprints_url_for_feed(feed_url), timeout=30) as r:
+        payload = json.loads(r.read().decode())
+    return set(payload.get("fingerprints") or [])
 
 
 # --- deterministic decisions -----------------------------------------------
@@ -460,7 +473,6 @@ def iterate(args):
     feed = fetch_feed(args.feed_url)
     exps = feed.get("experiments", [])
     recent_exps = feed.get("recentExperiments") or exps
-    lessons = feed.get("lessons", [])
     parent = champion(exps, args.benchmark_code)
     exp_num = next_exp_num(exps, feed.get("maxExpNum"))
     # Default: the skill's explore/exploit governance. When --mutate-families is on (codex only), we
@@ -489,7 +501,7 @@ def iterate(args):
     slug = re.sub(r"[^a-z0-9]+", "_", family.lower()).strip("_")
     target = os.path.join(SCRIPTS_DIR, f"{test_key}_{slug}.py")
     os.makedirs(SCRIPTS_DIR, exist_ok=True)
-    seen = set(feed.get("fingerprints") or []) or feed_fingerprints(exps)
+    seen = fetch_fingerprints(args.feed_url) or feed_fingerprints(exps)
     log(f"{test_key}: mode={mode} family={family} parent={(parent or {}).get('testKey')}", test_key=test_key)
     append_tokens_log("plan.iteration", test_key=test_key, note=f"mode={mode}; family={family}")
 
@@ -497,13 +509,14 @@ def iterate(args):
     ok = False
     for attempt in range(1, args.gen_retries + 1):
         if args.generator == "mutate":
-            gen_mutate(mode, family, parent, lessons, target, exp_num + attempt - 1)
+            gen_mutate(mode, family, parent, [], target, exp_num + attempt - 1)
             append_tokens_log("generate.mutate", test_key=test_key, attempt=attempt,
                               note=f"family={family}")
         else:
             parent_detail = fetch_experiment_detail(args.feed_url, parent.get("testKey")) if parent and not parent.get("scoringDefinition") else parent
             if parent_detail:
                 parent = {**parent, **parent_detail}
+            prompt_lessons = (parent or {}).get("lessons") or []
             if seeds:
                 hydrated = []
                 for seed in seeds:
@@ -514,7 +527,7 @@ def iterate(args):
                         hydrated.append({**seed, **detail})
                 seeds = hydrated
             log(f"generating {test_key} via codex (attempt {attempt}/{args.gen_retries})", test_key=test_key)
-            prompt = build_codex_prompt(mode, family, parent, lessons, target, exp_num, args.message, seeds)
+            prompt = build_codex_prompt(mode, family, parent, prompt_lessons, target, exp_num, args.message, seeds)
             append_tokens_log(
                 "generate.codex.started",
                 test_key=test_key,
