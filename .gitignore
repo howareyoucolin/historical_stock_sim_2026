@@ -2,6 +2,8 @@ node_modules
 .next
 out
 user-sessions/
+logs/*
+!logs/.gitkeep
 *.tsbuildinfo
 .DS_Store
 npm-debug.log*

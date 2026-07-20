@@ -24,6 +24,6 @@ echo "  pusher pid $!"
 echo "→ starting watchdog + supervisor…"
 cd "${SIM_ROOT}"
 export AUTOPILOT_MESSAGE="${AUTOPILOT_MESSAGE:-}"
-export WORKER_CMD='python3 tools/approved/run_autopilot.py --loop --gen-timeout 300 --bt-timeout 300'
-export STALE_SECS="${STALE_SECS:-900}"
+export WORKER_CMD='python3 tools/approved/run_autopilot.py --loop --generator mutate --gen-timeout 900 --bt-timeout 300'
+export STALE_SECS="${STALE_SECS:-1500}"
 exec bash tools/approved/watchdog.sh

@@ -37,6 +37,8 @@ SCORING_LAB = os.path.join(HERE, "scoring_lab_v2.py")
 WEBSITE_ROOT = os.path.abspath(os.path.join(SIM_ROOT, "..", "stock_report_website"))
 PUBLISH_SH = os.path.join(WEBSITE_ROOT, "deploy", "publish_scoring_results_v2.sh")
 PHP_CONTAINER = "stock_report_php"
+LOGS_DIR = os.path.join(SIM_ROOT, "logs")
+TOKENS_LOG = os.path.join(LOGS_DIR, "tokens.log")
 
 PROD_FEED = "https://stock.369usa.com/experiments-feed-v2.php"
 
@@ -53,6 +55,116 @@ def now_iso():
 def log(msg, level="info", test_key=None):
     alog.log(msg, level=level, source="autopilot", test_key=test_key)
     print(f"[{now_iso()}] {level.upper()} {msg}", flush=True)
+
+
+def append_tokens_log(step, test_key=None, attempt=None, usage=None, note=None):
+    has_usage = isinstance(usage, dict)
+    usage = usage or {}
+    input_tokens = usage.get("input_tokens")
+    cached_input_tokens = usage.get("cached_input_tokens")
+    output_tokens = usage.get("output_tokens")
+    reasoning_output_tokens = usage.get("reasoning_output_tokens")
+    total_tokens = None
+    if has_usage:
+        total_tokens = int((input_tokens or 0) + (output_tokens or 0) + (reasoning_output_tokens or 0))
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    row = {
+        "ts": now_iso(),
+        "test_key": test_key,
+        "step": step,
+        "attempt": attempt,
+        "usage_available": has_usage,
+        "input_tokens": int(input_tokens) if input_tokens is not None else None,
+        "cached_input_tokens": int(cached_input_tokens) if cached_input_tokens is not None else None,
+        "output_tokens": int(output_tokens) if output_tokens is not None else None,
+        "reasoning_output_tokens": int(reasoning_output_tokens) if reasoning_output_tokens is not None else None,
+        "total_tokens": total_tokens,
+        "note": note,
+    }
+    with open(TOKENS_LOG, "a") as fh:
+        fh.write(json.dumps(row, sort_keys=True) + "\n")
+
+
+def extract_codex_usage(output):
+    for line in reversed((output or "").splitlines()):
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            payload = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if payload.get("type") == "turn.completed" and isinstance(payload.get("usage"), dict):
+            return payload["usage"]
+    return None
+
+
+def approx_token_count(text):
+    # Rough fallback when Codex hasn't emitted final usage yet: ~4 chars/token for English/code mix.
+    return max(1, (len(text or "") + 3) // 4)
+
+
+def clip_text(text, max_chars):
+    text = (text or "").strip()
+    if len(text) <= max_chars:
+        return text
+    return text[:max_chars].rstrip() + "\n# ... truncated for prompt budget ..."
+
+
+def build_codex_prompt(mode, family, parent, lessons, target, exp_num, message="", seed_families=None):
+    parent_src = (parent or {}).get("scoringDefinition") or ""
+    lesson_txt = "\n".join(
+        f"- ({l.get('direction')}) {clip_text(l.get('text') or '', 180)}"
+        for l in lessons[:6]
+    )
+    directive = (f"\n*** OPERATOR DIRECTIVE for this run (HIGHEST PRIORITY — skew the script toward "
+                 f"this focus, within the mode/contract below): {message} ***\n" if message else "")
+    if seed_families:
+        seed = seed_families[0]
+        seeds_block = (
+            f"### family={notes_tag(seed)[1] or '?'}  testKey={seed.get('testKey')}  "
+            f"relative_return={seed.get('relativeReturn')}\n"
+            f"{clip_text(seed.get('notes') or '', 260)}\n"
+            f"{clip_text(seed.get('scoringDefinition') or '', 1800)}"
+        )
+        task_line = (f"MUTATE-FAMILIES: create a genuinely NEW strategy family named '{family}' by "
+                     f"MUTATING the single successful parent family below. Keep what makes it win, "
+                     f"then introduce a BOLD STRUCTURAL change (a new factor mix, a new regime gate, "
+                     f"or a materially different branch design) so the result is distinct from the seed — "
+                     f"not a weight tweak. Aim to BEAT the parent family's relative_return.")
+        context_block = f"Parent family to mutate:\n{seeds_block}"
+    else:
+        task_line = ('EXPLOIT: ONE targeted, attributable change within the parent family below.'
+                     if mode == 'exploit'
+                     else 'EXPLORE: a structurally NEW idea for the ' + family + ' archetype, unlike the parent.')
+        context_block = (('Parent script to build on:' if mode == 'exploit'
+                          else 'Parent script (for contrast — be structurally different):')
+                         + f"\n{clip_text(parent_src, 2600)}")
+    return f"""You are running scoring-script-autopilot-v2. Write ONE new Python scoring script.
+{directive}
+Mode: {mode}. Family: {family}. Next id: exp_{exp_num:03d}.
+Parent (champion) test_key: {(parent or {}).get('testKey')}, relative_return {(parent or {}).get('relativeReturn')}.
+
+Follow the contract in .claude/skills/scoring-script-autopilot-v2/SKILL.md exactly:
+- define score_universe(stocks, regime, ctx) -> {{symbol: score}}; restricted namespace (no imports/IO).
+- set LOGIC_VARIANT_COUNT to the true number of regime branches.
+- FIRST line of NOTES must be: mode={mode}; family={family}
+- {task_line}
+- Metric-coverage rule: consider the FULL metric menu in the skill (momentum, trend/recovery, vol,
+  liquidity, income, valuation, growth, quality, size). Using only a few is fine, but weight-0 the
+  rest DELIBERATELY — don't default to the same 4-5. Do NOT assume an untried metric is useless;
+  rotate which metrics you use across runs so the backtest can prove or kill each. Beware correlated
+  metrics (return/momentum/distance are one bet; pe/forward_pe/peg are one bet) and sparse
+  fundamentals (~30% coverage tilts toward large caps).
+
+Recent lessons (learn from these; do not repeat degrade lessons):
+{lesson_txt or '(none yet)'}
+
+{context_block}
+
+The target path is: {target}
+Return ONLY the raw Python file contents as your final answer so the caller can save it directly.
+Do not create or modify files yourself. Do not run anything else."""
 
 
 # --- feed -------------------------------------------------------------------
@@ -99,6 +211,20 @@ def pick_family(mode, exps, parent):
     tried = {notes_tag(e)[1] for e in exps if notes_tag(e)[1]}
     untried = [a for a in ARCHETYPES if a not in tried]
     return untried[0] if untried else min(ARCHETYPES, key=lambda a: sum(1 for e in exps if notes_tag(e)[1] == a))
+
+
+# Plan a "mutate one successful family into a NEW family" iteration: rotate through the top family
+# champions, but seed each run with only ONE parent family. Returns (parent, new_family, seeds) or
+# None when there is no usable pool.
+def plan_family_mutation(exps, benchmark_code, rotate_idx, k=4):
+    pool = [e for e in exps if e.get("benchmarkCode") == benchmark_code and e.get("relativeReturn") is not None]
+    if not pool:
+        return None
+    top = sorted(pool, key=lambda e: e["relativeReturn"], reverse=True)[:k]
+    primary = top[rotate_idx % len(top)]
+    # strip any existing -mut suffix so a re-mutated family deepens one lineage instead of -mut-mut...
+    base = re.sub(r"-mut$", "", notes_tag(primary)[1] or "regime-momentum-quality-value")
+    return primary, f"{base}-mut", [primary]
 
 
 def next_exp_num(exps, max_hint=0):
@@ -186,12 +312,39 @@ def score_universe(stocks, regime, ctx):
         out[r["symbol"]] = s
     return out
 """),
+    "recovery-quality": (2, """
+BULL = {{"from_200d_ma_pct": ({a}, +1), "from_52w_high_pct": ({b}, +1), "return_3m_pct": ({c}, +1),
+         "momentum_12_1_pct": ({d}, +1), "realized_vol_3m": ({e}, -1),
+         "operating_margin_pct": ({f}, +1), "avg_daily_dollar_volume_3m": ({g}, +1)}}
+RISK_OFF = {{"from_200d_ma_pct": ({a}, +1), "from_52w_high_pct": ({b}, +1), "realized_vol_3m": ({e}, -1),
+            "free_cash_flow_margin_pct": ({f}, +1), "operating_margin_pct": (0.10, +1),
+            "avg_daily_dollar_volume_3m": ({g}, +1), "return_6m_pct": (0.06, +1)}}
+def score_universe(stocks, regime, ctx):
+    book = BULL if regime.get("bull") else RISK_OFF
+    z = {{m: ctx.z(m) for m in book}}
+    out = {{}}
+    for r in stocks:
+        s = 0.0
+        for m, (w, sign) in book.items():
+            v = z[m].get(r["symbol"])
+            if v is not None:
+                s += w * sign * v
+        out[r["symbol"]] = s
+    return out
+"""),
 }
 
 
 def gen_mutate(mode, family, parent, lessons, target, exp_num):
-    tmpl_key = family if family in _MUTATE_TEMPLATES else (
-        "regime-momentum-quality-value" if mode == "exploit" else "mean-reversion")
+    parent_family = notes_tag(parent)[1] if parent else None
+    if family in _MUTATE_TEMPLATES:
+        tmpl_key = family
+    elif parent_family in _MUTATE_TEMPLATES:
+        tmpl_key = parent_family
+    elif parent_family == "recovery-quality" or family.startswith("recovery-quality"):
+        tmpl_key = "recovery-quality"
+    else:
+        tmpl_key = "regime-momentum-quality-value" if mode == "exploit" else "mean-reversion"
     variants, body = _MUTATE_TEMPLATES[tmpl_key]
     # deterministic per-exp weight jitter so each run is a distinct, valid point in the space
     j = ((exp_num * 7) % 11 - 5) / 100.0
@@ -208,36 +361,9 @@ def gen_mutate(mode, family, parent, lessons, target, exp_num):
     return True
 
 
-def gen_codex(mode, family, parent, lessons, target, exp_num, generator_cmd, timeout, message=""):
-    parent_src = (parent or {}).get("scoringDefinition") or ""
-    lesson_txt = "\n".join(f"- ({l.get('direction')}) {l.get('text')}" for l in lessons[:12])
-    directive = (f"\n*** OPERATOR DIRECTIVE for this run (HIGHEST PRIORITY — skew the script toward "
-                 f"this focus, within the mode/contract below): {message} ***\n" if message else "")
-    prompt = f"""You are running scoring-script-autopilot-v2. Write ONE new Python scoring script.
-{directive}
-Mode: {mode}. Family: {family}. Next id: exp_{exp_num:03d}.
-Parent (champion) test_key: {(parent or {}).get('testKey')}, relative_return {(parent or {}).get('relativeReturn')}.
-
-Follow the contract in .claude/skills/scoring-script-autopilot-v2/SKILL.md exactly:
-- define score_universe(stocks, regime, ctx) -> {{symbol: score}}; restricted namespace (no imports/IO).
-- set LOGIC_VARIANT_COUNT to the true number of regime branches.
-- FIRST line of NOTES must be: mode={mode}; family={family}
-- {'EXPLOIT: ONE targeted, attributable change within the parent family below.' if mode=='exploit' else 'EXPLORE: a structurally NEW idea for the '+family+' archetype, unlike the parent.'}
-- Metric-coverage rule: consider the FULL metric menu in the skill (momentum, trend/recovery, vol,
-  liquidity, income, valuation, growth, quality, size). Using only a few is fine, but weight-0 the
-  rest DELIBERATELY — don't default to the same 4-5. Do NOT assume an untried metric is useless;
-  rotate which metrics you use across runs so the backtest can prove or kill each. Beware correlated
-  metrics (return/momentum/distance are one bet; pe/forward_pe/peg are one bet) and sparse
-  fundamentals (~30% coverage tilts toward large caps).
-
-Recent lessons (learn from these; do not repeat degrade lessons):
-{lesson_txt or '(none yet)'}
-
-{'Parent script to build on:' if mode=='exploit' else 'Parent script (for contrast — be structurally different):'}
-{parent_src}
-
-Write the COMPLETE file to: {target}
-Output only the file. Do not run anything else."""
+def gen_codex(mode, family, parent, lessons, target, exp_num, generator_cmd, timeout, message="",
+              seed_families=None):
+    prompt = build_codex_prompt(mode, family, parent, lessons, target, exp_num, message, seed_families)
     tmp = target + ".prompt.txt"
     with open(tmp, "w") as fh:
         fh.write(prompt)
@@ -247,12 +373,24 @@ Output only the file. Do not run anything else."""
             os.remove(target)
         proc = subprocess.run(generator_cmd, shell=True, cwd=SIM_ROOT, env=env,
                               capture_output=True, text=True, timeout=timeout)
+        usage = extract_codex_usage(proc.stdout)
         if proc.returncode != 0:
             log(f"generator exited {proc.returncode}: {(proc.stderr or proc.stdout)[:200]}", "warn")
-        return os.path.exists(target) and os.path.getsize(target) > 0
+        meta = {
+            "usage": usage,
+            "prompt_chars": len(prompt),
+            "prompt_tokens_est": approx_token_count(prompt),
+            "status": "ok" if usage else "missing_usage",
+        }
+        return os.path.exists(target) and os.path.getsize(target) > 0, meta
     except subprocess.TimeoutExpired:
         log(f"generator timed out after {timeout}s", "warn")
-        return False
+        return False, {
+            "usage": None,
+            "prompt_chars": len(prompt),
+            "prompt_tokens_est": approx_token_count(prompt),
+            "status": "timeout",
+        }
     finally:
         try:
             os.remove(tmp)
@@ -306,17 +444,32 @@ def publish(test_key, timeout):
 # --- one iteration ----------------------------------------------------------
 def iterate(args):
     log("iter start: studying feed")
+    append_tokens_log("feed.fetch", note=args.feed_url)
     feed = fetch_feed(args.feed_url)
     exps = feed.get("experiments", [])
     lessons = feed.get("lessons", [])
-    mode = decide_mode(exps)
     parent = champion(exps, args.benchmark_code)
-    family = pick_family(mode, exps, parent)
+    exp_num = next_exp_num(exps, feed.get("maxExpNum"))
+    # Default: the skill's explore/exploit governance. When --mutate-families is on (codex only), we
+    # instead seed each run from one successful parent family and mint a NEW mutated family from it.
+    seeds = None
+    plan = plan_family_mutation(exps, args.benchmark_code, exp_num) if args.mutate_families else None
+    if plan:
+        parent, family, seeds = plan
+        mode = "explore"  # a brand-new family is exploration, not refinement of an existing one
+    else:
+        mode = decide_mode(exps)
+        family = pick_family(mode, exps, parent)
     # mutate only has a few templates; snap to one so the recorded family matches the real logic
     # (codex honors the chosen family, so this only applies to the no-AI sweep path).
     if args.generator == "mutate" and family not in _MUTATE_TEMPLATES:
-        family = "regime-momentum-quality-value" if mode == "exploit" else "mean-reversion"
-    exp_num = next_exp_num(exps, feed.get("maxExpNum"))
+        parent_family = notes_tag(parent)[1] if parent else None
+        if parent_family == "recovery-quality" or family.startswith("recovery-quality"):
+            family = "recovery-quality"
+        elif parent_family in _MUTATE_TEMPLATES:
+            family = parent_family
+        else:
+            family = "regime-momentum-quality-value" if mode == "exploit" else "mean-reversion"
     # --test-key overrides automatic numbering (e.g. a fixed 'exp_dryrun' for repeatable tests: it
     # doesn't match exp_<n> so it never consumes a real number or bumps the counter).
     test_key = args.test_key or f"exp_{exp_num:03d}"
@@ -325,25 +478,51 @@ def iterate(args):
     os.makedirs(SCRIPTS_DIR, exist_ok=True)
     seen = feed_fingerprints(exps)
     log(f"{test_key}: mode={mode} family={family} parent={(parent or {}).get('testKey')}", test_key=test_key)
+    append_tokens_log("plan.iteration", test_key=test_key, note=f"mode={mode}; family={family}")
 
     # generate (retry until valid + unique, else skip)
     ok = False
     for attempt in range(1, args.gen_retries + 1):
         if args.generator == "mutate":
             gen_mutate(mode, family, parent, lessons, target, exp_num + attempt - 1)
+            append_tokens_log("generate.mutate", test_key=test_key, attempt=attempt,
+                              note=f"family={family}")
         else:
             log(f"generating {test_key} via codex (attempt {attempt}/{args.gen_retries})", test_key=test_key)
-            if not gen_codex(mode, family, parent, lessons, target, exp_num, args.generator_cmd,
-                             args.gen_timeout, args.message):
+            prompt = build_codex_prompt(mode, family, parent, lessons, target, exp_num, args.message, seeds)
+            append_tokens_log(
+                "generate.codex.started",
+                test_key=test_key,
+                attempt=attempt,
+                note=f"family={family}; prompt_chars={len(prompt)}; prompt_tokens_est={approx_token_count(prompt)}",
+            )
+            gen_ok, meta = gen_codex(mode, family, parent, lessons, target, exp_num, args.generator_cmd,
+                                     args.gen_timeout, args.message, seeds)
+            usage = (meta or {}).get("usage")
+            append_tokens_log(
+                "generate.codex",
+                test_key=test_key,
+                attempt=attempt,
+                usage=usage,
+                note=(
+                    f"family={family}; status={(meta or {}).get('status')}; "
+                    f"prompt_chars={(meta or {}).get('prompt_chars')}; "
+                    f"prompt_tokens_est={(meta or {}).get('prompt_tokens_est')}"
+                ),
+            )
+            if not gen_ok:
                 log(f"generation attempt {attempt} produced no file", "warn", test_key)
                 continue
         try:
             v1.load_script(target)  # contract check (defines score_universe)
+            append_tokens_log("validate.script", test_key=test_key, attempt=attempt)
         except SystemExit as e:
             log(f"attempt {attempt} invalid script: {e}", "warn", test_key)
+            append_tokens_log("validate.script_failed", test_key=test_key, attempt=attempt, note=str(e))
             continue
         if fingerprint(open(target).read()) in seen:
             log(f"attempt {attempt} is a duplicate; regenerating", "warn", test_key)
+            append_tokens_log("validate.duplicate", test_key=test_key, attempt=attempt)
             continue
         ok = True
         break
@@ -358,26 +537,32 @@ def iterate(args):
     for attempt in range(1, args.bt_retries + 1):
         try:
             result = run_backtest(target, test_key, (parent or {}).get("testKey"), args.benchmark, args.bt_timeout)
+            append_tokens_log("backtest.run", test_key=test_key, attempt=attempt, note=args.benchmark)
             break
         except (subprocess.TimeoutExpired, RuntimeError) as e:
             log(f"backtest attempt {attempt} failed: {str(e)[:200]}", "warn", test_key)
+            append_tokens_log("backtest.failed", test_key=test_key, attempt=attempt, note=str(e)[:200])
             time.sleep(args.retry_sleep * attempt)
     if result is None:
         log(f"{test_key}: backtest failed after {args.bt_retries} tries; skipping", "error", test_key)
         return False
     direction, delta = insert_lesson(result, parent, mode, family)
+    append_tokens_log("lesson.insert", test_key=test_key, note=f"direction={direction}; delta={delta}")
     log(f"backtested {test_key}: relative_return {result['relative_return']:.4f}x "
         f"({'Δ '+format(delta,'+.4f') if delta is not None else 'no parent'}, {direction}); "
         f"win {result['benchmark_win_rate_pct']}%", test_key=test_key)
 
     # publish (best-effort; result is already safe locally)
     if args.dry_run:
+        append_tokens_log("publish.skipped", test_key=test_key, note="dry_run")
         log(f"{test_key}: --dry-run, skipping publish", test_key=test_key)
     else:
         try:
             publish(test_key, args.publish_timeout)
+            append_tokens_log("publish.done", test_key=test_key)
             log(f"published {test_key} to prod", test_key=test_key)
         except (subprocess.TimeoutExpired, RuntimeError) as e:
+            append_tokens_log("publish.failed", test_key=test_key, note=str(e)[:150])
             log(f"{test_key}: publish failed (kept locally): {str(e)[:150]}", "warn", test_key)
     return True
 
@@ -389,9 +574,9 @@ def main():
     ap.add_argument("--max-iters", dest="max_iters", type=int, default=0, help="stop after N iterations (0=unlimited)")
     ap.add_argument("--generator", choices=["codex", "mutate"], default="codex")
     ap.add_argument("--generator-cmd", dest="generator_cmd",
-                    default='codex exec --ephemeral -s workspace-write "$(cat "$AUTOPILOT_PROMPT_FILE")"',
-                    help="shell command for --generator codex; must write the file to $AUTOPILOT_TARGET. "
-                         "Default is headless full-auto sandboxed to the workspace. For unsandboxed "
+                    default='codex exec --ephemeral --json -o "$AUTOPILOT_TARGET" -s workspace-write "$(cat "$AUTOPILOT_PROMPT_FILE")"',
+                    help="shell command for --generator codex; the final response is saved to "
+                         "$AUTOPILOT_TARGET. Default is headless full-auto sandboxed to the workspace. For unsandboxed "
                          "full-auto use --dangerously-bypass-approvals-and-sandbox instead of -s.")
     ap.add_argument("--benchmark", default="spy", choices=["spy", "capw", "ew"])
     ap.add_argument("--benchmark-code", dest="benchmark_code", default="CAPW_UNIV",
@@ -402,11 +587,17 @@ def main():
                     help="operator steering directive injected into the codex generation prompt so "
                          "the run skews toward a focus (e.g. --message 'focus on low-vol dividend names'). "
                          "Defaults to $AUTOPILOT_MESSAGE. Only affects --generator codex (mutate ignores it).")
+    ap.add_argument("--mutate-families", dest="mutate_families", action="store_true",
+                    default=os.environ.get("AUTOPILOT_MUTATE_FAMILIES", "").strip().lower() in ("1", "true", "yes"),
+                    help="each iteration, seed codex with one successful parent family and task it with "
+                         "spinning a genuinely NEW mutated family out of it, instead of re-tuning the "
+                         "same family in place. Bypasses the explore/exploit "
+                         "ratio. Codex only. Defaults to $AUTOPILOT_MUTATE_FAMILIES.")
     ap.add_argument("--feed-url", dest="feed_url", default=PROD_FEED)
     ap.add_argument("--dry-run", dest="dry_run", action="store_true", help="skip publish to prod")
     ap.add_argument("--sleep", type=int, default=5, help="seconds between iterations in --loop")
     ap.add_argument("--gen-retries", dest="gen_retries", type=int, default=3)
-    ap.add_argument("--gen-timeout", dest="gen_timeout", type=int, default=600)
+    ap.add_argument("--gen-timeout", dest="gen_timeout", type=int, default=900)
     ap.add_argument("--bt-retries", dest="bt_retries", type=int, default=2)
     ap.add_argument("--bt-timeout", dest="bt_timeout", type=int, default=300)
     ap.add_argument("--publish-timeout", dest="publish_timeout", type=int, default=300)
@@ -421,6 +612,9 @@ def main():
     if args.message:
         log(f"operator focus this run: {args.message}"
             + ("" if args.generator == "codex" else "  (note: ignored by --generator mutate)"), "info")
+    if args.mutate_families:
+        log("mutate-families ON: each run mints a NEW mutated family from one successful parent family "
+            + ("" if args.generator == "codex" else "(IGNORED: needs --generator codex)"), "info")
     n = 0
     while True:
         n += 1
