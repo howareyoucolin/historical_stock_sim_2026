@@ -64,7 +64,8 @@ def log(msg, level="info", test_key=None):
     print(f"[{now_iso()}] {level.upper()} {msg}", flush=True)
 
 
-def append_tokens_log(step, test_key=None, attempt=None, usage=None, note=None):
+def append_tokens_log(step, test_key=None, attempt=None, usage=None, note=None,
+                      prompt_chars=None, prompt_tokens_est=None):
     has_usage = isinstance(usage, dict)
     usage = usage or {}
     input_tokens = usage.get("input_tokens")
@@ -86,6 +87,8 @@ def append_tokens_log(step, test_key=None, attempt=None, usage=None, note=None):
         "output_tokens": int(output_tokens) if output_tokens is not None else None,
         "reasoning_output_tokens": int(reasoning_output_tokens) if reasoning_output_tokens is not None else None,
         "total_tokens": total_tokens,
+        "prompt_chars": int(prompt_chars) if prompt_chars is not None else None,
+        "prompt_tokens_est": int(prompt_tokens_est) if prompt_tokens_est is not None else None,
         "note": note,
     }
     with open(TOKENS_LOG, "a") as fh:
@@ -617,8 +620,13 @@ def iterate(args):
     for attempt in range(1, args.gen_retries + 1):
         if args.generator == "mutate":
             meta = gen_mutate(mode, family, parent, [], target, exp_num + attempt - 1, seen=seen)
+            script_src = open(target).read()
             append_tokens_log("generate.mutate", test_key=test_key, attempt=attempt,
-                              note=f"family={family}; template={meta['tmpl_key']}; variant={meta['variant_idx']}")
+                              note=f"family={family}; template={meta['tmpl_key']}; variant={meta['variant_idx']}",
+                              prompt_chars=0, prompt_tokens_est=0)
+            append_tokens_log("generate.mutate.script", test_key=test_key, attempt=attempt,
+                              note=f"family={family}; template={meta['tmpl_key']}; variant={meta['variant_idx']}",
+                              prompt_chars=len(script_src), prompt_tokens_est=approx_token_count(script_src))
         else:
             parent_detail = fetch_experiment_detail(args.feed_url, parent.get("testKey")) if parent and not parent.get("scoringDefinition") else parent
             if parent_detail:
