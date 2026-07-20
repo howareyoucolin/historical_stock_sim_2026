@@ -25,6 +25,7 @@ Usage:
 """
 import argparse, hashlib, json, os, re, subprocess, sys, time
 import urllib.parse, urllib.request
+from statistics import median
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, HERE)
@@ -39,12 +40,18 @@ PUBLISH_SH = os.path.join(WEBSITE_ROOT, "deploy", "publish_scoring_results_v2.sh
 PHP_CONTAINER = "stock_report_php"
 LOGS_DIR = os.path.join(SIM_ROOT, "logs")
 TOKENS_LOG = os.path.join(LOGS_DIR, "tokens.log")
+STATE_FILE = os.path.join(LOGS_DIR, "autopilot_state.json")
 
 PROD_FEED = "https://stock.369usa.com/experiments-feed-v2.min.php"
+FEED_CACHE_TTL = 30
+FINGERPRINT_CACHE_TTL = 120
 
 # Explore archetypes rotated through when no untried family is obvious (kept in sync with the skill).
 ARCHETYPES = ["mean-reversion", "deep-value", "low-vol-quality", "dividend-income",
               "breadth-regime", "contrarian-52w", "small-cap"]
+_FEED_CACHE = {"ts": 0.0, "url": None, "payload": None}
+_FINGERPRINT_CACHE = {"ts": 0.0, "url": None, "payload": None}
+_STATE = None
 
 
 def now_iso():
@@ -83,6 +90,61 @@ def append_tokens_log(step, test_key=None, attempt=None, usage=None, note=None):
     }
     with open(TOKENS_LOG, "a") as fh:
         fh.write(json.dumps(row, sort_keys=True) + "\n")
+
+
+def load_state():
+    global _STATE
+    if _STATE is not None:
+        return _STATE
+    try:
+        with open(STATE_FILE) as fh:
+            payload = json.load(fh)
+            _STATE = payload if isinstance(payload, dict) else {}
+    except (OSError, json.JSONDecodeError):
+        _STATE = {}
+    _STATE.setdefault("family_deltas", {})
+    _STATE.setdefault("variant_counters", {})
+    return _STATE
+
+
+def save_state():
+    os.makedirs(LOGS_DIR, exist_ok=True)
+    with open(STATE_FILE, "w") as fh:
+        json.dump(load_state(), fh, sort_keys=True)
+
+
+def record_family_delta(family, delta):
+    if not family or delta is None:
+        return
+    state = load_state()
+    vals = state["family_deltas"].setdefault(family, [])
+    vals.append(round(float(delta), 6))
+    state["family_deltas"][family] = vals[-8:]
+    save_state()
+
+
+def family_is_exhausted(family):
+    if not family:
+        return False
+    vals = load_state()["family_deltas"].get(family, [])
+    if len(vals) < 5:
+        return False
+    tail = vals[-5:]
+    return max(tail) <= 0 and median(tail) <= -0.12
+
+
+def next_variant_counter(family):
+    key = family or "default"
+    state = load_state()
+    cur = int(state["variant_counters"].get(key, 0)) + 1
+    state["variant_counters"][key] = cur
+    save_state()
+    return cur
+
+
+def cache_invalidate():
+    _FEED_CACHE.update({"ts": 0.0, "url": None, "payload": None})
+    _FINGERPRINT_CACHE.update({"ts": 0.0, "url": None, "payload": None})
 
 
 def extract_codex_usage(output):
@@ -185,11 +247,13 @@ def fingerprints_url_for_feed(feed_url):
 
 
 def fetch_feed(url):
-    # The minimized endpoint already returns one champion per family, recent experiment summaries
-    # for mode accounting, compact lessons, and global fingerprints for dedupe, so no extra query
-    # shaping is needed here.
+    now = time.time()
+    if _FEED_CACHE["payload"] is not None and _FEED_CACHE["url"] == url and (now - _FEED_CACHE["ts"]) < FEED_CACHE_TTL:
+        return _FEED_CACHE["payload"]
     with urllib.request.urlopen(url, timeout=30) as r:
-        return json.loads(r.read().decode())
+        payload = json.loads(r.read().decode())
+    _FEED_CACHE.update({"ts": now, "url": url, "payload": payload})
+    return payload
 
 
 def notes_tag(exp):
@@ -210,9 +274,14 @@ def fetch_experiment_detail(feed_url, test_key):
 
 
 def fetch_fingerprints(feed_url):
+    now = time.time()
+    if _FINGERPRINT_CACHE["payload"] is not None and _FINGERPRINT_CACHE["url"] == feed_url and (now - _FINGERPRINT_CACHE["ts"]) < FINGERPRINT_CACHE_TTL:
+        return _FINGERPRINT_CACHE["payload"]
     with urllib.request.urlopen(fingerprints_url_for_feed(feed_url), timeout=30) as r:
         payload = json.loads(r.read().decode())
-    return set(payload.get("fingerprints") or [])
+    fps = set(payload.get("fingerprints") or [])
+    _FINGERPRINT_CACHE.update({"ts": now, "url": feed_url, "payload": fps})
+    return fps
 
 
 # --- deterministic decisions -----------------------------------------------
@@ -232,10 +301,16 @@ def champion(exps, benchmark_code):
 
 def pick_family(mode, exps, parent):
     if mode == "exploit" and parent:
-        return notes_tag(parent)[1] or "regime-momentum-quality-value"
+        fam = notes_tag(parent)[1] or "regime-momentum-quality-value"
+        if not family_is_exhausted(fam):
+            return fam
     tried = {notes_tag(e)[1] for e in exps if notes_tag(e)[1]}
     untried = [a for a in ARCHETYPES if a not in tried]
-    return untried[0] if untried else min(ARCHETYPES, key=lambda a: sum(1 for e in exps if notes_tag(e)[1] == a))
+    if untried:
+        return untried[0]
+    viable = [a for a in ARCHETYPES if not family_is_exhausted(a)]
+    pool = viable or ARCHETYPES
+    return min(pool, key=lambda a: sum(1 for e in exps if notes_tag(e)[1] == a))
 
 
 # Plan a "mutate one successful family into a NEW family" iteration: rotate through the top family
@@ -245,7 +320,9 @@ def plan_family_mutation(exps, benchmark_code, rotate_idx, k=4):
     pool = [e for e in exps if e.get("benchmarkCode") == benchmark_code and e.get("relativeReturn") is not None]
     if not pool:
         return None
-    top = sorted(pool, key=lambda e: e["relativeReturn"], reverse=True)[:k]
+    top = sorted(pool, key=lambda e: e["relativeReturn"], reverse=True)
+    top = [e for e in top if not family_is_exhausted(notes_tag(e)[1])] or top
+    top = top[:k]
     primary = top[rotate_idx % len(top)]
     # strip any existing -mut suffix so a re-mutated family deepens one lineage instead of -mut-mut...
     base = re.sub(r"-mut$", "", notes_tag(primary)[1] or "regime-momentum-quality-value")
@@ -282,6 +359,31 @@ def fingerprint(src):
 
 def feed_fingerprints(exps):
     return {fingerprint(e.get("scoringDefinition") or "") for e in exps if e.get("scoringDefinition")}
+
+
+def _weight_for(family, variant_idx, slot, base, span, minimum=0.03):
+    seed = hashlib.sha256(f"{family}|{variant_idx}|{slot}".encode()).hexdigest()
+    bucket = int(seed[:8], 16) / 0xFFFFFFFF
+    val = round(base + (bucket - 0.5) * span, 3)
+    return max(minimum, val)
+
+
+def _render_mutate_src(mode, family, tmpl_key, variants, body, variant_idx):
+    weights = {
+        "a": _weight_for(family, variant_idx, "a", 0.35, 0.22),
+        "b": _weight_for(family, variant_idx, "b", 0.20, 0.18),
+        "c": _weight_for(family, variant_idx, "c", 0.18, 0.16),
+        "d": _weight_for(family, variant_idx, "d", 0.14, 0.14),
+        "e": _weight_for(family, variant_idx, "e", 0.08, 0.08),
+        "f": _weight_for(family, variant_idx, "f", 0.07, 0.08),
+        "g": _weight_for(family, variant_idx, "g", 0.28, 0.20),
+    }
+    filled = body.format(**weights)
+    return (f'# Auto-generated (mutate) variant {variant_idx} — {tmpl_key} sweep point.\n'
+            f'FORMULA_NAME = "{tmpl_key} (mutate v{variant_idx})"\n'
+            f'LOGIC_VARIANT_COUNT = {variants}\n'
+            f'NOTES = "mode={mode}; family={family}. Auto (mutate); variant={variant_idx}."\n'
+            + filled)
 
 
 # --- generators -------------------------------------------------------------
@@ -360,7 +462,7 @@ def score_universe(stocks, regime, ctx):
 }
 
 
-def gen_mutate(mode, family, parent, lessons, target, exp_num):
+def gen_mutate(mode, family, parent, lessons, target, exp_num, seen=None, max_candidates=24):
     parent_family = notes_tag(parent)[1] if parent else None
     if family in _MUTATE_TEMPLATES:
         tmpl_key = family
@@ -371,19 +473,20 @@ def gen_mutate(mode, family, parent, lessons, target, exp_num):
     else:
         tmpl_key = "regime-momentum-quality-value" if mode == "exploit" else "mean-reversion"
     variants, body = _MUTATE_TEMPLATES[tmpl_key]
-    # deterministic per-exp weight jitter so each run is a distinct, valid point in the space
-    j = ((exp_num * 7) % 11 - 5) / 100.0
-    w = {"a": round(0.35 + j, 3), "b": round(0.20 - j, 3), "c": round(0.20, 3), "d": round(0.15, 3),
-         "e": round(0.08, 3), "f": round(0.07, 3), "g": round(0.30 + j, 3)}
-    filled = body.format(**w)
-    src = (f'# Auto-generated (mutate) exp_{exp_num:03d} — {tmpl_key} sweep point.\n'
-           f'FORMULA_NAME = "{tmpl_key} (mutate v{exp_num})"\n'
-           f'LOGIC_VARIANT_COUNT = {variants}\n'
-           f'NOTES = "mode={mode}; family={family}. Auto (mutate); weight jitter j={j}."\n'
-           + filled)
+    start = max(int(exp_num), next_variant_counter(family))
+    src, chosen = None, None
+    for variant_idx in range(start, start + max_candidates):
+        candidate = _render_mutate_src(mode, family, tmpl_key, variants, body, variant_idx)
+        if seen and fingerprint(candidate) in seen:
+            continue
+        src, chosen = candidate, variant_idx
+        break
+    if src is None:
+        chosen = start + max_candidates
+        src = _render_mutate_src(mode, family, tmpl_key, variants, body, chosen)
     with open(target, "w") as fh:
         fh.write(src)
-    return True
+    return {"tmpl_key": tmpl_key, "variant_idx": chosen}
 
 
 def gen_codex(mode, family, parent, lessons, target, exp_num, generator_cmd, timeout, message="",
@@ -485,6 +588,10 @@ def iterate(args):
     else:
         mode = decide_mode(recent_exps)
         family = pick_family(mode, exps, parent)
+    if mode == "exploit" and family_is_exhausted(family):
+        log(f"{family}: exploit cooldown active after repeated degradation; switching to explore", "info")
+        mode = "explore"
+        family = pick_family(mode, exps, parent)
     # mutate only has a few templates; snap to one so the recorded family matches the real logic
     # (codex honors the chosen family, so this only applies to the no-AI sweep path).
     if args.generator == "mutate" and family not in _MUTATE_TEMPLATES:
@@ -509,9 +616,9 @@ def iterate(args):
     ok = False
     for attempt in range(1, args.gen_retries + 1):
         if args.generator == "mutate":
-            gen_mutate(mode, family, parent, [], target, exp_num + attempt - 1)
+            meta = gen_mutate(mode, family, parent, [], target, exp_num + attempt - 1, seen=seen)
             append_tokens_log("generate.mutate", test_key=test_key, attempt=attempt,
-                              note=f"family={family}")
+                              note=f"family={family}; template={meta['tmpl_key']}; variant={meta['variant_idx']}")
         else:
             parent_detail = fetch_experiment_detail(args.feed_url, parent.get("testKey")) if parent and not parent.get("scoringDefinition") else parent
             if parent_detail:
@@ -534,7 +641,7 @@ def iterate(args):
                 attempt=attempt,
                 note=f"family={family}; prompt_chars={len(prompt)}; prompt_tokens_est={approx_token_count(prompt)}",
             )
-            gen_ok, meta = gen_codex(mode, family, parent, lessons, target, exp_num, args.generator_cmd,
+            gen_ok, meta = gen_codex(mode, family, parent, prompt_lessons, target, exp_num, args.generator_cmd,
                                      args.gen_timeout, args.message, seeds)
             usage = (meta or {}).get("usage")
             append_tokens_log(
@@ -562,6 +669,7 @@ def iterate(args):
             log(f"attempt {attempt} is a duplicate; regenerating", "warn", test_key)
             append_tokens_log("validate.duplicate", test_key=test_key, attempt=attempt)
             continue
+        seen.add(fingerprint(open(target).read()))
         ok = True
         break
     if not ok:
@@ -585,6 +693,7 @@ def iterate(args):
         log(f"{test_key}: backtest failed after {args.bt_retries} tries; skipping", "error", test_key)
         return False
     direction, delta = insert_lesson(result, parent, mode, family)
+    record_family_delta(family, delta)
     append_tokens_log("lesson.insert", test_key=test_key, note=f"direction={direction}; delta={delta}")
     log(f"backtested {test_key}: relative_return {result['relative_return']:.4f}x "
         f"({'Δ '+format(delta,'+.4f') if delta is not None else 'no parent'}, {direction}); "
@@ -597,6 +706,7 @@ def iterate(args):
     else:
         try:
             publish(test_key, args.publish_timeout)
+            cache_invalidate()
             append_tokens_log("publish.done", test_key=test_key)
             log(f"published {test_key} to prod", test_key=test_key)
         except (subprocess.TimeoutExpired, RuntimeError) as e:
