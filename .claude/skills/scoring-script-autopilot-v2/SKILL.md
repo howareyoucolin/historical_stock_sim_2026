@@ -130,29 +130,42 @@ month, so leaning on them tilts selection toward large caps (the runner skips `N
 The same script files work in V1 and V2 — only the evaluation differs. See
 `tools/unapproved/scoring_scripts/exp_001_regime_momentum_quality_value.py` for a worked example.
 
-## Explore vs. exploit policy (how to spend each iteration)
+## Allocation policy (how to spend each iteration)
 
 The objective is a script that maximizes `relative_return`, but the fastest route to a *true*
 maximum is NOT to refine the current leader every run — that hill-climbs one idea and stalls in a
 local optimum (and floods the feed with near-identical re-keyed copies). Split effort
-deterministically between **exploit** (take the leader to its best) and **explore** (try a
-structurally different tactic).
+deterministically across three tracks:
 
-**Target mix ≈ 2 exploit : 1 explore. Measure it from the feed, don't guess.** Every experiment
-tags its `NOTES` first line with `mode=exploit|explore; family=<slug>`. Take the **12 most recently
-created** experiments (fetch with `&sort=recent`) and count modes: if explore is **under
-one-third**, this iteration is **explore**; otherwise **exploit**. This self-corrects.
+- **Explore new families:** about **50%**. Try structurally different tactics the feed has not yet
+  explored well.
+- **Exploit the current winner:** about **10%**. Take the champion family to its local best with a
+  single attributable refinement.
+- **Revisit other promising families:** about **40%**. Optimize non-champion families that looked
+  interesting but were not yet fully explored, to test whether they still have upside.
+
+**Measure the mix from the feed, don't guess.** Every experiment tags its `NOTES` first line with
+`mode=exploit|explore; family=<slug>; focus=explore|winner|contender`. Take the recent experiments
+window, count how many fell into each bucket, and choose the bucket that is currently most
+underweight versus the `50 / 10 / 40` target. This self-corrects over time.
 
 **Force explore when the champion family has plateaued** (regardless of the ratio): if the last 3
 exploit runs whose parent is in the current top family each returned `metric_delta <= +0.005`
 relative (note: V2 deltas are ratio units, e.g. +0.005 = +0.5 percentage points of relative
 return), the family is converged. Stop refining it; explore until a new family lands on the board.
 
-### Exploit mode — take the leader to its best
+### Exploit winner — take the leader to its best
 - Parent = the top-`relativeReturn` script in the feed (same `benchmark_code` as you will run).
 - Make **one** targeted, attributable change *within the same structural family*: retune a weight,
   shift a regime threshold, add or adjust a single factor. Keep `LOGIC_VARIANT_COUNT` honest.
-- First `NOTES` line: `mode=exploit; family=<same family slug as the parent>`.
+- First `NOTES` line: `mode=exploit; family=<same family slug as the parent>; focus=winner`.
+
+### Exploit contender — revisit a non-winning family with promise
+- Parent = the strongest non-champion script/family on the current board (same `benchmark_code`)
+  that is materially different from the champion family.
+- Make **one** targeted, attributable change within that family, aimed at testing whether the idea
+  still has headroom rather than merely copying the champion.
+- First `NOTES` line: `mode=exploit; family=<same family slug as the parent>; focus=contender`.
 
 ### Explore mode — try a genuinely different tactic
 - The script must be **structurally unlike** every current top-family script — a different *idea*,
@@ -160,8 +173,14 @@ return), the family is converged. Stop refining it; explore until a new family l
   mean-reversion, deep value, low-volatility/quality-only, dividend/income, a different regime
   definition (gate on `median_from_200d_ma_pct` or breadth extremes), contrarian/other tilts
   (`from_52w_high_pct`, small-cap via `market_cap`), etc.
+- Additional family ideas worth testing when applicable: consistency, acceleration,
+  capital-efficiency, recovery-quality, market-leaders, stability-compounders, scarcity-filter,
+  boolean-gate, anti-bubble, density-score, orthogonal-factors, sparse-formula,
+  interaction-effects, GARP, QARP, trend-confirmation, fundamental-momentum, turnaround,
+  income-growth, liquidity-preference, regime-specialist, underused-metrics, contradiction,
+  percentile-ranking, and threshold-ladder.
 - Build a ledger from the feed of which `family` slugs already exist; pick an **untried** archetype.
-- First `NOTES` line: `mode=explore; family=<new archetype slug>`.
+- First `NOTES` line: `mode=explore; family=<new archetype slug>; focus=explore`.
 - **An explorer that scores below the champion is a SUCCESS, not a waste.** Its value is the
   `--lesson`. Under V2 especially, judge an explore run by *which rolling windows / regimes* it
   beat the benchmark in (read `benchmark_win_rate_pct` and the `windows` array), not by
